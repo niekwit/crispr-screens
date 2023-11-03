@@ -1,0 +1,5 @@
+#colours should be in hex and quoted
+font_size: 14
+bar_graph_fill_colour: "#2e8b57" 
+bar_graph_line_colour: "#000000"
+ggplot2_theme: theme_bw
