@@ -1,4 +1,85 @@
-# Main entrypoint of the workflow. 
-# Please follow the best practices: 
-# https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
-# in particular regarding the standardized folder structure mentioned there. 
+import pandas as pd
+import sys
+from pathlib import Path
+
+from scripts import general_functions as utils
+from snakemake.utils import min_version
+
+# set minimum snakemake version
+min_version("6.4.1")
+
+report: "report/workflow.rst"
+
+# load config file
+configfile: "config/config.yml"
+
+# get all sample names
+SAMPLES = utils.sample_names()
+
+# load fasta and create index path/prefix
+fasta = utils.fasta()
+idx_prefix = utils.hisat2_index_path(fasta)
+
+# load which stats to apply
+skip_stats = config["stats"]["skip"]
+
+# load stats comparisons
+M_COMPARISONS, B_COMPARISONS = utils.comparisons()
+
+# import rules
+include: "rules/qc.smk"
+include: "rules/trim.smk"
+include: "rules/count.smk"
+include: "rules/stats.smk"
+
+
+# set targets
+TARGETS = [
+    "results/qc/multiqc.html",
+    "results/count/counts-aggregated_normalised.csv",
+    "results/qc/alignment-rates.pdf",
+    "results/qc/sequence-coverage.pdf",
+    "results/qc/gini-index.pdf",
+    "results/qc/sample-correlation.pdf",
+    "results/qc/missed-rgrnas.pdf",
+]
+
+if skip_stats != "mageck" and skip_stats !="both":
+    
+    # extend target rule with MAGecK targets     
+    TARGETS.extend([
+        expand("results/mageck/{mcomparison}/{mcomparison}.gene_summary.txt", mcomparison=M_COMPARISONS),
+        expand("results/mageck/{mcomparison}/{mcomparison}.sgrna_summary.txt", mcomparison=M_COMPARISONS),
+        expand("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_pos.pdf", mcomparison=M_COMPARISONS),
+        expand("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS),
+        expand("results/mageck_plots/{mcomparison}/{mcomparison}.sgrank.pdf", mcomparison=M_COMPARISONS),
+    ])
+
+if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
+    
+    # extend target rule with BAGEL2 targets
+    TARGETS.extend([
+        "workflow/scripts/bagel2/",
+        "count/counts-aggregated-bagel2.tsv",
+        expand("results/bagel2/{bcomparison}/{bcomparison}.foldchange", bcomparison=B_COMPARISONS),
+        expand("results/bagel2/{bcomparison}/{bcomparison}.bf", bcomparison=B_COMPARISONS),
+        expand("results/bagel2/{bcomparison}/{bcomparison}.pr", bcomparison=B_COMPARISONS),
+        expand("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", bcomparison=B_COMPARISONS),
+        expand("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", bcomparison=B_COMPARISONS),
+    ])
+
+# set target rule
+rule all:
+    input:
+        TARGETS
+
+
+# copy snakemake log to log files after successful run
+snake_log = "logs/snakemake/snakemake.log"
+os.makedirs("logs/snakemake", exist_ok=True)
+
+onsuccess: 
+    shell("cp -v {log} {snake_log}")
+    print("Analysis finished successfully!")
+
+
