@@ -103,7 +103,7 @@ def comparisons():
             B_COMPARISONS = None
 
     except FileNotFoundError:
-        print("WARNING: No stats.csv file found")
+        print("ERROR: No stats.csv file found")
         sys.exit(1)
             
     return M_COMPARISONS, B_COMPARISONS

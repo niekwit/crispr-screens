@@ -36,7 +36,6 @@ include: "rules/stats.smk"
 # set targets
 TARGETS = [
     "results/qc/multiqc.html",
-    "results/count/counts-aggregated_normalised.csv",
     "results/qc/alignment-rates.pdf",
     "results/qc/sequence-coverage.pdf",
     "results/qc/gini-index.pdf",
@@ -45,25 +44,16 @@ TARGETS = [
 ]
 
 if skip_stats != "mageck" and skip_stats !="both":
-    
     # extend target rule with MAGecK targets     
     TARGETS.extend([
-        expand("results/mageck/{mcomparison}/{mcomparison}.gene_summary.txt", mcomparison=M_COMPARISONS),
-        expand("results/mageck/{mcomparison}/{mcomparison}.sgrna_summary.txt", mcomparison=M_COMPARISONS),
         expand("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_pos.pdf", mcomparison=M_COMPARISONS),
         expand("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS),
         expand("results/mageck_plots/{mcomparison}/{mcomparison}.sgrank.pdf", mcomparison=M_COMPARISONS),
     ])
 
 if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
-    
     # extend target rule with BAGEL2 targets
     TARGETS.extend([
-        "workflow/scripts/bagel2/",
-        "count/counts-aggregated-bagel2.tsv",
-        expand("results/bagel2/{bcomparison}/{bcomparison}.foldchange", bcomparison=B_COMPARISONS),
-        expand("results/bagel2/{bcomparison}/{bcomparison}.bf", bcomparison=B_COMPARISONS),
-        expand("results/bagel2/{bcomparison}/{bcomparison}.pr", bcomparison=B_COMPARISONS),
         expand("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", bcomparison=B_COMPARISONS),
         expand("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", bcomparison=B_COMPARISONS),
     ])

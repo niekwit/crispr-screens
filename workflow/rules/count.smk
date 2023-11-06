@@ -71,7 +71,7 @@ rule normalise_count_table:
         input:
             counts="results/count/counts-aggregated.tsv"
         output:
-            norm_counts="results/count/counts-aggregated_normalised.csv"
+            norm_counts=temp("results/count/counts-aggregated_normalised.csv")
         run:
             df = pd.read_table(input.counts)
             column_range = range(2,len(df.columns))

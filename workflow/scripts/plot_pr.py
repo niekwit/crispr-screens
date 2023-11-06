@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
+comparison = snakemake.wildcards[0]
+
 if os.path.exists(f"bagel2/{comparison}/{comparison}.no_bf"):
     
     #create empty file
     open(pr, 'w').close()
-
-comparison = snakemake.wildcards[0]
 
 print(f"BAGEL2: plotting precision-recall for {comparison}")
 

@@ -55,10 +55,10 @@ if skip_stats != "mageck" and skip_stats !="both":
             "../scripts/sgrank_plot.R"
 
     
-elif skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
+if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
     rule install_bagel2:
         output:
-            directory("../scripts/bagel2/"),
+            directory("workflow/scripts/bagel2"),
         log:
             "logs/bagel2/install.log"
         shell:
@@ -101,7 +101,7 @@ elif skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             b2dir="workflow/scripts/bagel2/",
             fc="results/bagel2/{bcomparison}/{bcomparison}.foldchange",
         output:
-            "results/bagel2/{bcomparison}/{bcomparison}.bf"
+            bf="results/bagel2/{bcomparison}/{bcomparison}.bf"
         params:
             species=config["lib_info"]["species"],
         resources:

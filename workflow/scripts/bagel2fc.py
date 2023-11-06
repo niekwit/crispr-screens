@@ -20,11 +20,14 @@ comparison = os.path.basename(fc_table.replace(".foldchange",""))
 control = comparison.split("_vs_")[1]
 control_column = column_dict[control]
 
+# create output directory
+shell("mkdir -p bagel2/{comparison}")
+
 # run BAGEL2 fc
 shell(
     "python {b2dir}/BAGEL.py fc "
       "-i {count_table_bagel2} "
-      "-o bagel2/{comparison}/{comparison} "
+      "-o results/bagel2/{comparison}/{comparison} "
       "-c {control_column} "
       "{log}"
       )
