@@ -58,7 +58,7 @@ rule aggregated_counts:
     output:
         "results/count/counts-aggregated.tsv"
     params:
-        fa=utils.fasta(),
+        fa=fasta,
     conda:
         "../envs/count.yaml"
     log:

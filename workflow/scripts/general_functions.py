@@ -3,9 +3,29 @@ import glob
 import sys
 import pandas as pd
 
-def fasta():
+def fasta(config):
     fasta = glob.glob("resources/*.*a") # gets both .fa and .fasta files
 
+    # if no fasta file is available, convert csv file to fasta file
+    if len(fasta) == 0:
+        csv = glob.glob("resources/*.csv")
+        
+        try:
+            if len(csv) == 0:
+                print("ERROR: No fasta/csv file in resources directory")
+                sys.exit(1)
+            elif len(csv) > 1:
+                print("ERROR: More than one csv file in resources directory")
+                sys.exit(1)
+            else:
+                csv_to_fasta(csv[0], 
+                            config["csv"]["name_column"], 
+                            config["csv"]["sequence_column"])
+                fasta = glob.glob("resources/*.*a")
+        except KeyError:
+            print("ERROR: No fasta file in resources directory and no csv file information specified in config.yml")
+            sys.exit(1)
+    
     # Check that only one fasta file is given in resources directory
     assert len(fasta) == 1, "ERROR: There should be only one fasta file in the resources folder"
     
@@ -20,6 +40,32 @@ def fasta():
     
     return fasta[0]
 
+
+def csv_to_fasta(csv, column_gene, column_seq):
+    """Convert csv file to fasta file. Gene and sequence column numbers must be specified in config.yml.
+    """
+    df = pd.read_csv(csv)
+    fasta = csv.replace(".csv",".fasta")
+    
+    # enumerate number of sequences per gene in new column in csv
+    df["seq_number"] = df.groupby(df.columns[column_gene - 1]).cumcount() + 1
+    seq_number_loc = df.columns.get_loc("seq_number")
+        
+    # create sgRNA names
+    sgrna = []
+    for row in zip(df.iloc[:, column_gene - 1], df.iloc[:, seq_number_loc]):
+        sgrna.append(f">{row[0]}_sg{row[0]}_{row[1]}")
+    df["sgrna"] = sgrna
+    
+    # only keep sgRNA name and sequence columns
+    df = df.iloc[:, [seq_number_loc + 1, column_seq - 1]]
+    
+    # write fasta file
+    df.to_csv(fasta, 
+              sep="\n", 
+              index=False, 
+              header=False)
+        
 
 def hisat2_index_path(fasta):
     """Generate HISAT2 index path from fasta file

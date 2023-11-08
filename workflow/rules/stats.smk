@@ -71,7 +71,7 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
         output:
             "results/count/counts-aggregated-bagel2.tsv"
         params:
-            fa=utils.fasta(),
+            fa=fasta,
         resources:
             runtime=config["resources"]["stats"]["time"]
         conda:
@@ -142,7 +142,7 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
         log:
             "logs/bagel2/plot/bf_{bcomparison}.log"
         script:
-            "../scripts/plot_bf.py"
+            "../scripts/plot_bf.R"
 
 
     rule plot_pr:
@@ -155,6 +155,6 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
         log:
             "logs/bagel2/plot/pr_{bcomparison}.log"
         script:
-            "../scripts/plot_pr.py"
+            "../scripts/plot_pr.R"
 
             

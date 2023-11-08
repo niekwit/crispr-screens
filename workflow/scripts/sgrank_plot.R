@@ -73,7 +73,7 @@ p <- ggplot() +
                data = bgcol) +
   geom_segment(aes_string("LFC", "y", xend = "LFC", yend = "yend", color = "colour"), data = df.sub) +
   scale_color_manual(values = c("pos" = "#e41a1c","neg" = "#377eb8")) +
-  scale_y_continuous(breaks = bgcol$y[seq(1, nrow(bgcol), 4)] + z|  qwserbinwidth/2,
+  scale_y_continuous(breaks = bgcol$y[seq(1, nrow(bgcol), 4)] + binwidth / 2,
                      labels = genes, expand = c(0, 0)) +
   labs(x = "Log2(Fold change)", 
        y = NULL) +

@@ -46,7 +46,7 @@ rule plot_coverage:
     output:
         report("results/qc/sequence-coverage.pdf", caption="workflow/report/plot-coverage.rst", category="Sequence coverage")
     params:
-        fasta=utils.fasta()
+        fasta=fasta
     log:
         "logs/plot-coverage.log"
     conda:

@@ -16,7 +16,7 @@ norm.counts <- read.csv(snakemake@input[[1]]) %>%
   gather(var2, value, -var1)
 
 # plot heatmap
-p <- ggplot(df, aes(var1, var2, fill = value)) + 
+p <- ggplot(norm.counts, aes(var1, var2, fill = value)) + 
   geom_tile() + 
   scale_fill_viridis_c(guide = guide_colorbar(frame.colour = "black", 
                                               ticks.colour = "black")) +

@@ -3,6 +3,9 @@ lib_info:
     vector: ""
     left_trim : 0 #trim n bases from 5' end of reads
     species: human
+csv: # if no fasta is available, provide a csv file with sgRNA sequences
+  name_column: 3 # column number with gene names
+  sequence_column: 2 # column number with sgRNA sequences
 mismatch: 0 #mismatches allowed during alignment
 stats: 
   skip: none #skip mageck, bagel2, both, or none
