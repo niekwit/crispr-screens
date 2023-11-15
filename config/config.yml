@@ -13,9 +13,6 @@ stats:
   mageck_control_genes: all #all or file with control genes
   fdr: 0.25 #FDR threshold for mageck plotting
 resources:
-  account: XXX
-  partition: cclake
-  max_jobs: 100
   trim:
     cpu: 4
     time: 60
