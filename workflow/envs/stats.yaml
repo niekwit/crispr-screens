@@ -8,7 +8,6 @@ dependencies:
   - r-cowplot=1.1.1
   - r-viridis=0.6.4
   - r-ggrepel=0.9.4
-  - r-cowplot=1.1.1
   - r-ineq=0.2_13
   - r-reshape2=1.4.4
   - python=3.10.12
