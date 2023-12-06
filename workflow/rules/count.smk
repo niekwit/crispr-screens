@@ -26,7 +26,7 @@ rule hisat2_index:
 rule count:
     input: 
         fq="results/trimmed/{sample}.fastq.gz",
-        idx_files=multiext(idx_prefix, 
+        idx_files=multiext(utils.hisat2_index_path(fasta), 
                 ".1.ht2",
                 ".2.ht2",
                 ".3.ht2",
