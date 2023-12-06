@@ -1,6 +1,6 @@
 rule hisat2_index: 
     output:
-        files=multiext(idx_prefix, 
+        files=multiext(utils.hisat2_index_path(fasta), 
                 ".1.ht2",
                 ".2.ht2",
                 ".3.ht2",
