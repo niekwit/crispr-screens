@@ -61,6 +61,8 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             directory("workflow/scripts/bagel2"),
         log:
             "logs/bagel2/install.log"
+        conda:
+            "../envs/stats.yaml"
         shell:
             "git clone https://github.com/hart-lab/bagel.git {output} 2> {log}"
         
@@ -74,6 +76,8 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             fa=fasta,
         resources:
             runtime=config["resources"]["stats"]["time"]
+        log:
+            "logs/bagel2/convert_count_table.log"
         conda:
             "../envs/stats.yaml"
         script:

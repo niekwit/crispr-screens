@@ -15,9 +15,8 @@ configfile: "config/config.yml"
 # get all sample names
 SAMPLES = utils.sample_names()
 
-# load fasta and create index path/prefix
+# load fasta
 fasta = utils.fasta(config)
-idx_prefix = utils.hisat2_index_path(fasta)
 
 # load which stats to apply
 skip_stats = config["stats"]["skip"]
@@ -76,4 +75,4 @@ onerror:
     shell("cp -v {log} {snake_log}")
     print(f"Analysis (partly) failed...\nCheck {snake_log} for details")
 
-    
+

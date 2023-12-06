@@ -11,7 +11,7 @@ rule hisat2_index:
                 ".8.ht2"),
     params:
         fa=fasta,
-        idx=idx_prefix,
+        idx=utils.hisat2_index_path(fasta),
     threads: config["resources"]["count"]["cpu"]
     resources:
         runtime=config["resources"]["count"]["time"]
@@ -39,7 +39,7 @@ rule count:
         "results/count/{sample}.guidecounts.txt"
     params:
         mm=config["mismatch"],
-        idx=idx_prefix,
+        idx=utils.hisat2_index_path(fasta),
     threads: config["resources"]["count"]["cpu"]
     resources:
         runtime=config["resources"]["count"]["time"]
@@ -72,15 +72,9 @@ rule normalise_count_table:
             counts="results/count/counts-aggregated.tsv"
         output:
             norm_counts=temp("results/count/counts-aggregated_normalised.csv")
-        run:
-            df = pd.read_table(input.counts)
-            column_range = range(2,len(df.columns))
-            for i in column_range:
-                column_sum = df.iloc[:,i].sum()
-                df.iloc[:,i] = df.iloc[:,i] / column_sum * 1E8
-                df.iloc[:,i] = df.iloc[:,i].astype(int)
-            df.to_csv(output.norm_counts,
-                    index = False,
-                    header = True)
-
-
+        conda:
+            "../envs/count.yaml"
+        log:
+            "logs/count/normalise_counts.log"
+        script:
+            "../scripts/normalise_count_table.py"
