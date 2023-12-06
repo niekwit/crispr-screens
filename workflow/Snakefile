@@ -1,11 +1,12 @@
 import pandas as pd
-
+import datetime
 from scripts import general_functions as utils
 from snakemake.utils import min_version
 
 # set minimum snakemake version
 min_version("6.4.1")
 
+# define reoprt file
 report: "report/workflow.rst"
 
 # load config file
@@ -62,12 +63,17 @@ rule all:
         TARGETS
 
 
-# copy snakemake log to log files after successful run
-snake_log = "logs/snakemake/snakemake.log"
+# save snakemake terminal output to log file
+time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+snake_log = f"logs/snakemake/{time}_snakemake.log"
 os.makedirs("logs/snakemake", exist_ok=True)
 
 onsuccess: 
     shell("cp -v {log} {snake_log}")
     print("Analysis finished successfully!")
 
+onerror:
+    shell("cp -v {log} {snake_log}")
+    print(f"Analysis (partly) failed...\nCheck {snake_log} for details")
 
+    
