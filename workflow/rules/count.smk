@@ -2,7 +2,7 @@ rule hisat2_index:
     input:
         fasta = fasta
     output:
-        directory("resources/index/")
+        temp(directory("resources/index/"))
     params:
         extra="",
         prefix = "resources/index/index"
