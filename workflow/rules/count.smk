@@ -1,45 +1,29 @@
-rule hisat2_index: 
+rule hisat2_index:
+    input:
+        fasta = fasta
     output:
-        files=multiext(utils.hisat2_index_path(fasta), 
-                ".1.ht2",
-                ".2.ht2",
-                ".3.ht2",
-                ".4.ht2",
-                ".5.ht2",
-                ".6.ht2",
-                ".7.ht2",
-                ".8.ht2"),
+        directory("resources/index/")
     params:
-        fa=fasta,
-        idx=utils.hisat2_index_path(fasta),
+        extra="",
+        prefix = "resources/index/index"
+    log:
+        "logs/hisat2/index.log"
     threads: config["resources"]["count"]["cpu"]
     resources:
         runtime=config["resources"]["count"]["time"]
-    log:
-        "logs/hisat2/index.log"
-    conda:
-        "../envs/count.yaml"
-    shell:
-        "hisat2-build -p {threads} {params.fa} {params.idx} 2> {log}"
+    wrapper:
+        "v3.0.4/bio/hisat2/index"
 
 
 rule count:
     input: 
         fq="results/trimmed/{sample}.fastq.gz",
-        idx_files=multiext(utils.hisat2_index_path(fasta), 
-                ".1.ht2",
-                ".2.ht2",
-                ".3.ht2",
-                ".4.ht2",
-                ".5.ht2",
-                ".6.ht2",
-                ".7.ht2",
-                ".8.ht2"),
+        idx="resources/index/",
     output:
         "results/count/{sample}.guidecounts.txt"
     params:
         mm=config["mismatch"],
-        idx=utils.hisat2_index_path(fasta),
+        idx="resources/index/index",
     threads: config["resources"]["count"]["cpu"]
     resources:
         runtime=config["resources"]["count"]["time"]
@@ -47,9 +31,10 @@ rule count:
         "logs/count/{sample}.log"
     conda:
         "../envs/count.yaml"
-    shell:
-        "zcat {input.fq} | hisat2 --no-hd -p {threads} -t -N {params.mm} -x {params.idx} - 2> {log} | "
-        "sed '/XS:/d' | cut -f3 | sort | uniq -c | sed 's/^ *//' | sed '1d' > {output}"
+    script:
+        "../scripts/count.sh"
+        #"zcat {input.fq} | hisat2 --no-hd -p {threads} -t -N {params.mm} -x {params.idx} - 2> {log} | "
+        #"sed '/XS:/d' | cut -f3 | sort | uniq -c | sed 's/^ *//' | sed '1d' > {output}"
 
 
 rule aggregated_counts:
