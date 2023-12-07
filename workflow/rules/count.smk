@@ -33,8 +33,6 @@ rule count:
         "../envs/count.yaml"
     script:
         "../scripts/count.sh"
-        #"zcat {input.fq} | hisat2 --no-hd -p {threads} -t -N {params.mm} -x {params.idx} - 2> {log} | "
-        #"sed '/XS:/d' | cut -f3 | sort | uniq -c | sed 's/^ *//' | sed '1d' > {output}"
 
 
 rule aggregated_counts:
