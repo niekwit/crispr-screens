@@ -16,11 +16,9 @@ if skip_stats != "mageck" and skip_stats !="both":
             "../envs/stats.yaml"
         log:
             "logs/mageck/{mcomparison}.log"
-        shell:
-            '''
-            mageck test --normcounts-to-file -k {input} -t $(echo "{wildcards.mcomparison}" | awk -F '_vs_' '{{print $1}}' | sed 's/-/,/') -c $(echo "{wildcards.mcomparison}" | awk -F '_vs_' '{{print $2}}' | sed 's/-/,/' ) -n results/mageck/{wildcards.mcomparison}/{wildcards.mcomparison} {params.control} {params.extra} 2> {log}
-            '''
-
+        script:
+            "../scripts/mageck.sh"
+            
 
     rule lfc_plots:
         input:
