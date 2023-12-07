@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+title: crispr-screens
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Niek
+    family-names: Wit
+    email: nw416@cam.ac.uk
+    affiliation: University of Cambridge
+    orcid: https://orcid.org/0009-0002-4330-5333
+repository-code: 'https://github.com/niekwit/crispr-screens'
+license: MIT
+doi: 10.5281/zenodo.10286661
