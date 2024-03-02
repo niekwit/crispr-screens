@@ -4,7 +4,7 @@ if skip_stats != "mageck" and skip_stats !="both":
             "results/count/counts-aggregated.tsv"
         output:
             "results/mageck/{mcomparison}/{mcomparison}_summary.Rnw",
-            report("results/mageck/{mcomparison}/{mcomparison}.gene_summary.txt", caption="workflow/report/mageck.rst", category="MAGeCK"),
+            report("results/mageck/{mcomparison}/{mcomparison}.gene_summary.txt", caption="../report/mageck.rst", category="MAGeCK"),
             "results/mageck/{mcomparison}/{mcomparison}.sgrna_summary.txt",
             "results/mageck/{mcomparison}/{mcomparison}.normalized.txt"
         params:
@@ -24,8 +24,8 @@ if skip_stats != "mageck" and skip_stats !="both":
         input:
             "results/mageck/{mcomparison}/{mcomparison}.gene_summary.txt",
         output:
-            pos=report("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_pos.pdf", caption="workflow/report/lfc_pos.rst", category="MAGeCK plots", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "lfc plot enriched genes"}),
-            neg=report("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_neg.pdf", caption="workflow/report/lfc_neg.rst", category="MAGeCK plots", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "lfc plot depleted genes"}),
+            pos=report("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_pos.pdf", caption="../report/lfc_pos.rst", category="MAGeCK plots", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "lfc plot enriched genes"}),
+            neg=report("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_neg.pdf", caption="../report/lfc_neg.rst", category="MAGeCK plots", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "lfc plot depleted genes"}),
         resources:
             runtime=config["resources"]["stats"]["time"]
         conda:
@@ -40,7 +40,7 @@ if skip_stats != "mageck" and skip_stats !="both":
         input:
             "results/mageck/{mcomparison}/{mcomparison}.sgrna_summary.txt",
         output:
-            report("results/mageck_plots/{mcomparison}/{mcomparison}.sgrank.pdf", caption="workflow/report/sgrank.rst", category="MAGeCK plots", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "sgrank plot"})
+            report("results/mageck_plots/{mcomparison}/{mcomparison}.sgrank.pdf", caption="../report/sgrank.rst", category="MAGeCK plots", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "sgrank plot"})
         params:
             fdr=config["stats"]["fdr"],
         resources:
@@ -121,7 +121,7 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             b2dir="workflow/scripts/bagel2/",
             bf="results/bagel2/{bcomparison}/{bcomparison}.bf",
         output:
-            report("results/bagel2/{bcomparison}/{bcomparison}.pr", caption="workflow/report/bagel2.rst", category="BAGEL2")
+            "results/bagel2/{bcomparison}/{bcomparison}.pr",
         params:
             species=config["lib_info"]["species"]
         resources:
@@ -138,7 +138,7 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
         input:
             "results/bagel2/{bcomparison}/{bcomparison}.bf"
         output:
-            report("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", caption="workflow/report/bagel2_plots.rst", category="BAGEL2 plots", subcategory="{bcomparison}", labels={"Comparison":"{bcomparison}", "Figure":"BF plot"})
+            report("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", caption="../report/bagel2_plots.rst", category="BAGEL2 plots", subcategory="{bcomparison}", labels={"Comparison":"{bcomparison}", "Figure":"BF plot"})
         conda:
             "../envs/stats.yaml"
         log:
@@ -151,7 +151,7 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
         input:
             "results/bagel2/{bcomparison}/{bcomparison}.pr"
         output:
-            report("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", caption="workflow/report/bagel2_plots.rst", category="BAGEL2 plots", subcategory="{bcomparison}", labels={"Comparison":"{bcomparison}", "Figure":"Precision-recall plot"})
+            report("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", caption="../report/bagel2_plots.rst", category="BAGEL2 plots", subcategory="{bcomparison}", labels={"Comparison":"{bcomparison}", "Figure":"Precision-recall plot"})
         conda:
             "../envs/stats.yaml"
         log:

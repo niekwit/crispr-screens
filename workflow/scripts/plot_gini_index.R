@@ -30,7 +30,8 @@ p <- ggplot(data = df, aes(x = sample, y = Gini_index)) +
   theme_cowplot(16) +
   ylab("Gini index") +
   xlab(NULL) +
-  theme(plot.title = element_text(hjust = 0.5))+
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
   ggtitle("Evenness of sgRNAs") +
   scale_x_discrete(guide = guide_axis(angle = 45))
 

@@ -35,12 +35,13 @@ p <- ggplot(df, aes(x = sample, y = mapping.rate)) +
            fill = "aquamarine4",
            colour = "black") +
   theme_cowplot(16) +
-  scale_y_continuous(limits = c(0,100)) +
+  scale_y_continuous(limits = c(0,100),
+                     expand = expansion(mult = c(0, 0.1))) +
   scale_x_discrete(guide = guide_axis(angle = 45)) +
   ylab("Mapping rate (%)") +
   xlab(NULL)
 
-# save plot
+# Save plot
 ggsave(snakemake@output[[1]], p)
 
 # close log file

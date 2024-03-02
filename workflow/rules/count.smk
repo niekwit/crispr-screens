@@ -2,7 +2,7 @@ rule hisat2_index:
     input:
         fasta = fasta
     output:
-        temp(directory("resources/index/"))
+        directory("resources/index/")
     params:
         extra="",
         prefix = "resources/index/index"
@@ -12,7 +12,7 @@ rule hisat2_index:
     resources:
         runtime=config["resources"]["count"]["time"]
     wrapper:
-        "v3.0.4/bio/hisat2/index"
+        "v3.4.0/bio/hisat2/index"
 
 
 rule count:

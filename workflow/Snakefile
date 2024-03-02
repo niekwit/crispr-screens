@@ -4,7 +4,7 @@ from scripts import general_functions as utils
 from snakemake.utils import min_version
 
 # set minimum snakemake version
-min_version("6.4.1")
+min_version("7.24.0")
 
 # define reoprt file
 report: "report/workflow.rst"

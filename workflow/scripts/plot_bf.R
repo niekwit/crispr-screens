@@ -16,6 +16,7 @@ p <- ggplot(data, aes(x = BF)) +
                  fill = "aquamarine4") +
   labs(x = "Bayes Factor", 
        y = "Number of genes") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
   theme_cowplot(16)
 
 # save plot

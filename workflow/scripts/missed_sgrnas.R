@@ -24,6 +24,7 @@ p <- ggplot(data = df, aes(x = sample, y = value)) +
   theme_cowplot(16) +
   xlab(NULL) +
   ylab("Missed sgRNAs") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
   scale_x_discrete(guide = guide_axis(angle = 45))
 
 # save plot

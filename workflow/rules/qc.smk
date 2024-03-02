@@ -3,37 +3,45 @@ rule fastqc:
         "results/trimmed/{sample}.fastq.gz"
     output:
         html="results/qc/fastqc/{sample}.html",
-        zip="results/qc/fastqc/{sample}_fastqc.zip"
+        zip="results/qc/fastqc/{sample}_fastqc.zip",
     params:
         extra = "--quiet"
     log:
         "logs/fastqc/{sample}.log"
     threads: config["resources"]["fastqc"]["cpu"]
+    threads: config["resources"]["fastqc"]["cpu"]
+    resources:
+        runtime=config["resources"]["fastqc"]["time"],
+        mem_mb = 2048,
     wrapper:
-        "v2.0.0/bio/fastqc"
+        "v3.4.0/bio/fastqc"
 
 
 rule multiqc:
     input:
         expand("results/qc/fastqc/{sample}_fastqc.zip", sample=SAMPLES)
     output:
-        "results/qc/multiqc.html",
+        report("results/qc/multiqc.html", caption="../report/multiqc.rst", category="MultiQC"),
     params:
         extra="",  # Optional: extra parameters for multiqc
     threads: config["resources"]["fastqc"]["cpu"]
+    resources:
+        runtime=config["resources"]["fastqc"]["time"],
+        mem_mb = 2048,
     log:
         "logs/multiqc/multiqc.log"
     wrapper:
-        "v2.9.0/bio/multiqc"
+        "v3.4.0/bio/multiqc"
 
 
 rule plot_alignment_rate:
     input:
         expand("logs/count/{sample}.log", sample=SAMPLES)
     output:
-        report("results/qc/alignment-rates.pdf", caption="workflow/report/alignment-rates.rst", category="Alignment rates")
+        report("results/qc/alignment-rates.pdf", caption="../report/alignment-rates.rst", category="Alignment rates")
     log:
         "logs/plot-alignment-rate.log"
+    threads: 1
     conda:
         "../envs/stats.yaml"
     script:
@@ -44,9 +52,10 @@ rule plot_coverage:
     input:
         "results/count/counts-aggregated.tsv"
     output:
-        report("results/qc/sequence-coverage.pdf", caption="workflow/report/plot-coverage.rst", category="Sequence coverage")
+        report("results/qc/sequence-coverage.pdf", caption="../report/plot-coverage.rst", category="Sequence coverage")
     params:
         fasta=fasta
+    threads: 1
     log:
         "logs/plot-coverage.log"
     conda:
@@ -59,9 +68,10 @@ rule plot_gini_index:
     input:
         "results/count/counts-aggregated.tsv"
     output:
-        report("results/qc/gini-index.pdf", caption="workflow/report/gini-index.rst", category="Gini index")
+        report("results/qc/gini-index.pdf", caption="../report/gini-index.rst", category="Gini index")
     params:
         yaml="workflow/envs/plot_settings.yaml"
+    threads: 1
     log:
         "logs/gini-index.log"
     conda:
@@ -74,7 +84,8 @@ rule plot_sample_correlation:
     input:
         "results/count/counts-aggregated_normalised.csv"
     output:
-        report("results/qc/sample-correlation.pdf", caption="workflow/report/sample-correlation.rst", category="Sample correlation")
+        report("results/qc/sample-correlation.pdf", caption="../report/sample-correlation.rst", category="Sample correlation")
+    threads: 1
     log:
         "logs/sample-correlation.log"
     conda:
@@ -87,9 +98,10 @@ rule plot_missed_sgrnas:
     input:
         "results/count/counts-aggregated.tsv"
     output:
-        report("results/qc/missed-rgrnas.pdf", caption="workflow/report/missed-rgrnas.rst", category="Missed sgRNAs")
+        report("results/qc/missed-rgrnas.pdf", caption="../report/missed-rgrnas.rst", category="Missed sgRNAs")
     params:
         yaml="workflow/envs/plot_settings.yaml"
+    threads: 1
     log:
         "logs/missed-rgrnas.log"
     conda:
