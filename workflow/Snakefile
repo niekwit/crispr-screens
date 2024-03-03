@@ -22,8 +22,8 @@ validate(stats, "schemas/stats.schema.yaml")
 SAMPLES = sample_names()
 
 # Load fasta
-fasta = fasta(config)
-lib_name = lib_name(fasta)
+fasta = fasta()
+lib_name = lib_name()
 
 # Load which stats to apply
 skip_stats = config["stats"]["skip"]

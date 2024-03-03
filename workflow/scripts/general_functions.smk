@@ -30,7 +30,7 @@ def targets():
     return TARGETS
 
 
-def fasta(config):
+def fasta():
     fasta = glob.glob("resources/*.*a") # gets both .fa and .fasta files
 
     # If no fasta file is available, convert csv file to fasta file
@@ -179,7 +179,7 @@ def comparisons():
     return M_COMPARISONS, B_COMPARISONS
 
 
-def mageck_control(config):
+def mageck_control():
     """Load control genes for MAGeCK
     """
     if config["stats"]["mageck_control_genes"] == "all": # Use all genes as controls
@@ -188,13 +188,13 @@ def mageck_control(config):
         file = config["stats"]["mageck_control_genes"]
 
         # Check if file exists
-        assert os.path.exists(file), f"ERROR: control gene file ({file}) does not exist"
+        assert os.path.exists(file), f"Control gene file ({file}) does not exist"
         control = f"--control-gene {file}" 
         
     return control
 
     
-def gene_number(fasta):
+def gene_number():
     """
     Get number of genes from sgRNA fasta file
     """
@@ -210,7 +210,7 @@ def gene_number(fasta):
     return len(set(genes))
 
 
-def lib_name(fasta):
+def lib_name():
     """
     Get sgRNA library name
     """

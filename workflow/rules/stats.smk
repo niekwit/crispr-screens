@@ -8,7 +8,7 @@ if skip_stats != "mageck" and skip_stats !="both":
             "results/mageck/{mcomparison}/{mcomparison}.sgrna_summary.txt",
             "results/mageck/{mcomparison}/{mcomparison}.normalized.txt"
         params:
-            control=mageck_control(config),
+            control=mageck_control(),
             extra=config["stats"]["extra_mageck_arguments"],
         resources:
             runtime=config["resources"]["stats"]["time"]
