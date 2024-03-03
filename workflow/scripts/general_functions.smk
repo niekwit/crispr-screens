@@ -157,14 +157,15 @@ def comparisons():
     """
     try:
         COMPARISONS = pd.read_csv("config/stats.csv")
-        M_COMPARISONS = (COMPARISONS["test"] + "_vs_" + COMPARISONS["control"]).tolist()
+        M_COMPARISONS = COMPARISONS[["test","control"]].agg('_vs_'.join, axis=1).tolist()
+        
         M_COMPARISONS = [x.replace(";","-") for x in M_COMPARISONS] # snakemake report does not support ; in filenames
 
         # Get comparisons for BAGEL2
         B_COMPARISONS = COMPARISONS[COMPARISONS["bagel2"] == "y"]
         
         if len(B_COMPARISONS) != 0:
-            B_COMPARISONS = (B_COMPARISONS["test"] + "_vs_" + B_COMPARISONS["control"]).tolist()
+            B_COMPARISONS = B_COMPARISONS[["test","control"]].agg('_vs_'.join, axis=1).tolist()
             B_COMPARISONS = [x.replace(";","-") for x in B_COMPARISONS]
         
             # Remove comparisons with pooled control samples (not supported by BAGEL2)
