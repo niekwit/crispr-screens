@@ -1,68 +1,48 @@
 import pandas as pd
 import datetime
-from scripts import general_functions as utils
+include: "scripts/general_functions.smk"
 from snakemake.utils import min_version
+from snakemake.utils import validate
 
-# set minimum snakemake version
+# Set minimum snakemake version
 min_version("7.24.0")
 
-# define reoprt file
+# Define reoprt file
 report: "report/workflow.rst"
 
-# load config file
+# Load config file
 configfile: "config/config.yml"
+validate(config, "schemas/config.schema.yaml")
 
-# get all sample names
-SAMPLES = utils.sample_names()
+# Load and validate stas.csv
+stats = pd.read_csv("config/stats.csv")
+validate(stats, "schemas/stats.schema.yaml")
 
-# load fasta
-fasta = utils.fasta(config)
+# Get all sample names
+SAMPLES = sample_names()
 
-# load which stats to apply
+# Load fasta
+fasta = fasta(config)
+lib_name = lib_name(fasta)
+
+# Load which stats to apply
 skip_stats = config["stats"]["skip"]
 
-# load stats comparisons
-M_COMPARISONS, B_COMPARISONS = utils.comparisons()
+# Load stats comparisons
+M_COMPARISONS, B_COMPARISONS = comparisons()
 
-# import rules
+# Import rules
 include: "rules/qc.smk"
 include: "rules/trim.smk"
 include: "rules/count.smk"
 include: "rules/stats.smk"
 
-
-# set targets
-TARGETS = [
-    "results/qc/multiqc.html",
-    "results/qc/alignment-rates.pdf",
-    "results/qc/sequence-coverage.pdf",
-    "results/qc/gini-index.pdf",
-    "results/qc/sample-correlation.pdf",
-    "results/qc/missed-rgrnas.pdf",
-]
-
-if skip_stats != "mageck" and skip_stats !="both":
-    # extend target rule with MAGecK targets     
-    TARGETS.extend([
-        expand("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_pos.pdf", mcomparison=M_COMPARISONS),
-        expand("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS),
-        expand("results/mageck_plots/{mcomparison}/{mcomparison}.sgrank.pdf", mcomparison=M_COMPARISONS),
-    ])
-
-if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
-    # extend target rule with BAGEL2 targets
-    TARGETS.extend([
-        expand("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", bcomparison=B_COMPARISONS),
-        expand("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", bcomparison=B_COMPARISONS),
-    ])
-
-# set target rule
+# Set target rule
 rule all:
     input:
-        TARGETS
+        targets()
 
-
-# save snakemake terminal output to log file
+# Save snakemake terminal output to log file
 time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 snake_log = f"logs/snakemake/{time}_snakemake.log"
 os.makedirs("logs/snakemake", exist_ok=True)
@@ -73,6 +53,6 @@ onsuccess:
 
 onerror:
     shell("cp -v {log} {snake_log}")
-    print(f"Analysis (partly) failed...\nCheck {snake_log} for details")
+    print(f"Analysis failed...\nCheck {snake_log} for details")
 
 

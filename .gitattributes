@@ -1,0 +1,4 @@
+*.smk linguist-language=Snakemake
+Snakefile linguist-language=Snakemake
+.test/* linguist-vendored=false
+.test/report.html linguist-generated=true

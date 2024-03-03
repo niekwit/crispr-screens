@@ -3,6 +3,33 @@ import glob
 import sys
 import pandas as pd
 
+def targets():
+    TARGETS = [
+    "results/qc/multiqc.html",
+    "results/qc/alignment-rates.pdf",
+    "results/qc/sequence-coverage.pdf",
+    "results/qc/gini-index.pdf",
+    "results/qc/sample-correlation.pdf",
+    "results/qc/missed-rgrnas.pdf",
+]
+
+    if skip_stats != "mageck" and skip_stats !="both":
+        # extend target rule with MAGecK targets     
+        TARGETS.extend([
+            expand("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_pos.pdf", mcomparison=M_COMPARISONS),
+            expand("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS),
+            expand("results/mageck_plots/{mcomparison}/{mcomparison}.sgrank.pdf", mcomparison=M_COMPARISONS),
+        ])
+
+    if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
+        # extend target rule with BAGEL2 targets
+        TARGETS.extend([
+            expand("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", bcomparison=B_COMPARISONS),
+            expand("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", bcomparison=B_COMPARISONS),
+        ])
+    return TARGETS
+
+
 def fasta(config):
     fasta = glob.glob("resources/*.*a") # gets both .fa and .fasta files
 
@@ -180,7 +207,13 @@ def gene_number(fasta):
     genes = [x.split("_sg")[0].replace(">","") for x in f]
     
     return len(set(genes))
+
+
+def lib_name(fasta):
+    """
+    Get sgRNA library name
+    """
+    name = os.path.basename(fasta).rsplit(".", 1)[0]
     
-    
-    
+    return name
     

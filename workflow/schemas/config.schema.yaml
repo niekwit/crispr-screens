@@ -1,0 +1,107 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: Snakemake configuration file
+
+type: object
+
+properties:
+  lib_info:
+    type: object
+    properties:
+      sg_length:
+        type: integer
+        minimum: 12
+        maximum: 23
+      vector:
+        type: string
+      left_trim:
+        type: integer
+        minimum: 0
+      species:
+        type: string
+        enum: ["human", "mouse"]
+    required:
+      - sg_length
+      - vector
+      - left_trim
+      - species
+
+  csv:
+    type: object
+    properties:
+      name_column:
+        type: integer
+        minimum: 1
+      sequence_column:
+        type: integer
+    required:
+      - name_column
+      - sequence_column
+
+  mismatch:
+    type: integer
+    minimum: 0
+    maximum: 2
+
+  stats:
+    type: object
+    properties:
+      skip:
+        description: Skip analysis with MAGeCK/BAGEL2
+        type: string
+        enum: ["mageck", "bagel2", "both", "none"]
+      extra_mageck_arguments:
+        type: string
+      mageck_control_genes:
+        type: string
+      fdr:
+        type: number
+        minimum: 0
+        maximum: 1
+    required:
+    - skip
+    - extra_mageck_arguments
+    - mageck_control_genes
+    - fdr
+  
+  resources:
+    type: object
+    properties:
+      trim:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+      fastqc:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+      count:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+      stats:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+
+required:
+  - lib_info
+  - mismatch
+  - stats
+  - resources

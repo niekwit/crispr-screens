@@ -6,6 +6,7 @@ rule hisat2_index:
     params:
         extra="",
         prefix = "resources/index/index"
+    cache: True
     log:
         "logs/hisat2/index.log"
     threads: config["resources"]["count"]["cpu"]
