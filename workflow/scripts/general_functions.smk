@@ -142,12 +142,7 @@ def sample_names():
     assert len(fastq) != 0, "No fastq files (.fastq.gz) found in reads directory"
     
     sample_names = [os.path.basename(x).replace(".fastq.gz","") for x in fastq]
-    
-    # Check for invalid characters (.,:;-) in sample names
-    invalid = [".",":",";","-"]
-    for name in sample_names:
-        assert not any(x in name for x in invalid), f"Invalid character(s) (.,:;-) in sample {name}"
-    
+        
     return sample_names
 
 

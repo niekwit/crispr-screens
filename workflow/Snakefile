@@ -1,8 +1,7 @@
 import pandas as pd
 import datetime
 include: "scripts/general_functions.smk"
-from snakemake.utils import min_version
-from snakemake.utils import validate
+from snakemake.utils import min_version, validate
 
 # Set minimum snakemake version
 min_version("7.24.0")
@@ -50,9 +49,6 @@ os.makedirs("logs/snakemake", exist_ok=True)
 onsuccess: 
     shell("cp -v {log} {snake_log}")
     print("Analysis finished successfully!")
-
 onerror:
     shell("cp -v {log} {snake_log}")
     print(f"Analysis failed...\nCheck {snake_log} for details")
-
-

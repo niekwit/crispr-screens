@@ -2,11 +2,10 @@ rule hisat2_index:
     input:
         fasta = fasta,
     output:
-        directory(f"resources/{lib_name}_index/"),
+        directory(f"resources/index/"),
     params:
         extra="",
-        prefix = f"resources/{lib_name}_index/",
-    cache: True
+        prefix = "resources/index/index",
     log:
         "logs/hisat2/index.log"
     threads: config["resources"]["count"]["cpu"]
@@ -19,7 +18,7 @@ rule hisat2_index:
 rule count:
     input: 
         fq="results/trimmed/{sample}.fastq.gz",
-        idx=f"resources/{lib_name}_index/",
+        idx=f"resources/index/",
     output:
         "results/count/{sample}.guidecounts.txt"
     params:
