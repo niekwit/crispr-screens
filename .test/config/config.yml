@@ -1,6 +1,6 @@
 lib_info:
     sg_length: 17
-    vector: ""
+    vector: "N"
     left_trim : 1 #trim n bases from 5' end of reads
     species: human
 csv: # if no fasta is available, provide a csv file with sgRNA sequences
