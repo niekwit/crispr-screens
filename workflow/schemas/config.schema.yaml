@@ -14,6 +14,8 @@ properties:
         maximum: 23
       vector:
         type: string
+        pattern: "^[NATGCnatgc]+$"
+        description: Vector sequence to be removed from reads (N for none)
       left_trim:
         type: integer
         minimum: 0
