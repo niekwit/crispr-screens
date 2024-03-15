@@ -93,41 +93,20 @@ def csv_to_fasta(csv, column_gene, column_seq):
               header=False)
         
 
-def hisat2_index_path(fasta):
-    """
-    Generate HISAT2 index path from fasta file
-    """
-    lib = os.path.basename(fasta).split(".",1)[0]
-    index = f"resources/index_{lib}/index_{lib}"
-    
-    return index
-
-
 def cut_adapt_arg(config):
     """
     Generates Cutadapt argument for removing vector sequence
     """
-    try:
-        vector = config["lib_info"]["vector"]
-
-        # Check if vector is DNA sequence or empty
-        if vector == "":
-            try:
-                sg_length = config["lib_info"]["sg_length"]
-            except KeyError:
-                print("No sg_length set in config.yml")
-                sys.exit(1)
-        
-            assert type(sg_length) == int, "sg_length in config.yml is not an integer"
-        
-            cut_arg = f"-l {str(sg_length)}"
-        elif not set(vector.lower()).issubset(set("atcg")):
-            print(f"Vector sequence ({vector}) in config.yml is not a DNA sequence")
-            sys.exit(1)
-        else:
-            cut_arg = f"-a {vector}" 
-    except KeyError:
-        cut_arg = f"-l {sg_length}"
+    left_trim = config["lib_info"]["left_trim"]
+    vector = config["lib_info"]["vector"]
+    if vector.lower() == "n":
+        sg_length = config["lib_info"]["sg_length"]
+        cut_arg = f"-l {str(sg_length)}"
+    else:
+        cut_arg = f"-a {vector}"
+    
+    if left_trim != 0:
+        cut_arg += f" -u {str(left_trim)}"
 
     return cut_arg
 
