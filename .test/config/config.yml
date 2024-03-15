@@ -8,7 +8,7 @@ csv: # if no fasta is available, provide a csv file with sgRNA sequences
   sequence_column: 2 # column number with sgRNA sequences
 mismatch: 0 #mismatches allowed during alignment
 stats: 
-  skip: none #skip mageck, bagel2, both, or none
+  skip: bagel2 #skip mageck, bagel2, both, or none
   extra_mageck_arguments: "" 
   mageck_control_genes: all #all or file with control genes
   fdr: 0.25 #FDR threshold for mageck plotting
