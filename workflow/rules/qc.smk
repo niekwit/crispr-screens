@@ -14,7 +14,7 @@ rule fastqc:
         runtime=config["resources"]["fastqc"]["time"],
         mem_mb = 2048,
     wrapper:
-        "v3.4.0/bio/fastqc"
+        f"{wrapper_version}/bio/fastqc"
 
 
 rule multiqc:
@@ -31,7 +31,7 @@ rule multiqc:
     log:
         "logs/multiqc/multiqc.log"
     wrapper:
-        "v3.4.0/bio/multiqc"
+        f"{wrapper_version}/bio/multiqc"
 
 
 rule plot_alignment_rate:

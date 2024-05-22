@@ -12,4 +12,4 @@ rule cutadapt:
     resources:
         runtime=config["resources"]["trim"]["time"]
     wrapper:
-        "v3.4.0/bio/cutadapt/se"
+        f"{wrapper_version}/bio/cutadapt/se"
