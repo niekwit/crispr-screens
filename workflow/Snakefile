@@ -2,18 +2,31 @@ import pandas as pd
 import datetime
 include: "scripts/general_functions.smk"
 from snakemake.utils import min_version, validate
+from snakemake.logging import logger
+
+# Workflow version
+VERSION = "v0.5.3"
 
 # Set minimum snakemake version
-min_version("7.24.0")
+min_version("8.10.6")
 
-# Define reoprt file
+# Wrapper version
+wrapper_version = "v3.10.2"
+
+logger.info(f"Workflow version: {VERSION}")
+logger.info(f"Wrapper version: {wrapper_version}")
+
+# Define report file
 report: "report/workflow.rst"
+
+# Define Docker container
+containerized: f"docker://niekwit/crispr-screens:{VERSION}"
 
 # Load config file
 configfile: "config/config.yml"
 validate(config, "schemas/config.schema.yaml")
 
-# Load and validate stas.csv
+# Load and validate stats.csv
 stats = pd.read_csv("config/stats.csv")
 validate(stats, "schemas/stats.schema.yaml")
 
