@@ -4,11 +4,11 @@ description: CSV file for pairwise comparisons with MAGeCK and/or BAGEL2
 properties:
   test:
     type: string
-    pattern: "^[a-zA-Z0-9_].+$"
+    pattern: "^[a-zA-Z0-9_;].+$"
     description: Test sample
   control:
     type: string
-    pattern: "^[a-zA-Z0-9_].+$"
+    pattern: "^[a-zA-Z0-9_;].+$"
     description: Control sample
   bagel2:
     type: string
