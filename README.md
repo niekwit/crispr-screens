@@ -83,6 +83,7 @@ If you only have a text file containing the sgRNA names and sequences in differe
 > [!IMPORTANT]  
 > All sgRNA names must be in the following format: GENE_sgGENE_sgRNAnumber (e.g. B2M_sgB2M_1).
 
+If no fasta file has been generated yet, but a csv file is available that contains sgRNA sequences and gene name in separate column, then this can be copied into the resources directory instead. The workflow will generate the fasta file from this automatically. The columns that contains this information must be included in config.yaml under "csv".
 
 ## sgRNA library meta data and analysis settings
 
