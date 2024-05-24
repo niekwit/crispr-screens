@@ -185,3 +185,10 @@ def gene_number():
     
     return len(set(genes))
     
+def lib_name():
+    """
+    Get sgRNA library name
+    """
+    name = os.path.basename(fasta).rsplit(".", 1)[0]
+
+    return name
