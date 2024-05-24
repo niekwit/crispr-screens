@@ -1,6 +1,7 @@
 import os
 import glob
 import sys
+import re
 import pandas as pd
 
 def targets():
@@ -129,27 +130,28 @@ def comparisons():
     """
     Load comparisons for MAGeCK and/or BAGEL2
     """
-    try:
-        COMPARISONS = pd.read_csv("config/stats.csv")
-        M_COMPARISONS = COMPARISONS[["test","control"]].agg('_vs_'.join, axis=1).tolist()
-        
-        M_COMPARISONS = [x.replace(";","-") for x in M_COMPARISONS] # snakemake report does not support ; in filenames
+    COMPARISONS = pd.read_csv("config/stats.csv")
+    M_COMPARISONS = COMPARISONS[["test","control"]].agg('_vs_'.join, axis=1).tolist()
+    
+    M_COMPARISONS = [x.replace(";","-") for x in M_COMPARISONS] # snakemake report does not support ; in filenames
 
-        # Get comparisons for BAGEL2
-        B_COMPARISONS = COMPARISONS[COMPARISONS["bagel2"] == "y"]
-        
-        if len(B_COMPARISONS) != 0:
-            B_COMPARISONS = B_COMPARISONS[["test","control"]].agg('_vs_'.join, axis=1).tolist()
-            B_COMPARISONS = [x.replace(";","-") for x in B_COMPARISONS]
-        
-            # Remove comparisons with pooled control samples (not supported by BAGEL2)
-            B_COMPARISONS = [x for x in B_COMPARISONS if not "-" in x.split("_vs_")[1]]
-        else:
-            B_COMPARISONS = None
-    except FileNotFoundError:
-        print("No stats.csv file found")
-        sys.exit(1)
-            
+    if "--paired" in config["stats"]["extra_mageck_arguments"]:
+        # Remove comparisons with unequal number of test and control samples
+        # i.e. the number of - is not zero or an even number
+        M_COMPARISONS = [x for x in M_COMPARISONS if x.count("-") % 2 == 0]
+
+    # Get comparisons for BAGEL2
+    B_COMPARISONS = COMPARISONS[COMPARISONS["bagel2"] == "y"]
+    
+    if len(B_COMPARISONS) != 0:
+        B_COMPARISONS = B_COMPARISONS[["test","control"]].agg('_vs_'.join, axis=1).tolist()
+        B_COMPARISONS = [x.replace(";","-") for x in B_COMPARISONS]
+    
+        # Remove comparisons with pooled control samples (not supported by BAGEL2)
+        B_COMPARISONS = [x for x in B_COMPARISONS if not "-" in x.split("_vs_")[1]]
+    else:
+        B_COMPARISONS = None
+                
     return M_COMPARISONS, B_COMPARISONS
 
 
@@ -182,13 +184,4 @@ def gene_number():
     genes = [x.split("_sg")[0].replace(">","") for x in f]
     
     return len(set(genes))
-
-
-def lib_name():
-    """
-    Get sgRNA library name
-    """
-    name = os.path.basename(fasta).rsplit(".", 1)[0]
-    
-    return name
     
