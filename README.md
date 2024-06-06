@@ -1,7 +1,7 @@
 # Snakemake workflow: `crispr-screens`
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10286662.svg)](https://doi.org/10.5281/zenodo.10286662)
-[![Snakemake](https://img.shields.io/badge/snakemake-≥8.10.6-brightgreen.svg)](https://snakemake.github.io)
+[![Snakemake](https://img.shields.io/badge/snakemake-≥8.12.0-brightgreen.svg)](https://snakemake.github.io)
 [![Tests](https://github.com/niekwit/crispr-screens/actions/workflows/main.yml/badge.svg)](https://github.com/niekwit/crispr-screens/actions/workflows/main.yml)
 [![CodeFactor](https://www.codefactor.io/repository/github/niekwit/crispr-screens/badge)](https://www.codefactor.io/repository/github/niekwit/crispr-screens)
 
@@ -45,9 +45,9 @@ The easiest way to obtain the workflow code is to use [snakefetch](https://pypi.
 
 ```shell
 $ pip install snakefetch
-$ snakefetch --outdir /path/to/analysis --repo-version v0.5.3 --url https://github.com/niekwit/crispr-screens
-Downloading archive file for version v0.5.3 from https://github.com/niekwit/damid-seq...
-Extracting config and workflow directories from tar.gz file to /home/niek/Downloads/TEST...
+$ snakefetch --outdir /path/to/analysis --repo-version v0.6.0 --url https://github.com/niekwit/crispr-screens
+Downloading archive file for version v0.6.0 from https://github.com/niekwit/crispr-screens...
+Extracting config and workflow directories from tar.gz file to /path/to/analysis...
 Done!
 ```
 
@@ -83,7 +83,7 @@ If you only have a text file containing the sgRNA names and sequences in differe
 > [!IMPORTANT]  
 > All sgRNA names must be in the following format: GENE_sgGENE_sgRNAnumber (e.g. B2M_sgB2M_1).
 
-If no fasta file has been generated yet, but a csv file is available that contains sgRNA sequences and gene name in separate column, then this can be copied into the resources directory instead. The workflow will generate the fasta file from this automatically. The columns that contains this information must be included in config.yaml under "csv".
+If no fasta file has been generated yet, but a csv file is available that contains sgRNA sequences and gene names in separate column, then this can be copied into the resources directory instead. The workflow will generate the fasta file from this automatically. The columns that contains this information must be included in config.yaml under "csv".
 
 ## sgRNA library meta data and analysis settings
 
@@ -91,7 +91,7 @@ Analysis settings are stored in config/config.yml:
 
 ```yaml
 lib_info:
-    sg_length: 20 # sgRNA length
+    sg_length: 20
     vector: "N" # Vector sequence to be removed from reads (N for none)
     left_trim : 0 # Trim n bases from 5' end of reads
     species: human
@@ -101,9 +101,18 @@ csv: # If no fasta is available, provide a csv file with sgRNA sequences
 mismatch: 0 # Mismatches allowed during alignment
 stats: 
   skip: none # Skip mageck, bagel2, both, or none
-  extra_mageck_arguments: "" 
-  mageck_control_genes: all # All or file with control genes
-  fdr: 0.25 # FDR threshold for mageck plotting
+  mageck:
+    extra_mageck_arguments: "" 
+    mageck_control_genes: all # All or file with control genes
+    fdr: 0.25 # FDR threshold for downstream mageck analysis
+    apply_CNV_correction: False # Apply CNV correction to mageck results
+    cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
+  pathway_analysis: 
+      run: True # Perform pathway analysis on mageck results
+      data: both # enriched, depleted, or both
+      dbs: ["GO_Molecular_Function_2023","GO_Biological_Process_2023","Reactome_2022"]
+      top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+      terms: 10 # Number of terms to plot
 resources:
   trim:
     cpu: 4
@@ -163,16 +172,16 @@ When running on a slurm-based HPC, the following lines can be included in `confi
 ```yaml
 executor: slurm
 jobs: 100
+apptainer-args: "--bind '/parent_dir/of/analysis'" # if analysis in not in /home/$USER
 default-resources:
         slurm_partition: icelake
         slurm_account: <ACCOUNT>
 ```
 
-Snakemake supports between workflow caching, so that certain resource files, such as the Bowtie2 index, can be re-used between different analyses.
+Some system have limited space allocated to `/tmp`, which can be problematic when using Apptainer. Add the following line to `~/.bashrc` to set a different temporary directory location:
 
-To enable this append this line to your `~/.bashrc`:
 ```shell
-export SNAKEMAKE_OUTPUT_CACHE=/path/to/snakemake-cache/
+export APPTAINER_TMPDIR=~/rds/hpc-work/apptainer_tmp
 ```
 
 ## Dry-run of the analysis
