@@ -17,9 +17,9 @@ def targets():
     if skip_stats != "mageck" and skip_stats !="both":
         # extend target rule with MAGecK targets     
         TARGETS.extend([
-            expand("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_pos.pdf", mcomparison=M_COMPARISONS),
-            expand("results/mageck_plots/{mcomparison}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS),
-            expand("results/mageck_plots/{mcomparison}/{mcomparison}.sgrank.pdf", mcomparison=M_COMPARISONS),
+            expand("results/mageck_plots/{mcomparison}_{cnv}/{mcomparison}.lfc_pos.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
+            expand("results/mageck_plots/{mcomparison}_{cnv}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
+            expand("results/mageck_plots/{mcomparison}_{cnv}/{mcomparison}.sgrank.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
         ])
 
     if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
@@ -135,7 +135,7 @@ def comparisons():
     
     M_COMPARISONS = [x.replace(";","-") for x in M_COMPARISONS] # snakemake report does not support ; in filenames
 
-    if "--paired" in config["stats"]["extra_mageck_arguments"]:
+    if "--paired" in config["stats"]["mageck"]["extra_mageck_arguments"]:
         # Remove comparisons with unequal number of test and control samples
         # i.e. the number of - is not zero or an even number
         M_COMPARISONS = [x for x in M_COMPARISONS if x.count("-") % 2 == 0]
@@ -158,10 +158,10 @@ def comparisons():
 def mageck_control():
     """Load control genes for MAGeCK
     """
-    if config["stats"]["mageck_control_genes"] == "all": # Use all genes as controls
+    if config["stats"]["mageck"]["mageck_control_genes"] == "all": # Use all genes as controls
         control = ""
     else: # Use genes from file set in config
-        file = config["stats"]["mageck_control_genes"]
+        file = config["stats"]["mageck"]["mageck_control_genes"]
 
         # Check if file exists
         assert os.path.exists(file), f"Control gene file ({file}) does not exist"
@@ -192,3 +192,26 @@ def lib_name():
     name = os.path.basename(fasta).rsplit(".", 1)[0]
 
     return name
+
+
+def mageck_input():
+    """
+    Defines MAGeCK rule input file(s) 
+    """
+    # Base input
+    input_data = {"counts": "results/count/counts-aggregated.tsv"}
+
+    if config["stats"]["mageck"]["apply_CNV_correction"]:
+        input_data["cnv"] = "resources/cnv_data.txt"
+        
+    return input_data
+
+
+def cnv():
+    """
+    Returns value for CNV wildcard.
+    """
+    if config["stats"]["mageck"]["apply_CNV_correction"]:
+        return ["CNV-corrected"]
+    else:
+        return ["not-CNV-corrected"]

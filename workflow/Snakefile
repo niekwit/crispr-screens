@@ -5,10 +5,10 @@ from snakemake.utils import min_version, validate
 from snakemake.logging import logger
 
 # Workflow version
-VERSION = "v0.5.3"
+VERSION = "v0.5.3" #change to v0.6.0 later  
 
 # Set minimum snakemake version
-min_version("8.10.6")
+min_version("8.12.0")
 
 # Wrapper version
 wrapper_version = "v3.10.2"
@@ -30,8 +30,10 @@ validate(config, "schemas/config.schema.yaml")
 stats = pd.read_csv("config/stats.csv")
 validate(stats, "schemas/stats.schema.yaml")
 
-# Get all sample names
+# Get wildcard values
 SAMPLES = sample_names()
+M_COMPARISONS, B_COMPARISONS = comparisons()
+CNV = cnv()
 
 # Load fasta
 fasta = fasta()
@@ -39,9 +41,6 @@ lib_name = lib_name()
 
 # Load which stats to apply
 skip_stats = config["stats"]["skip"]
-
-# Load stats comparisons
-M_COMPARISONS, B_COMPARISONS = comparisons()
 
 # Import rules
 include: "rules/qc.smk"
