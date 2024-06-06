@@ -1,17 +1,20 @@
 lib_info:
     sg_length: 20
     vector: "N" # Vector sequence to be removed from reads (N for none)
-    left_trim : 0 #trim n bases from 5' end of reads
+    left_trim : 0 # Trim n bases from 5' end of reads
     species: human
-csv: # if no fasta is available, provide a csv file with sgRNA sequences
-  name_column: 3 # column number with gene names
-  sequence_column: 2 # column number with sgRNA sequences
-mismatch: 0 #mismatches allowed during alignment
+csv: # If no fasta is available, provide a csv file with sgRNA sequences
+  name_column: 3 # Column number with gene names
+  sequence_column: 2 # Column number with sgRNA sequences
+mismatch: 0 # Mismatches allowed during alignment
 stats: 
-  skip: none #skip mageck, bagel2, both, or none
-  extra_mageck_arguments: "" 
-  mageck_control_genes: all #all or file with control genes
-  fdr: 0.25 #FDR threshold for mageck plotting
+  skip: none # Skip mageck, bagel2, both, or none
+  mageck:
+    extra_mageck_arguments: "" 
+    mageck_control_genes: all # All or file with control genes
+    fdr: 0.25 # FDR threshold for mageck plotting
+    apply_CNV_correction: False # Apply CNV correction to mageck results
+    cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
 resources:
   trim:
     cpu: 4
