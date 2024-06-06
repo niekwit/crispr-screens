@@ -52,19 +52,44 @@ properties:
         description: Skip analysis with MAGeCK/BAGEL2
         type: string
         enum: ["mageck", "bagel2", "both", "none"]
-      extra_mageck_arguments:
-        type: string
-      mageck_control_genes:
-        type: string
-      fdr:
-        type: number
-        minimum: 0
-        maximum: 1
+      mageck:
+        type: object
+        properties:
+          extra_mageck_arguments:
+            type: string
+          mageck_control_genes:
+            type: string
+          fdr:
+            type: number
+            minimum: 0
+            maximum: 1
+          apply_CNV_correction:
+            type: boolean
+          cell_line:
+            type: string
+      pathway_analysis:
+        type: object
+        properties:
+          run:
+            type: boolean
+          data:
+            type: string
+            enum: ["enriched", "depleted", "both"]
+          dbs:
+            type: array
+            items:
+              type: string
+          terms:
+            type: integer
+            minimum: 1
+          top_genes:
+            type: integer
+            minimum: 0
+            
     required:
     - skip
-    - extra_mageck_arguments
-    - mageck_control_genes
-    - fdr
+    - mageck
+    - pathway_analysis
   
   resources:
     type: object

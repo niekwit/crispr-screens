@@ -90,6 +90,28 @@ if skip_stats != "mageck" and skip_stats !="both":
             "../scripts/sgrank_plot.R"
 
     
+    rule pathway_analysis:
+        input:
+            txt="results/mageck/{mcomparison}_{cnv}/{mcomparison}.gene_summary.txt",
+        output:
+            csv=report(expand("results/mageck/{{mcomparison}}_{{cnv}}/pathway_analysis/{dbs}_{pathway_data}.csv", dbs=DBS, pathway_data=PATHWAY_DATA), caption="../report/pathway_analysis.rst", category="Pathway analysis MAGeCK results", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "pathway analysis"}),
+            plots=report(expand("results/mageck_plots/{{mcomparison}}_{{cnv}}/pathway_analysis/{dbs}_{pathway_data}.pdf", dbs=DBS, pathway_data=PATHWAY_DATA), caption="../report/pathway_analysis.rst", category="Pathway analysis MAGeCK results", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "pathway analysis"})
+        params:
+            dbs=DBS,
+            fdr=config["stats"]["mageck"]["fdr"],
+            top_genes=config["stats"]["pathway_analysis"]["top_genes"],
+            data_type=PATHWAY_DATA,
+            terms=config["stats"]["pathway_analysis"]["terms"],
+        threads: config["resources"]["stats"]["cpu"]
+        resources:
+            runtime=config["resources"]["stats"]["time"]
+        conda:
+            "../envs/stats.yaml"
+        log:
+            "logs/pathway_analysis_{mcomparison}_{cnv}.log"
+        script:
+            "../scripts/pathway_analysis.R"
+    
 if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
     rule install_bagel2:
         output:
@@ -208,5 +230,3 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             "logs/bagel2/plot/pr_{bcomparison}.log"
         script:
             "../scripts/plot_pr.R"
-
-            

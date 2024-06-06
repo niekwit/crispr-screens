@@ -21,6 +21,11 @@ def targets():
             expand("results/mageck_plots/{mcomparison}_{cnv}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
             expand("results/mageck_plots/{mcomparison}_{cnv}/{mcomparison}.sgrank.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
         ])
+        if config["stats"]["pathway_analysis"]["run"]:
+            TARGETS.extend([
+                expand("results/mageck/{mcomparison}_{cnv}/pathway_analysis/{dbs}_{pathway_data}.csv", mcomparison=M_COMPARISONS, cnv=CNV, pathway_data=PATHWAY_DATA, dbs=DBS),
+                expand("results/mageck_plots/{mcomparison}_{cnv}/pathway_analysis/{dbs}_{pathway_data}.pdf", mcomparison=M_COMPARISONS, cnv=CNV, dbs=DBS, pathway_data=PATHWAY_DATA),
+            ])
 
     if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
         # extend target rule with BAGEL2 targets
@@ -203,7 +208,7 @@ def mageck_input():
 
     if config["stats"]["mageck"]["apply_CNV_correction"]:
         input_data["cnv"] = "resources/cnv_data.txt"
-        
+
     return input_data
 
 
@@ -215,3 +220,14 @@ def cnv():
         return ["CNV-corrected"]
     else:
         return ["not-CNV-corrected"]
+
+
+def pathway_data():
+    """
+    Returns value(s) for PATHWAY_DATA wildcard.
+    """
+    data = config["stats"]["pathway_analysis"]["data"]
+    if data == "both":
+        return ["enriched", "depleted"]
+    else:
+        [data]

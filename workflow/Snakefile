@@ -5,7 +5,7 @@ from snakemake.utils import min_version, validate
 from snakemake.logging import logger
 
 # Workflow version
-VERSION = "v0.5.3" #change to v0.6.0 later  
+VERSION = "v0.6.0" 
 
 # Set minimum snakemake version
 min_version("8.12.0")
@@ -34,6 +34,8 @@ validate(stats, "schemas/stats.schema.yaml")
 SAMPLES = sample_names()
 M_COMPARISONS, B_COMPARISONS = comparisons()
 CNV = cnv()
+PATHWAY_DATA = pathway_data()
+DBS = config["stats"]["pathway_analysis"]["dbs"]
 
 # Load fasta
 fasta = fasta()
