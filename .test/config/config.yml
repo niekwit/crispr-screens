@@ -15,10 +15,11 @@ stats:
     fdr: 0.25 # FDR threshold for downstream mageck analysis
     apply_CNV_correction: False # Apply CNV correction to mageck results
     cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
-  enrichment_analysis: 
-      run: True # Perform enrichment analysis
+  pathway_analysis: 
+      run: True # Perform pathway analysis on mageck results
       data: both # enriched, depleted, or both
-      dbs: ["GO_Molecular_Function_2018","GO_Biological_Process_2018","KEGG_2019"]
+      dbs: ["GO_Molecular_Function_2023","GO_Biological_Process_2023","Reactome_2022"]
+      top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
       terms: 10 # Number of terms to plot
 resources:
   trim:
