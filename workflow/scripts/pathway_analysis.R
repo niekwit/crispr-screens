@@ -109,7 +109,8 @@ pathway_analysis <- function(dt) {
       theme(axis.text.x = element_text(angle = 45, 
                                        hjust = 1)) +
       labs(x = "-log10(Adjusted P value)", 
-           y = NULL)
+           y = NULL) +
+      ggtitle(paste0(db, " (", dt, ")"))
     
     # Save plot
     ggsave(paste0(plots_out_dir, "/", db, "_", dt, ".pdf"),
