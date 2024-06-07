@@ -94,8 +94,8 @@ if skip_stats != "mageck" and skip_stats !="both":
         input:
             txt="results/mageck/{mcomparison}/{cnv}/{mcomparison}.gene_summary.txt",
         output:
-            csv=report(expand("results/mageck/{{mcomparison}}/{{cnv}}/pathway_analysis/{dbs}_{pathway_data}.csv", dbs=DBS, pathway_data=PATHWAY_DATA), caption="../report/pathway_analysis.rst", category="Pathway analysis MAGeCK results", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "pathway analysis"}),
-            plots=report(expand("results/mageck_plots/{{mcomparison}}/{{cnv}}/pathway_analysis/{dbs}_{pathway_data}.pdf", dbs=DBS, pathway_data=PATHWAY_DATA), caption="../report/pathway_analysis.rst", category="Pathway analysis MAGeCK results", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "pathway analysis"})
+            csv=expand("results/mageck/{{mcomparison}}/{{cnv}}/pathway_analysis/{dbs}_{pathway_data}.csv", dbs=DBS, pathway_data=PATHWAY_DATA),
+            plots=report(expand("results/mageck_plots/{{mcomparison}}/{{cnv}}/pathway_analysis/{dbs}_{pathway_data}.pdf", dbs=DBS, pathway_data=PATHWAY_DATA), caption="../report/pathway_analysis.rst", category="Pathway analysis MAGeCK plots", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "pathway analysis"})
         params:
             dbs=DBS,
             fdr=config["stats"]["mageck"]["fdr"],
