@@ -63,9 +63,7 @@ os.makedirs("logs/snakemake", exist_ok=True)
 
 onsuccess: 
     shell("cp -v {log} {snake_log}")
-    print("Analysis finished successfully!")
-    logger.info("Generating report...")
-    shell("snakemake --report report.html")
+    logger.info("Analysis finished successfully!")
 onerror:
     shell("cp -v {log} {snake_log}")
-    print(f"Analysis failed...\nCheck {snake_log} for details")
+    logger.info(f"Analysis failed...\nCheck {snake_log} for details")
