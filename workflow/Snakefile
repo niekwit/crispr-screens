@@ -3,6 +3,7 @@ import datetime
 include: "scripts/general_functions.smk"
 from snakemake.utils import min_version, validate
 from snakemake.logging import logger
+from snakemake.shell import shell
 
 # Workflow version
 VERSION = "v0.6.0" 
@@ -63,6 +64,8 @@ os.makedirs("logs/snakemake", exist_ok=True)
 onsuccess: 
     shell("cp -v {log} {snake_log}")
     print("Analysis finished successfully!")
+    logger.info("Generating report...")
+    shell("snakemake --report report.html")
 onerror:
     shell("cp -v {log} {snake_log}")
     print(f"Analysis failed...\nCheck {snake_log} for details")
