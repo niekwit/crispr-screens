@@ -6,13 +6,13 @@ from snakemake.logging import logger
 from snakemake.shell import shell
 
 # Workflow version
-VERSION = "v0.6.0" 
+VERSION = "v0.6.1" 
 
 # Set minimum snakemake version
 min_version("8.12.0")
 
 # Wrapper version
-wrapper_version = "v3.10.2"
+wrapper_version = "v3.12.1"
 
 logger.info(f"Workflow version: {VERSION}")
 logger.info(f"Wrapper version: {wrapper_version}")
