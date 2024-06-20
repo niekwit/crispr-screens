@@ -19,7 +19,7 @@ df <- colSums(counts == 0) %>%
 # create bar graph
 p <- ggplot(data = df, aes(x = sample, y = value)) + 
   geom_bar(stat = "identity",
-           fill = "aquamarine4",
+           fill = "#419179",
            colour = "black") +
   theme_cowplot(16) +
   xlab(NULL) +

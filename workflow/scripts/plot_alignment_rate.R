@@ -32,7 +32,7 @@ df$sample <- str_remove(df$sample, "^X")
 # create plot
 p <- ggplot(df, aes(x = sample, y = mapping.rate)) +
   geom_bar(stat = "identity", 
-           fill = "aquamarine4",
+           fill = "#419179",
            colour = "black") +
   theme_cowplot(16) +
   scale_y_continuous(limits = c(0,100),

@@ -25,7 +25,7 @@ for (i in seq_len(nrow(df))){
 # plot Gini index bar graph
 p <- ggplot(data = df, aes(x = sample, y = Gini_index)) + 
   geom_bar(stat = "identity",
-           fill = "aquamarine4",
+           fill = "#419179",
            colour = "black") +
   theme_cowplot(16) +
   ylab("Gini index") +

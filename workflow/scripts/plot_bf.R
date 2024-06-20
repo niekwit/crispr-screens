@@ -13,7 +13,7 @@ data <- read.delim(snakemake@input[[1]])
 # plot histogram for BF values in data
 p <- ggplot(data, aes(x = BF)) +
   geom_histogram(bins = 100,
-                 fill = "aquamarine4") +
+                 fill = "#419179") +
   labs(x = "Bayes Factor", 
        y = "Number of genes") +
   scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +

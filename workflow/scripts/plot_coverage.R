@@ -37,7 +37,7 @@ for (n in seq(names(data))){
 # plot sequence coverage
 p <- ggplot(df, aes(x = sample, y = coverage)) +
   geom_bar(stat = "identity", 
-           fill = "aquamarine4",
+           fill = "#419179",
            colour = "black") +
   theme_cowplot(16) +
   scale_x_discrete(guide = guide_axis(angle = 45)) +
