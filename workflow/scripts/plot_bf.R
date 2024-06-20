@@ -17,7 +17,7 @@ p <- ggplot(data, aes(x = BF)) +
   labs(x = "Bayes Factor", 
        y = "Number of genes") +
   scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
-  theme_cowplot(16)
+  theme_cowplot(18)
 
 # save plot
 ggsave(snakemake@output[[1]], p)

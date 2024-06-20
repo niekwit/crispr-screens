@@ -15,7 +15,7 @@ p <- ggplot(data, aes(x = Recall, y = Precision)) +
   geom_line() +
   labs(x = "Recall", 
        y = "Precision") +
-  theme_cowplot(16) +
+  theme_cowplot(18) +
   scale_y_continuous(limits = c(0, 1))
 
 # save plot
