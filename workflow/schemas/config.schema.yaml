@@ -52,6 +52,16 @@ properties:
         description: Skip analysis with MAGeCK/BAGEL2
         type: string
         enum: ["mageck", "bagel2", "both", "none"]
+      bagel2:
+        type: object
+        properties:
+          custom_gene_lists:
+            type: object
+            properties:
+              essential_genes:
+                type: string
+              non_essential_genes:
+                type: string
       mageck:
         type: object
         properties:
