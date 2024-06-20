@@ -39,6 +39,10 @@ If you want to deploy Snakemake on an HPC system using slurm also run:
 $ pip install snakemake-executor-plugin-slurm
 ```
 
+> [!NOTE]  
+> Depending on your HPC/cloud system you may also need to install a storage plugin. For more information on this see: https://snakemake.github.io/snakemake-plugin-catalog/index.html.
+
+
 ### Workflow code
 
 The easiest way to obtain the workflow code is to use [snakefetch](https://pypi.org/project/snakefetch/):
@@ -205,9 +209,9 @@ $ snakemake --forceall --rulegraph | grep -v '\-> 0\|0\[label = \"all\"' | dot -
 
 ## Running the analysis
 
-Once you know that the test and/or dry run has worked, the actual analysis can be initiated as follows:
+If the dry run has worked, the actual analysis can be initiated as follows:
 ```shell
-$ snakemake --profile /home/user/.config/snakemake/profile --directory .test/
+$ snakemake --profile /home/user/.config/snakemake/profile
 ```
 
 > [!IMPORTANT]  
