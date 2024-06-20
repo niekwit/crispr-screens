@@ -9,6 +9,10 @@ csv: # if no fasta is available, provide a csv file with sgRNA sequences
 mismatch: 0 #mismatches allowed during alignment
 stats: 
   skip: none # Skip mageck, bagel2, both, or none
+  bagel2:
+    custom_gene_lists: # Paths to custom gene lists for bagel2 analysis
+      essential_genes: none
+      non_essential_genes: none
   mageck:
     extra_mageck_arguments: "" 
     mageck_control_genes: all # All or file with control genes
