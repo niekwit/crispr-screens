@@ -170,6 +170,8 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             bf="results/bagel2/{bcomparison}/{bcomparison}.bf"
         params:
             species=config["lib_info"]["species"],
+            ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
+            cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"]
         threads: config["resources"]["stats"]["cpu"]
         resources:
             runtime=config["resources"]["stats"]["time"]
@@ -188,7 +190,9 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
         output:
             "results/bagel2/{bcomparison}/{bcomparison}.pr",
         params:
-            species=config["lib_info"]["species"]
+            species=config["lib_info"]["species"],
+            ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
+            cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"],
         threads: config["resources"]["stats"]["cpu"]
         resources:
             runtime=config["resources"]["stats"]["time"]
