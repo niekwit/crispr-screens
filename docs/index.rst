@@ -8,14 +8,14 @@
 .. image:: https://img.shields.io/github/stars/niekwit/crispr-screens?style=social
     :alt: GitHub stars
 
-
+================
 `crispr-screens`
 ================
 
 `crispr-screens` is a containerized Snakemake workflow for the analysis of CRISPR screens. It provides a scalable and highly reproducible analysis pipeline.
 
 Contents
-========
+--------
 
 .. toctree::
    :maxdepth: 1
