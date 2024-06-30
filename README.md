@@ -10,6 +10,23 @@ A Snakemake workflow for the analysis of CRISPR screens.
 
 If you use this workflow in a paper, don't forget to give credits to the authors by citing the URL of this (original) repository and its DOI (see above).
 
+Instruction of how to use `crispr-screens` can be found here:
+
+https://crispr-screens.readthedocs.io/en/latest/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Installation of required software
 
