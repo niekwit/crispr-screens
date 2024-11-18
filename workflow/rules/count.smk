@@ -8,9 +8,9 @@ rule hisat2_index:
         prefix = "resources/index/index",
     log:
         "logs/hisat2/index.log"
-    threads: config["resources"]["count"]["cpu"]
+    threads: 4
     resources:
-        runtime=config["resources"]["count"]["time"]
+        runtime=30
     wrapper:
         f"{wrapper_version}/bio/hisat2/index"
 
@@ -24,9 +24,9 @@ rule count:
     params:
         mm=config["mismatch"],
         idx="resources/index/index",
-    threads: config["resources"]["count"]["cpu"]
+    threads: 6
     resources:
-        runtime=config["resources"]["count"]["time"]
+        runtime=45
     log:
         "logs/count/{sample}.log"
     conda:
@@ -42,6 +42,9 @@ rule aggregated_counts:
         "results/count/counts-aggregated.tsv"
     params:
         fa=fasta,
+    threads: 1
+    resources:
+        runtime=10
     conda:
         "../envs/count.yaml"
     log:
@@ -51,13 +54,16 @@ rule aggregated_counts:
 
 
 rule normalise_count_table:
-        input:
-            counts="results/count/counts-aggregated.tsv"
-        output:
-            norm_counts=temp("results/count/counts-aggregated_normalised.csv")
-        conda:
-            "../envs/count.yaml"
-        log:
-            "logs/count/normalise_counts.log"
-        script:
-            "../scripts/normalise_count_table.py"
+    input:
+        counts="results/count/counts-aggregated.tsv"
+    output:
+        norm_counts=temp("results/count/counts-aggregated_normalised.csv")
+    conda:
+        "../envs/count.yaml"
+    threads: 1
+    resources:
+        runtime=5
+    log:
+        "logs/count/normalise_counts.log"
+    script:
+        "../scripts/normalise_count_table.py"

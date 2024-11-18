@@ -44,9 +44,9 @@ if skip_stats != "mageck" and skip_stats !="both":
             control=mageck_control(),
             dir_name=lambda wc, output: os.path.dirname(output["rnw"]),
             extra=config["stats"]["mageck"]["extra_mageck_arguments"],
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 2
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=30
         conda:
             "../envs/stats.yaml"
         log:
@@ -61,9 +61,9 @@ if skip_stats != "mageck" and skip_stats !="both":
         output:
             pos=report("results/mageck_plots/{mcomparison}/{cnv}/{mcomparison}.lfc_pos.pdf", caption="../report/lfc_pos.rst", category="MAGeCK plots", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "lfc plot enriched genes"}),
             neg=report("results/mageck_plots/{mcomparison}/{cnv}/{mcomparison}.lfc_neg.pdf", caption="../report/lfc_neg.rst", category="MAGeCK plots", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "lfc plot depleted genes"}),
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 1
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=5
         conda:
             "../envs/stats.yaml"
         log:
@@ -79,9 +79,9 @@ if skip_stats != "mageck" and skip_stats !="both":
             report("results/mageck_plots/{mcomparison}/{cnv}/{mcomparison}.sgrank.pdf", caption="../report/sgrank.rst", category="MAGeCK plots", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}","Figure": "sgrank plot"})
         params:
             fdr=config["stats"]["mageck"]["fdr"],
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 1
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=5
         conda:
             "../envs/stats.yaml"
         log:
@@ -102,9 +102,9 @@ if skip_stats != "mageck" and skip_stats !="both":
             top_genes=config["stats"]["pathway_analysis"]["top_genes"],
             data_type=PATHWAY_DATA,
             terms=config["stats"]["pathway_analysis"]["terms"],
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 1
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=5
         conda:
             "../envs/stats.yaml"
         log:
@@ -118,9 +118,9 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             directory("workflow/scripts/bagel2"),
         log:
             "logs/bagel2/install.log"
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 2
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=30
         conda:
             "../envs/stats.yaml"
         shell:
@@ -134,9 +134,9 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             "results/count/counts-aggregated-bagel2.tsv"
         params:
             fa=fasta,
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 1
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=5
         log:
             "logs/bagel2/convert_count_table.log"
         conda:
@@ -151,9 +151,9 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             ct="results/count/counts-aggregated-bagel2.tsv",
         output:
             fc="results/bagel2/{bcomparison}/{bcomparison}.foldchange"
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 2
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=15
         conda:
             "../envs/stats.yaml"
         log:
@@ -172,9 +172,9 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             species=config["lib_info"]["species"],
             ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
             cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"]
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 2
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=15
         conda:
             "../envs/stats.yaml"
         log:
@@ -193,9 +193,9 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             species=config["lib_info"]["species"],
             ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
             cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"],
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 2
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=15
         conda:
             "../envs/stats.yaml"
         log:
@@ -209,9 +209,9 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             "results/bagel2/{bcomparison}/{bcomparison}.bf"
         output:
             report("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", caption="../report/bagel2_plots.rst", category="BAGEL2 plots", subcategory="{bcomparison}", labels={"Comparison":"{bcomparison}", "Figure":"BF plot"})
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 1
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=5
         conda:
             "../envs/stats.yaml"
         log:
@@ -225,9 +225,9 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             "results/bagel2/{bcomparison}/{bcomparison}.pr"
         output:
             report("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", caption="../report/bagel2_plots.rst", category="BAGEL2 plots", subcategory="{bcomparison}", labels={"Comparison":"{bcomparison}", "Figure":"Precision-recall plot"})
-        threads: config["resources"]["stats"]["cpu"]
+        threads: 1
         resources:
-            runtime=config["resources"]["stats"]["time"]
+            runtime=5
         conda:
             "../envs/stats.yaml"
         log:

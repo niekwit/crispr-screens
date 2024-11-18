@@ -8,10 +8,9 @@ rule fastqc:
         extra = "--quiet"
     log:
         "logs/fastqc/{sample}.log"
-    threads: config["resources"]["fastqc"]["cpu"]
-    threads: config["resources"]["fastqc"]["cpu"]
+    threads: 4
     resources:
-        runtime=config["resources"]["fastqc"]["time"],
+        runtime=15,
         mem_mb = 2048,
     wrapper:
         f"{wrapper_version}/bio/fastqc"
@@ -24,9 +23,9 @@ rule multiqc:
         report("results/qc/multiqc.html", caption="../report/multiqc.rst", category="MultiQC"),
     params:
         extra="",  # Optional: extra parameters for multiqc
-    threads: config["resources"]["fastqc"]["cpu"]
+    threads: 2
     resources:
-        runtime=config["resources"]["fastqc"]["time"],
+        runtime=30,
         mem_mb = 2048,
     log:
         "logs/multiqc/multiqc.log"
@@ -42,6 +41,8 @@ rule plot_alignment_rate:
     log:
         "logs/plot-alignment-rate.log"
     threads: 1
+    resources:
+        runtime=5
     conda:
         "../envs/stats.yaml"
     script:
@@ -56,6 +57,8 @@ rule plot_coverage:
     params:
         fasta=fasta
     threads: 1
+    resources:
+        runtime=5
     log:
         "logs/plot-coverage.log"
     conda:
@@ -72,6 +75,8 @@ rule plot_gini_index:
     params:
         yaml="workflow/envs/plot_settings.yaml"
     threads: 1
+    resources:
+        runtime=5
     log:
         "logs/gini-index.log"
     conda:
@@ -86,6 +91,8 @@ rule plot_sample_correlation:
     output:
         report("results/qc/sample-correlation.pdf", caption="../report/sample-correlation.rst", category="Sample correlation")
     threads: 1
+    resources:
+        runtime=5
     log:
         "logs/sample-correlation.log"
     conda:
@@ -102,6 +109,8 @@ rule plot_missed_sgrnas:
     params:
         yaml="workflow/envs/plot_settings.yaml"
     threads: 1
+    resources:
+        runtime=5
     log:
         "logs/missed-rgrnas.log"
     conda:
