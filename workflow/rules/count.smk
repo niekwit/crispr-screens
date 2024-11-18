@@ -12,7 +12,7 @@ rule hisat2_index:
     resources:
         runtime=30
     wrapper:
-        f"{wrapper_version}/bio/hisat2/index"
+        "v5.1.0/bio/hisat2/index"
 
 
 rule count:
