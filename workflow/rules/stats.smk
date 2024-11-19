@@ -268,7 +268,7 @@ if config["stats"]["drugz"]["run"]:
         conda:
             "../envs/stats.yaml"
         log:
-            "logs/drugz/{mcomparison}.log"
+            "logs/drugz/{bcomparison}.log"
         shell:
             "python {input.drugz}/drugz.py "
             "-i {input.counts} "
