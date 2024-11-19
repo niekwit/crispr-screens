@@ -13,9 +13,8 @@ def targets():
     "results/qc/sample-correlation.pdf",
     "results/qc/missed-rgrnas.pdf",
 ]
-
-    if skip_stats != "mageck" and skip_stats !="both":
-        # extend target rule with MAGecK targets     
+    if config["stats"]["mageck"]["run"]:
+        # Extend targets with MAGeCK files    
         TARGETS.extend([
             expand("results/mageck_plots/{mcomparison}/{cnv}/{mcomparison}.lfc_pos.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
             expand("results/mageck_plots/{mcomparison}/{cnv}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
@@ -26,12 +25,16 @@ def targets():
                 expand("results/mageck/{mcomparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.csv", mcomparison=M_COMPARISONS, cnv=CNV, pathway_data=PATHWAY_DATA, dbs=DBS),
                 expand("results/mageck_plots/{mcomparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.pdf", mcomparison=M_COMPARISONS, cnv=CNV, dbs=DBS, pathway_data=PATHWAY_DATA),
             ])
-
-    if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
-        # extend target rule with BAGEL2 targets
+    if config["stats"]["bagel2"]["run"]:
+        # Extend targets with BAGEL2 files 
         TARGETS.extend([
             expand("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", bcomparison=B_COMPARISONS),
             expand("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", bcomparison=B_COMPARISONS),
+        ])
+    if config["stats"]["drugz"]["run"]:
+        # Extend targets with DrugZ files 
+        TARGETS.extend([
+            expand("results/drugz/{mcomparison}.txt", mcomparison=M_COMPARISONS),
         ])
     return TARGETS
 
