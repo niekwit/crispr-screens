@@ -259,8 +259,8 @@ if config["stats"]["drugz"]["run"]:
         output:
             "results/drugz/{mcomparison}.txt"
         params:
-            test=lambda wc: wc.mcomparison.split("_vs_")[0],
-            control=lambda wc: wc.mcomparison.split("_vs_")[1],
+            test=lambda wc: wc.mcomparison.split("_vs_")[0].replace("-",","),
+            control=lambda wc: wc.mcomparison.split("_vs_")[1].replace("-",","),
             extra=config["stats"]["drugz"]["extra"]
         threads: 2
         resources:
