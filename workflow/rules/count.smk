@@ -55,7 +55,7 @@ rule count:
         "../scripts/count.sh"
 
 
-rule aggregated_counts:
+rule aggregate_counts:
     input:
         files=expand("results/count/{sample}.guidecounts.txt", sample=SAMPLES)
     output:
@@ -70,7 +70,7 @@ rule aggregated_counts:
     log:
         "logs/count/aggregate_counts.log"
     script:
-        "../scripts/join.py"
+        "../scripts/aggregate_counts.py"
 
 
 rule normalise_count_table:
