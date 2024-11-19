@@ -7,6 +7,7 @@ from snakemake.shell import shell
 
 # Workflow version
 VERSION = "v0.7.0" 
+DOCKER_VERSION = "v0.6.1" # Docker image version (no change to v0.7.0)
 
 # Set minimum snakemake version
 min_version("8.13.0")
@@ -21,7 +22,7 @@ logger.info(f"Wrapper version: {wrapper_version}")
 report: "report/workflow.rst"
 
 # Define Docker container
-containerized: f"docker://niekwit/crispr-screens:{VERSION}"
+containerized: f"docker://niekwit/crispr-screens:{DOCKER_VERSION}"
 
 # Load config file
 configfile: "config/config.yml"
