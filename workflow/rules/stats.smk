@@ -1,4 +1,4 @@
-if skip_stats != "mageck" and skip_stats !="both":
+if config["stats"]["mageck"]["run"]:
     if config["stats"]["mageck"]["apply_CNV_correction"]:
         logger.info("Applying CNV correction to MAGeCK analysis")
         check_sum = "33abf0c446f3e5116f35bda5483de28c3e504b1740457e1658b3fc2d22fbfa58"
@@ -112,15 +112,15 @@ if skip_stats != "mageck" and skip_stats !="both":
         script:
             "../scripts/pathway_analysis.R"
     
-if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
+if config["stats"]["bagel2"]["run"]:
     rule install_bagel2:
         output:
             directory("workflow/scripts/bagel2"),
         log:
             "logs/bagel2/install.log"
-        threads: 2
+        threads: 1
         resources:
-            runtime=30
+            runtime=5
         conda:
             "../envs/stats.yaml"
         shell:
@@ -234,3 +234,44 @@ if skip_stats != "bagel2" and skip_stats !="both" and B_COMPARISONS != None:
             "logs/bagel2/plot/pr_{bcomparison}.log"
         script:
             "../scripts/plot_pr.R"
+
+
+if config["stats"]["drugz"]["run"]:
+    rule install_drugz:
+        output:
+            directory("workflow/scripts/drugz"),
+        log:
+            "logs/drugz/install.log"
+        threads: 1
+        resources:
+            runtime=5
+        conda:
+            "../envs/stats.yaml"
+        shell:
+            "git clone https://github.com/hart-lab/drugz.git {output} 2> {log}"
+
+
+    rule drugz:
+        input:
+            counts="results/count/counts-aggregated.tsv",
+            drugz="workflow/scripts/drugz/",
+        output:
+            "results/drugz/{mcomparison}.txt"
+        params:
+            test=lambda wc: wc.mcomparison.split("_vs_")[0],
+            control=lambda wc: wc.mcomparison.split("_vs_")[1],
+            extra=config["stats"]["drugz"]["extra"]
+        threads: 2
+        resources:
+            runtime=15
+        conda:
+            "../envs/stats.yaml"
+        log:
+            "logs/drugz/{mcomparison}.log"
+        shell:
+            "python {input.drugz}/drugz.py "
+            "-i {input.counts} "
+            "-c {params.control} "
+            "-x {params.test} "
+            "{params.extra} "
+            "-o {output} 2> {log} "
