@@ -259,8 +259,8 @@ if config["stats"]["drugz"]["run"]:
         output:
             "results/drugz/{bcomparison}.txt"
         params:
-            test=lambda wc: wc.bcomparison.split("_vs_")[0],
-            control=lambda wc: wc.bcomparison.split("_vs_")[1],
+            test=lambda wc, output: wc.bcomparison.split("_vs_")[0],
+            control=lambda wc, output: wc.bcomparison.split("_vs_")[1],
             extra=config["stats"]["drugz"]["extra"]
         threads: 2
         resources:
