@@ -43,7 +43,7 @@ rule count:
         "results/count/{sample}.guidecounts.txt"
     params:
         mm=config["mismatch"],
-        idx="resources/index/index",
+        idx=lambda wildcard, input: input.idx[0].replace(".1.ht2", ""),
     threads: 6
     resources:
         runtime=45
