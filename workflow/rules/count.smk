@@ -15,7 +15,7 @@ rule hisat2_index:
         ),
     params:
         extra="",
-        prefix = "resources/index/index",
+        prefix = lambda wildcard, output: output[0].replace(".1.ht2", ""),
     log:
         "logs/hisat2/index.log"
     threads: 4
