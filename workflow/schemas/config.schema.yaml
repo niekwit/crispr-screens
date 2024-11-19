@@ -10,18 +10,16 @@ properties:
     properties:
       sg_length:
         type: integer
-        minimum: 12
-        maximum: 23
+        description: Length of sgRNA sequence
       vector:
         type: string
-        pattern: "^[NATGCnatgc]+$"
         description: Vector sequence to be removed from reads (N for none)
       left_trim:
         type: integer
-        minimum: 0
+        description: Trim n bases from 5' end of reads
       species:
         type: string
-        enum: ["human", "mouse"]
+        description: Species of the reference genome
     required:
       - sg_length
       - vector
@@ -33,112 +31,111 @@ properties:
     properties:
       name_column:
         type: integer
-        minimum: 1
+        description: Column number with gene names
       sequence_column:
         type: integer
+        description: Column number with sgRNA sequences
     required:
       - name_column
       - sequence_column
 
   mismatch:
     type: integer
-    minimum: 0
-    maximum: 2
+    description: Mismatches allowed during alignment
 
   stats:
     type: object
     properties:
-      skip:
-        description: Skip analysis with MAGeCK/BAGEL2
-        type: string
-        enum: ["mageck", "bagel2", "both", "none"]
       bagel2:
         type: object
         properties:
+          run:
+            type: boolean
+            description: Perform bagel2 analysis
           custom_gene_lists:
             type: object
             properties:
               essential_genes:
                 type: string
+                description: Path to custom gene list for bagel2 analysis
               non_essential_genes:
                 type: string
+                description: Path to custom gene list for bagel2 analysis
+        required:
+          - run
+          - custom_gene_lists
+
       mageck:
         type: object
         properties:
+          run:
+            type: boolean
+            description: Perform mageck analysis
           extra_mageck_arguments:
             type: string
+            description: Extra arguments for mageck
           mageck_control_genes:
             type: string
+            description: All or path to file with control genes
           fdr:
             type: number
-            minimum: 0
-            maximum: 1
+            description: FDR threshold for downstream mageck analysis
           apply_CNV_correction:
             type: boolean
+            description: Apply CNV correction to mageck results
           cell_line:
             type: string
+            description: Cell line for CNV correction
+        required:
+          - run
+          - extra_mageck_arguments
+          - mageck_control_genes
+          - fdr
+          - apply_CNV_correction
+          - cell_line
+
+      drugz:
+        type: object
+        properties:
+          run:
+            type: boolean
+            description: Perform drugZ analysis
+          extra:
+            type: string
+            description: Extra arguments for drugZ
+        required:
+          - run
+          - extra
+
       pathway_analysis:
         type: object
         properties:
           run:
             type: boolean
+            description: Perform pathway analysis on mageck results
           data:
             type: string
-            enum: ["enriched", "depleted", "both"]
+            description: enriched, depleted, or both
           dbs:
             type: array
             items:
               type: string
-          terms:
-            type: integer
-            minimum: 1
+            description: List of databases to use for pathway analysis
           top_genes:
             type: integer
-            minimum: 0
-            
-    required:
-    - skip
-    - mageck
-    - pathway_analysis
-  
-  resources:
-    type: object
-    properties:
-      trim:
-        type: object
-        properties:
-          cpu:
+            description: Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+          terms:
             type: integer
-            minimum: 1
-          time:
-            type: integer
-      fastqc:
-        type: object
-        properties:
-          cpu:
-            type: integer
-            minimum: 1
-          time:
-            type: integer
-      count:
-        type: object
-        properties:
-          cpu:
-            type: integer
-            minimum: 1
-          time:
-            type: integer
-      stats:
-        type: object
-        properties:
-          cpu:
-            type: integer
-            minimum: 1
-          time:
-            type: integer
+            description: Number of terms to plot
+        required:
+          - run
+          - data
+          - dbs
+          - top_genes
+          - terms
 
 required:
   - lib_info
+  - csv
   - mismatch
   - stats
-  - resources
