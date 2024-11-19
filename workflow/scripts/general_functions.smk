@@ -10,7 +10,6 @@ def targets():
     "results/qc/alignment-rates.pdf",
     "results/qc/sequence-coverage.pdf",
     "results/qc/gini-index.pdf",
-    "results/qc/sample-correlation.pdf",
     "results/qc/missed-rgrnas.pdf",
 ]
     if config["stats"]["mageck"]["run"]:

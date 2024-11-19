@@ -85,22 +85,6 @@ rule plot_gini_index:
         "../scripts/plot_gini_index.R"
 
 
-rule plot_sample_correlation:
-    input:
-        "results/count/counts-aggregated_normalised.csv"
-    output:
-        report("results/qc/sample-correlation.pdf", caption="../report/sample-correlation.rst", category="Sample correlation")
-    threads: 1
-    resources:
-        runtime=5
-    log:
-        "logs/sample-correlation.log"
-    conda:
-        "../envs/stats.yaml"
-    script:
-        "../scripts/sample_correlation.R"
-
-
 rule plot_missed_sgrnas:
     input:
         "results/count/counts-aggregated.tsv"
