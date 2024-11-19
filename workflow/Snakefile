@@ -6,13 +6,13 @@ from snakemake.logging import logger
 from snakemake.shell import shell
 
 # Workflow version
-VERSION = "v0.6.1" 
+VERSION = "v0.7.0" 
 
 # Set minimum snakemake version
-min_version("8.12.0")
+min_version("8.13.0")
 
 # Wrapper version
-wrapper_version = "v3.12.1"
+wrapper_version = "v5.1.0"
 
 logger.info(f"Workflow version: {VERSION}")
 logger.info(f"Wrapper version: {wrapper_version}")
@@ -41,9 +41,6 @@ DBS = config["stats"]["pathway_analysis"]["dbs"]
 # Load fasta
 fasta = fasta()
 lib_name = lib_name()
-
-# Load which stats to apply
-skip_stats = config["stats"]["skip"]
 
 # Import rules
 include: "rules/qc.smk"
