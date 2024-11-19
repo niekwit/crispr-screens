@@ -8,8 +8,8 @@ rule cutadapt:
         extra=f"-q 20 {cut_adapt_arg(config)}",
     log:
         "logs/cutadapt/{sample}.log",
-    threads: config["resources"]["trim"]["cpu"]  # set desired number of threads here
+    threads: 4  # set desired number of threads here
     resources:
-        runtime=config["resources"]["trim"]["time"]
+        runtime=25
     wrapper:
         "v5.1.0/bio/cutadapt/se"
