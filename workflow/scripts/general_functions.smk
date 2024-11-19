@@ -33,7 +33,7 @@ def targets():
     if config["stats"]["drugz"]["run"]:
         # Extend targets with DrugZ files 
         TARGETS.extend([
-            expand("results/drugz/{mcomparison}.txt", mcomparison=M_COMPARISONS),
+            expand("results/drugz/{bcomparison}.txt", bcomparison=B_COMPARISONS),
         ])
     return TARGETS
 

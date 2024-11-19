@@ -240,7 +240,7 @@ if config["stats"]["bagel2"]["run"]:
 if config["stats"]["drugz"]["run"]:
     rule install_drugz:
         output:
-            directory("workflow/scripts/drugz"),
+            directory("resources/drugz"),
         log:
             "logs/drugz/install.log"
         threads: 1
@@ -255,12 +255,12 @@ if config["stats"]["drugz"]["run"]:
     rule drugz:
         input:
             counts="results/count/counts-aggregated.tsv",
-            drugz="workflow/scripts/drugz/",
+            drugz="resources/drugz",
         output:
-            "results/drugz/{mcomparison}.txt"
+            "results/drugz/{bcomparison}.txt"
         params:
-            test=lambda wc: wc.mcomparison.split("_vs_")[0].replace("-",","),
-            control=lambda wc: wc.mcomparison.split("_vs_")[1].replace("-",","),
+            test=lambda wc: wc.bcomparison.split("_vs_")[0],
+            control=lambda wc: wc.bcomparison.split("_vs_")[1],
             extra=config["stats"]["drugz"]["extra"]
         threads: 2
         resources:
