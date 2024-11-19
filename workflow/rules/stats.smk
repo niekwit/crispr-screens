@@ -113,127 +113,128 @@ if config["stats"]["mageck"]["run"]:
             "../scripts/pathway_analysis.R"
     
 if config["stats"]["bagel2"]["run"]:
-    rule install_bagel2:
-        output:
-            directory("workflow/scripts/bagel2"),
-        log:
-            "logs/bagel2/install.log"
-        threads: 1
-        resources:
-            runtime=5
-        conda:
-            "../envs/stats.yaml"
-        shell:
-            "git clone https://github.com/hart-lab/bagel.git {output} 2> {log}"
-        
+    if set(stats["bagel2"]) != {"n"}:
+        rule install_bagel2:
+            output:
+                directory("workflow/scripts/bagel2"),
+            log:
+                "logs/bagel2/install.log"
+            threads: 1
+            resources:
+                runtime=5
+            conda:
+                "../envs/stats.yaml"
+            shell:
+                "git clone https://github.com/hart-lab/bagel.git {output} 2> {log}"
+            
 
-    rule convert_count_table:
-        input:
-            "results/count/counts-aggregated.tsv"
-        output:
-            "results/count/counts-aggregated-bagel2.tsv"
-        params:
-            fa=fasta,
-        threads: 1
-        resources:
-            runtime=5
-        log:
-            "logs/bagel2/convert_count_table.log"
-        conda:
-            "../envs/stats.yaml"
-        script:
-            "../scripts/convert_count_table.py"
-
-
-    rule bagel2fc:
-        input:
-            b2dir="workflow/scripts/bagel2/",
-            ct="results/count/counts-aggregated-bagel2.tsv",
-        output:
-            fc="results/bagel2/{bcomparison}/{bcomparison}.foldchange"
-        threads: 2
-        resources:
-            runtime=15
-        conda:
-            "../envs/stats.yaml"
-        log:
-            "logs/bagel2/fc/{bcomparison}.log"
-        script:
-            "../scripts/bagel2fc.py"
+        rule convert_count_table:
+            input:
+                "results/count/counts-aggregated.tsv"
+            output:
+                "results/count/counts-aggregated-bagel2.tsv"
+            params:
+                fa=fasta,
+            threads: 1
+            resources:
+                runtime=5
+            log:
+                "logs/bagel2/convert_count_table.log"
+            conda:
+                "../envs/stats.yaml"
+            script:
+                "../scripts/convert_count_table.py"
 
 
-    rule bagel2bf:
-        input:
-            b2dir="workflow/scripts/bagel2/",
-            fc="results/bagel2/{bcomparison}/{bcomparison}.foldchange",
-        output:
-            bf="results/bagel2/{bcomparison}/{bcomparison}.bf"
-        params:
-            species=config["lib_info"]["species"],
-            ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
-            cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"]
-        threads: 2
-        resources:
-            runtime=15
-        conda:
-            "../envs/stats.yaml"
-        log:
-            "logs/bagel2/bf/{bcomparison}.log"
-        script:
-            "../scripts/bagel2bf.py"
+        rule bagel2fc:
+            input:
+                b2dir="workflow/scripts/bagel2/",
+                ct="results/count/counts-aggregated-bagel2.tsv",
+            output:
+                fc="results/bagel2/{bcomparison}/{bcomparison}.foldchange"
+            threads: 2
+            resources:
+                runtime=15
+            conda:
+                "../envs/stats.yaml"
+            log:
+                "logs/bagel2/fc/{bcomparison}.log"
+            script:
+                "../scripts/bagel2fc.py"
 
 
-    rule bagel2pr:
-        input:
-            b2dir="workflow/scripts/bagel2/",
-            bf="results/bagel2/{bcomparison}/{bcomparison}.bf",
-        output:
-            "results/bagel2/{bcomparison}/{bcomparison}.pr",
-        params:
-            species=config["lib_info"]["species"],
-            ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
-            cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"],
-        threads: 2
-        resources:
-            runtime=15
-        conda:
-            "../envs/stats.yaml"
-        log:
-            "logs/bagel2/pr/{bcomparison}.log"
-        script:
-            "../scripts/bagel2pr.py"
+        rule bagel2bf:
+            input:
+                b2dir="workflow/scripts/bagel2/",
+                fc="results/bagel2/{bcomparison}/{bcomparison}.foldchange",
+            output:
+                bf="results/bagel2/{bcomparison}/{bcomparison}.bf"
+            params:
+                species=config["lib_info"]["species"],
+                ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
+                cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"]
+            threads: 2
+            resources:
+                runtime=15
+            conda:
+                "../envs/stats.yaml"
+            log:
+                "logs/bagel2/bf/{bcomparison}.log"
+            script:
+                "../scripts/bagel2bf.py"
 
 
-    rule plot_bf:
-        input:
-            "results/bagel2/{bcomparison}/{bcomparison}.bf"
-        output:
-            report("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", caption="../report/bagel2_plots.rst", category="BAGEL2 plots", subcategory="{bcomparison}", labels={"Comparison":"{bcomparison}", "Figure":"BF plot"})
-        threads: 1
-        resources:
-            runtime=5
-        conda:
-            "../envs/stats.yaml"
-        log:
-            "logs/bagel2/plot/bf_{bcomparison}.log"
-        script:
-            "../scripts/plot_bf.R"
+        rule bagel2pr:
+            input:
+                b2dir="workflow/scripts/bagel2/",
+                bf="results/bagel2/{bcomparison}/{bcomparison}.bf",
+            output:
+                "results/bagel2/{bcomparison}/{bcomparison}.pr",
+            params:
+                species=config["lib_info"]["species"],
+                ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
+                cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"],
+            threads: 2
+            resources:
+                runtime=15
+            conda:
+                "../envs/stats.yaml"
+            log:
+                "logs/bagel2/pr/{bcomparison}.log"
+            script:
+                "../scripts/bagel2pr.py"
 
 
-    rule plot_pr:
-        input:
-            "results/bagel2/{bcomparison}/{bcomparison}.pr"
-        output:
-            report("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", caption="../report/bagel2_plots.rst", category="BAGEL2 plots", subcategory="{bcomparison}", labels={"Comparison":"{bcomparison}", "Figure":"Precision-recall plot"})
-        threads: 1
-        resources:
-            runtime=5
-        conda:
-            "../envs/stats.yaml"
-        log:
-            "logs/bagel2/plot/pr_{bcomparison}.log"
-        script:
-            "../scripts/plot_pr.R"
+        rule plot_bf:
+            input:
+                "results/bagel2/{bcomparison}/{bcomparison}.bf"
+            output:
+                report("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", caption="../report/bagel2_plots.rst", category="BAGEL2 plots", subcategory="{bcomparison}", labels={"Comparison":"{bcomparison}", "Figure":"BF plot"})
+            threads: 1
+            resources:
+                runtime=5
+            conda:
+                "../envs/stats.yaml"
+            log:
+                "logs/bagel2/plot/bf_{bcomparison}.log"
+            script:
+                "../scripts/plot_bf.R"
+
+
+        rule plot_pr:
+            input:
+                "results/bagel2/{bcomparison}/{bcomparison}.pr"
+            output:
+                report("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", caption="../report/bagel2_plots.rst", category="BAGEL2 plots", subcategory="{bcomparison}", labels={"Comparison":"{bcomparison}", "Figure":"Precision-recall plot"})
+            threads: 1
+            resources:
+                runtime=5
+            conda:
+                "../envs/stats.yaml"
+            log:
+                "logs/bagel2/plot/pr_{bcomparison}.log"
+            script:
+                "../scripts/plot_pr.R"
 
 
 if config["stats"]["drugz"]["run"]:
