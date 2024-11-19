@@ -2,7 +2,17 @@ rule hisat2_index:
     input:
         fasta = fasta,
     output:
-        directory(f"resources/index/"),
+        multiext(
+            "resources/index/index",
+            ".1.ht2",
+            ".2.ht2",
+            ".3.ht2",
+            ".4.ht2",
+            ".5.ht2",
+            ".6.ht2",
+            ".7.ht2",
+            ".8.ht2",
+        ),
     params:
         extra="",
         prefix = "resources/index/index",
@@ -18,7 +28,17 @@ rule hisat2_index:
 rule count:
     input: 
         fq="results/trimmed/{sample}.fastq.gz",
-        idx=f"resources/index/",
+        idx=multiext(
+            "resources/index/index",
+            ".1.ht2",
+            ".2.ht2",
+            ".3.ht2",
+            ".4.ht2",
+            ".5.ht2",
+            ".6.ht2",
+            ".7.ht2",
+            ".8.ht2",
+        ),
     output:
         "results/count/{sample}.guidecounts.txt"
     params:
