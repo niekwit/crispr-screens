@@ -25,15 +25,16 @@ def targets():
                 expand("results/mageck_plots/{mcomparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.pdf", mcomparison=M_COMPARISONS, cnv=CNV, dbs=DBS, pathway_data=PATHWAY_DATA),
             ])
     if config["stats"]["bagel2"]["run"]:
-        # Extend targets with BAGEL2 files 
-        TARGETS.extend([
-            expand("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", bcomparison=B_COMPARISONS),
-            expand("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", bcomparison=B_COMPARISONS),
-        ])
+        if B_COMPARISONS:
+            # Extend targets with BAGEL2 files 
+            TARGETS.extend([
+                expand("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", bcomparison=B_COMPARISONS),
+                expand("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", bcomparison=B_COMPARISONS),
+            ])
     if config["stats"]["drugz"]["run"]:
         # Extend targets with DrugZ files 
         TARGETS.extend([
-            expand("results/drugz/{bcomparison}.txt", bcomparison=B_COMPARISONS),
+            expand("results/drugz/{mcomparison}.txt", mcomparison=M_COMPARISONS),
         ])
     return TARGETS
 
@@ -74,10 +75,10 @@ def fasta():
     # Check if sgRNA names follow correct format (GENE_sgGENE_number)
     bad_sgrna_names = []
     for line in lines_name:
-        if not re.match(r">[A-Za-z0-9\-]+_sg[A-Za-z0-9\-]+_[0-9]+", line):
+        if not re.match(r">[A-Za-z0-9\-\.]+_sg[A-Za-z0-9\-\.]+_[0-9]+", line):
             bad_sgrna_names.append(line)
     if len(bad_sgrna_names) != 0:
-        bad_sgrna_names = "\n".join(bad_sgrna_names)
+        bad_sgrna_names = "".join(bad_sgrna_names)
         print(f"ERROR: Incorrect sgRNA names in fasta file (format as GENE_sgGENE_number):\n{bad_sgrna_names}")
         sys.exit(1)
 
