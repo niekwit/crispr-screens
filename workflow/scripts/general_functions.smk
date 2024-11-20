@@ -185,31 +185,7 @@ def mageck_control():
         control = f"--control-gene {file}" 
         
     return control
-
-    
-def gene_number():
-    """
-    Get number of genes from sgRNA fasta file
-    """
-    # Read fasta file
-    f = open(fasta, "r").readlines()
-    
-    # Select lines with sgRNA names (start with >)
-    f = [x.strip() for x in f if x.startswith(">")]
-    
-    # Return number of genes
-    genes = [x.split("_sg")[0].replace(">","") for x in f]
-    
-    return len(set(genes))
-    
-def lib_name():
-    """
-    Get sgRNA library name
-    """
-    name = os.path.basename(fasta).rsplit(".", 1)[0]
-
-    return name
-
+  
 
 def mageck_input():
     """
