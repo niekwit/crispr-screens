@@ -71,6 +71,16 @@ def fasta():
         lines_name = [x for x in lines if x.startswith(">")]
     assert len(lines_seq) == len(lines_name), "Fasta file is not correct"
     
+    # Check if sgRNA names follow correct format (GENE_sgGENE_number)
+    bad_sgrna_names = []
+    for line in lines_name:
+        if not re.match(r">[A-Za-z0-9\-]+_sg[A-Za-z0-9\-]+_[0-9]+", line):
+            bad_sgrna_names.append(line)
+    if len(bad_sgrna_names) != 0:
+        bad_sgrna_names = "\n".join(bad_sgrna_names)
+        print(f"ERROR: Incorrect sgRNA names in fasta file (format as GENE_sgGENE_number):\n{bad_sgrna_names}")
+        sys.exit(1)
+
     return fasta[0]
 
 
