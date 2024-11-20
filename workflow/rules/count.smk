@@ -50,14 +50,15 @@ rule count:
     log:
         "logs/count/{sample}.log"
     conda:
-        "../envs/count.yaml"
+        "../envs/stats.yaml"
     script:
         "../scripts/count.sh"
 
 
 rule aggregate_counts:
     input:
-        files=expand("results/count/{sample}.guidecounts.txt", sample=SAMPLES)
+        files=expand("results/count/{sample}.guidecounts.txt", sample=SAMPLES),
+        fasta=fasta,
     output:
         "results/count/counts-aggregated.tsv"
     params:
@@ -66,7 +67,7 @@ rule aggregate_counts:
     resources:
         runtime=10
     conda:
-        "../envs/count.yaml"
+        "../envs/stats.yaml"
     log:
         "logs/count/aggregate_counts.log"
     script:
@@ -79,7 +80,7 @@ rule normalise_count_table:
     output:
         norm_counts=temp("results/count/counts-aggregated_normalised.csv")
     conda:
-        "../envs/count.yaml"
+        "../envs/stats.yaml"
     threads: 1
     resources:
         runtime=5
