@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 from snakemake.shell import shell
 
@@ -8,7 +9,13 @@ bf = snakemake.output["bf"]
 comparison = snakemake.wildcards[0]
 ceg = snakemake.params["ceg"]
 cneg = snakemake.params["cneg"]
-log = snakemake.log_fmt_shell(stdout=True, stderr=True)
+
+# Set up logging
+log_stdout = snakemake.log["stdout"]
+log_stderr = snakemake.log["stderr"]
+logging.basicConfig(format='%(levelname)s:%(message)s', 
+                    level=logging.DEBUG,
+                    handlers=[logging.FileHandler(snakemake.log["command"])])
 
 # Load gene sets
 if ceg == "none" and cneg == "none":
@@ -48,10 +55,7 @@ else: # Multiple samples will be pooled
     # Convert to comma-seperated string
     sample_column = ",".join(sample_columns)
 
-shell(
-    "python {b2dir}/BAGEL.py bf -i {fc} "
-    " -o {bf} " 
-    "-e {eg} " 
-    "-n {neg} "
-    "-c {sample_column} {log}"
-) 
+# Prepare command and log, and run
+command = f"python {b2dir}/BAGEL.py bf -i {fc} -o {bf} -e {eg} -n {neg} -c {sample_column} > {log_stdout} 2> {log_stderr}"
+logging.debug(command)
+shell(command) 

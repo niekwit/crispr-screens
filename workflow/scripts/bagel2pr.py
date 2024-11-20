@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import logging
 from snakemake.shell import shell
 
 b2dir = snakemake.input["b2dir"]
@@ -9,7 +10,13 @@ bf = snakemake.input["bf"]
 pr = snakemake.output[0]
 ceg = snakemake.params["ceg"]
 cneg = snakemake.params["cneg"]
-log = snakemake.log_fmt_shell(stdout=True, stderr=True)
+
+# Set up logging
+log_stdout = snakemake.log["stdout"]
+log_stderr = snakemake.log["stderr"]
+logging.basicConfig(format='%(levelname)s:%(message)s', 
+                    level=logging.DEBUG,
+                    handlers=[logging.FileHandler(snakemake.log["command"])])
 
 # Get comparison
 comparison = os.path.basename(bf.replace(".bf",""))
@@ -27,15 +34,7 @@ else:
     eg = ceg
     neg = cneg
 
-# Run BAGEL2 pr
-shell(
-    "python {b2dir}/BAGEL.py pr -i {bf} " 
-    "-o {pr} " 
-    "-e {eg} " 
-    "-n {neg} {log}"
-)
-
-
-
-
-
+# Prepare command and log, and run
+command = f"python {b2dir}/BAGEL.py pr -i {bf} -o {pr} -e {eg} -n {neg} > {log_stdout} 2> {log_stderr}"
+logging.debug(command)
+shell(command)

@@ -113,10 +113,10 @@ if config["stats"]["mageck"]["run"]:
             "../scripts/pathway_analysis.R"
     
 if config["stats"]["bagel2"]["run"]:
-    if set(stats["bagel2"]) != {"n"}:
+    if B_COMPARISONS:
         rule install_bagel2:
             output:
-                directory("workflow/scripts/bagel2"),
+                directory("resources/bagel2"),
             log:
                 "logs/bagel2/install.log"
             threads: 1
@@ -148,7 +148,7 @@ if config["stats"]["bagel2"]["run"]:
 
         rule bagel2fc:
             input:
-                b2dir="workflow/scripts/bagel2/",
+                b2dir="resources/bagel2/",
                 ct="results/count/counts-aggregated-bagel2.tsv",
             output:
                 fc="results/bagel2/{bcomparison}/{bcomparison}.foldchange"
@@ -158,14 +158,16 @@ if config["stats"]["bagel2"]["run"]:
             conda:
                 "../envs/stats.yaml"
             log:
-                "logs/bagel2/fc/{bcomparison}.log"
+                command="logs/bagel2/fc/{bcomparison}_command.log",
+                stdout="logs/bagel2/fc/{bcomparison}_stdout.log",
+                stderr="logs/bagel2/fc/{bcomparison}_stderr.log"
             script:
                 "../scripts/bagel2fc.py"
 
 
         rule bagel2bf:
             input:
-                b2dir="workflow/scripts/bagel2/",
+                b2dir="resources/bagel2/",
                 fc="results/bagel2/{bcomparison}/{bcomparison}.foldchange",
             output:
                 bf="results/bagel2/{bcomparison}/{bcomparison}.bf"
@@ -179,14 +181,16 @@ if config["stats"]["bagel2"]["run"]:
             conda:
                 "../envs/stats.yaml"
             log:
-                "logs/bagel2/bf/{bcomparison}.log"
+                command="logs/bagel2/bf/{bcomparison}_command.log",
+                stdout="logs/bagel2/bf/{bcomparison}_stdout.log",
+                stderr="logs/bagel2/bf/{bcomparison}_stderr.log"
             script:
                 "../scripts/bagel2bf.py"
 
 
         rule bagel2pr:
             input:
-                b2dir="workflow/scripts/bagel2/",
+                b2dir="resources/bagel2/",
                 bf="results/bagel2/{bcomparison}/{bcomparison}.bf",
             output:
                 "results/bagel2/{bcomparison}/{bcomparison}.pr",
@@ -200,7 +204,9 @@ if config["stats"]["bagel2"]["run"]:
             conda:
                 "../envs/stats.yaml"
             log:
-                "logs/bagel2/pr/{bcomparison}.log"
+                command="logs/bagel2/pr/{bcomparison}_command.log",
+                stdout="logs/bagel2/pr/{bcomparison}_stdout.log",
+                stderr="logs/bagel2/pr/{bcomparison}_stderr.log"
             script:
                 "../scripts/bagel2pr.py"
 
@@ -257,10 +263,10 @@ if config["stats"]["drugz"]["run"]:
             counts="results/count/counts-aggregated.tsv",
             drugz="resources/drugz",
         output:
-            "results/drugz/{bcomparison}.txt"
+            "results/drugz/{mcomparison}.txt"
         params:
-            test=lambda wc, output: wc.bcomparison.split("_vs_")[0],
-            control=lambda wc, output: wc.bcomparison.split("_vs_")[1],
+            test=lambda wc, output: wc.mcomparison.split("_vs_")[0],
+            control=lambda wc, output: wc.mcomparison.split("_vs_")[1],
             extra=config["stats"]["drugz"]["extra"]
         threads: 2
         resources:
@@ -268,7 +274,7 @@ if config["stats"]["drugz"]["run"]:
         conda:
             "../envs/stats.yaml"
         log:
-            "logs/drugz/{bcomparison}.log"
+            "logs/drugz/{mcomparison}.log"
         shell:
             "python {input.drugz}/drugz.py "
             "-i {input.counts} "
