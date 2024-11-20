@@ -1,9 +1,0 @@
-name: count
-channels: 
-  - conda-forge
-  - bioconda
-  - defaults
-dependencies:
-  - hisat2=2.2.1
-  - pandas=2.1.1
-  
