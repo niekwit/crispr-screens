@@ -61,8 +61,6 @@ rule aggregate_counts:
         fasta=fasta,
     output:
         "results/count/counts-aggregated.tsv"
-    params:
-        fa=fasta,
     threads: 1
     resources:
         runtime=10
