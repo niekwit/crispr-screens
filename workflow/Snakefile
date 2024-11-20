@@ -41,7 +41,6 @@ DBS = config["stats"]["pathway_analysis"]["dbs"]
 
 # Load fasta
 fasta = fasta()
-lib_name = lib_name()
 
 # Import rules
 include: "rules/qc.smk"
