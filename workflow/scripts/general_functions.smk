@@ -219,4 +219,4 @@ def pathway_data():
     if data == "both":
         return ["enriched", "depleted"]
     else:
-        [data]
+        return [data]
