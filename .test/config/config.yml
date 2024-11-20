@@ -27,11 +27,11 @@ stats:
     cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
   
   drugz:
-    run: True # Perform drugZ analysis
+    run: False # Perform drugZ analysis
     extra: "" # Extra arguments for drugZ
 
   pathway_analysis: 
-    run: True # Perform pathway analysis on mageck results
+    run: False # Perform pathway analysis on mageck results
     data: both # enriched, depleted, or both
     dbs: ["GO_Molecular_Function_2023","GO_Biological_Process_2023","Reactome_2022"]
     top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
