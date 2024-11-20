@@ -27,6 +27,6 @@ control = comparison.split("_vs_")[1]
 control_column = column_dict[control]
 
 # Prepare command and log
-command = f"python {b2dir}/BAGEL.py fc -i {count_table_bagel2} -o results/bagel2/{comparison}/{comparison} -c  {control_column} > {log_stdout} 2> {log_stderr}"
+command = f"python {b2dir}/BAGEL.py fc -i {count_table_bagel2} -o results/bagel2/{comparison}/{comparison} -c {control_column} > {log_stdout} 2> {log_stderr}"
 logging.debug(command)
 shell(command)
