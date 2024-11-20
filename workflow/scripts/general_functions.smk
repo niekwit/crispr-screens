@@ -73,6 +73,7 @@ def fasta():
     assert len(lines_seq) == len(lines_name), "Fasta file is not correct"
     
     # Check if sgRNA names follow correct format (GENE_sgGENE_number)
+    # Gene names may contain letters, numbers, hyphens, and periods
     bad_sgrna_names = []
     for line in lines_name:
         if not re.match(r">[A-Za-z0-9\-\.]+_sg[A-Za-z0-9\-\.]+_[0-9]+", line):
