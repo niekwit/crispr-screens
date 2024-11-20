@@ -77,7 +77,7 @@ Installation on HPC systems
 As the installation of Apptainer requires administrator privileges, please contact your HPC administrator to install Apptainer if it is not available yet.
 
 
-Obtaining workflow code with snakefetch
+Snakefetch
 =======================================
 
 The easiest way to obtain the workflow code is to use `(snakefetch) <https://pypi.org/project/snakefetch/>`_:
@@ -86,5 +86,28 @@ The easiest way to obtain the workflow code is to use `(snakefetch) <https://pyp
 
     $ pip install snakefetch
 
-Further instructions to obtain the workflow code will be included in the `usage` section of the documentation.
 
+Obtaining workflow code
+=======================
+
+To obtain the workflow code, run snakefetch from the analysis directory:
+
+.. code-block:: console
+
+   $ mkdir my_experiment
+   $ cd my_experiment
+   $ snakefetch --outdir . --repo-version v0.7.0 --url https://github.com/niekwit/crispr-screens
+   Downloading archive file for version v0.7.0 from https://github.com/niekwit/crispr-screens...
+   Extracting config and workflow directories from tar.gz file to /path/to/analysis...
+   Done!
+
+Alternatively, you can install the latest development version from source:
+
+.. code-block:: console
+
+    
+    $ git clone https://github.com/niekwit/crispr-screens.git
+    $ cd crispr-screens
+    $ cp -r workflow /path/to/analysis
+
+To download a specific version, go to the `release page <https://github.com/niekwit/crispr-screens/releases>`_ on GitHub and download the source code there.

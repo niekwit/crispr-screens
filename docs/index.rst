@@ -34,16 +34,10 @@ Contents
    installation/installation.rst
 
 .. toctree::
-   :caption: Bioinformatic analysis
+   :caption: Workflow usage
    :maxdepth: 2
 
    usage/usage.rst
-
-.. toctree::
-   :caption: Follow-up of screen results
-   :maxdepth: 1
-
-   follow_up/follow_up.rst
 
 .. toctree::
    :caption: Protocols
