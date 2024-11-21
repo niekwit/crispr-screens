@@ -27,7 +27,7 @@ stats:
     cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
   
   drugz:
-    run: False # Perform drugZ analysis
+    run: True # Perform drugZ analysis
     extra: "" # Extra arguments for drugZ
 
   pathway_analysis: 
