@@ -32,5 +32,8 @@ df = df.fillna(0)
 numeric_cols = df.select_dtypes(include="number").columns
 df[numeric_cols] = df[numeric_cols].round(decimals=0).astype(int)
 
+# Remove duplicate rows (observed in some cases)
+df = df.drop_duplicates()
+
 # Save data frame to file
 df.to_csv(snakemake.output[0], sep='\t', index=False)
