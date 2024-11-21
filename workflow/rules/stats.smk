@@ -263,7 +263,7 @@ if config["stats"]["drugz"]["run"]:
             counts="results/count/counts-aggregated.tsv",
             drugz="resources/drugz",
         output:
-            "results/drugz/{mcomparison}.txt"
+            report("results/drugz/{mcomparison}.txt", caption="../report/drugz.rst", category="DrugZ", subcategory="{mcomparison}", labels={"Comparison":"{mcomparison}", "Figure":"DrugZ output"})
         params:
             test=lambda wc, output: wc.mcomparison.split("_vs_")[0].replace("-", ","),
             control=lambda wc, output: wc.mcomparison.split("_vs_")[1].replace("-", ","),
