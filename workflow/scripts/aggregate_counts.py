@@ -9,7 +9,7 @@ GENE_sgGENE_1, etc
 '''
 
 # Prepare data frame with gene and sgRNA names
-fasta = pd.read_csv(snakemake.input["fasta"], header=None)
+fasta = pd.read_csv(snakemake.input["fa"], header=None)
 df = fasta[fasta[0].str.contains(">")].copy()
 df.loc[:,0] = fasta.loc[:,0].str.replace(">", "", regex=False)
 df.columns = ["sgRNA"]
