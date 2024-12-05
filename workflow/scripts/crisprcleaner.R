@@ -9,14 +9,17 @@ library(CRISPRcleanR)
 
 # Load Snakemake variable
 counts <- read.table(snakemake@input[["counts"]], header = TRUE)
-fasta <- snakemake@params[["fasta"]]
+fasta <- snakemake@input[["fasta"]]
 control.name <- snakemake@params[["control"]]
 test.name <- snakemake@params[["test"]]
-library.annotation <- read.table(snakemake@input[["annotation"]], header = TRUE)
-comparison <- snakemake@wildcards[["mcomparison"]]
+library.annotation <- read_delim(snakemake@params[["lib"]], delim = NULL)
+comparison <- snakemake@wildcards[["bcomparison"]]
 cell.line <- snakemake@params[["cell_line"]]
-corrected.fc.file <- snakemake@output[["corr_fc"]]
+corrected.fc.file <- snakemake@output[["corr_lfc"]]
 corrected.counts <- snakemake@output[["corr_counts"]]
+ceg <- snakemake@params[["ceg"]]
+cneg <- snakemake@params[["cneg"]]
+
 out.dir <- dirname(corrected.fc.file)
 dir.create(out.dir, showWarnings = FALSE)
 
@@ -41,7 +44,7 @@ non.control.columns <- setdiff(3:ncol(counts), control.columns)
 
 # Move control column(s) after 2nd column
 counts <- counts %>%
-  select(1, 2, control.columns, all_of(non.control.columns))
+  select(1, 2, all_of(control.columns), all_of(non.control.columns))
 
 # Load fasta file and create library annotation file
 sequences <- read.table(fasta, 
@@ -52,11 +55,11 @@ names <- read.table(fasta, header = FALSE) %>%
   filter(grepl("^>", V1)) %>%
   # Remove ">" from the beginning of the line
   mutate(V1 = gsub("^>", "", V1))
-  
+
 full.annotations <- data.frame(CODE = names$V1, seq = sequences$V1) %>%
   # Create GENE column by removing everything after the first underscore
-  mutate(GENES = gsub("_.*", "", CODE)) %>%
-  left_join(library.annotation, by = c("seq", "GENES")) %>%
+  #mutate(GENES = gsub("_.*", "", CODE)) %>%
+  left_join(library.annotation, by = "seq") %>%
   # Row names as CODE
   column_to_rownames(var = "CODE") %>%
   mutate(CODE = rownames(.)) %>%
@@ -101,23 +104,36 @@ write.table(correctedFCs$corrected_logFCs,
             quote = FALSE)
 
 # Save corrected fold changes in BAGEL2 format
+print("Creating BAGEL2 format LFC table...")
 lfc.bagel <- correctedFCs$corrected_logFCs %>%
-  # column CODE with rownames
   mutate(CODE = rownames(.)) %>%
-  # keep CODE, corrrectedFC, genes columns
-  select(CODE, correctedFC, genes) %>%
-  # Add seq column from full.annotations with join
-  left_join(full.annotations %>% select(seq, CODE), by = "CODE") %>%
-  # Rename columns: seq to REAGENT_ID, correctedFC to test.name variable
-  rename(REAGENT_ID = seq,
-         GENE = genes,
-         !!test.name := correctedFC) %>%
-  # Remove CODE column and reorder other columns: REAGENT_ID, GENE, test.name
+  select(CODE, correctedFC, -genes) %>%
+  left_join(full.annotations %>% select(seq, CODE, GENES), by = "CODE") %>%
+  rename_with(~ "GENE", GENES, .cols = GENES) %>%
+  rename_with(~ "REAGENT_ID", seq, .cols = seq) %>%
+  rename_with(~ test.name, everything(), .cols = correctedFC) %>%
   select(-CODE) %>%
   select(REAGENT_ID, GENE, !!test.name)
 
+print("Saving BAGEL2 format LFC table...")
+write.table(lfc.bagel, 
+            corrected.fc.file, 
+            sep = "\t", 
+            quote = FALSE, 
+            row.names = FALSE)
 
 # Prepare data for QC plots
+if (ceg == "none") {
+  data(BAGEL_essential)
+} else {
+  BAGEL_essential <- scan(ceg, what = "character")
+}
+if (cneg == "none") {
+  data(BAGEL_nonEssential)
+} else {
+  BAGEL_nonEssential <- scan(cneg, what = "character")
+}
+
 FCs <- correctedFCs$corrected_logFCs$avgFC
 names(FCs) <- rownames(correctedFCs$corrected_logFCs)
 BAGEL_essential_sgRNAs <- ccr.genes2sgRNAs(full.annotations, BAGEL_essential)
