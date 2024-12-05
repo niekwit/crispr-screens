@@ -12,4 +12,4 @@ rule cutadapt:
     resources:
         runtime=25
     wrapper:
-        "v5.1.0/bio/cutadapt/se"
+        "v5.2.1/bio/cutadapt/se"

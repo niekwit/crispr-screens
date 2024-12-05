@@ -13,7 +13,7 @@ rule fastqc:
         runtime=15,
         mem_mb = 2048,
     wrapper:
-        "v5.1.0/bio/fastqc"
+        "v5.2.1/bio/fastqc"
 
 
 rule multiqc:
@@ -30,7 +30,7 @@ rule multiqc:
     log:
         "logs/multiqc/multiqc.log"
     wrapper:
-        "v5.1.0/bio/multiqc"
+        "v5.2.1/bio/multiqc"
 
 
 rule plot_alignment_rate:
