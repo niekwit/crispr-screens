@@ -13,10 +13,10 @@ fasta <- snakemake@input[["fasta"]]
 control.name <- snakemake@params[["control"]]
 test.name <- snakemake@params[["test"]]
 library.annotation <- read_delim(snakemake@params[["lib"]], delim = NULL)
-comparison <- snakemake@wildcards[["bcomparison"]]
+comparison <- snakemake@wildcards[["comparison"]]
 cell.line <- snakemake@params[["cell_line"]]
 corrected.fc.file <- snakemake@output[["corr_lfc"]]
-corrected.counts <- snakemake@output[["corr_counts"]]
+corrected.counts.file <- snakemake@output[["corr_counts"]]
 ceg <- snakemake@params[["ceg"]]
 cneg <- snakemake@params[["cneg"]]
 
@@ -98,8 +98,8 @@ correctedCounts <- ccr.correctCounts(comparison,
                                      OutDir = out.dir)
 
 # Count table already in MAGeCK format
-write.table(correctedFCs$corrected_logFCs, 
-            corrected.counts, 
+write.table(correctedCounts, 
+            corrected.counts.file, 
             sep = "\t", 
             quote = FALSE)
 
