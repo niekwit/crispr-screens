@@ -101,7 +101,8 @@ correctedCounts <- ccr.correctCounts(comparison,
 write.table(correctedCounts, 
             corrected.counts.file, 
             sep = "\t", 
-            quote = FALSE)
+            quote = FALSE,
+            row.names = FALSE)
 
 # Save corrected fold changes in BAGEL2 format
 print("Creating BAGEL2 format LFC table...")
