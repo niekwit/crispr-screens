@@ -34,7 +34,7 @@ validate(stats, "schemas/stats.schema.yaml")
 
 # Get wildcard values
 SAMPLES = sample_names()
-M_COMPARISONS, B_COMPARISONS = comparisons()
+COMPARISONS = comparisons()
 CNV = cnv()
 PATHWAY_DATA = pathway_data()
 DBS = config["stats"]["pathway_analysis"]["dbs"]
