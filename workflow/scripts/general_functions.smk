@@ -15,26 +15,26 @@ def targets():
     if config["stats"]["mageck"]["run"]:
         # Extend targets with MAGeCK files    
         TARGETS.extend([
-            expand("results/plots/mageck/{mcomparison}/{cnv}/{mcomparison}.lfc_pos.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
-            expand("results/plots/mageck/{mcomparison}/{cnv}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
-            expand("results/plots/mageck/{mcomparison}/{cnv}/{mcomparison}.sgrank.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
+            expand("results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf", comparison=COMPARISONS, cnv=CNV),
+            expand("results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf", comparison=COMPARISONS, cnv=CNV),
+            expand("results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank.pdf", comparison=COMPARISONS, cnv=CNV),
         ])
         if config["stats"]["pathway_analysis"]["run"]:
             TARGETS.extend([
-                expand("results/mageck/{mcomparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.csv", mcomparison=M_COMPARISONS, cnv=CNV, pathway_data=PATHWAY_DATA, dbs=DBS),
-                expand("results/plots/mageck/{mcomparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.pdf", mcomparison=M_COMPARISONS, cnv=CNV, dbs=DBS, pathway_data=PATHWAY_DATA),
+                expand("results/mageck/{comparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.csv", comparison=COMPARISONS, cnv=CNV, pathway_data=PATHWAY_DATA, dbs=DBS),
+                expand("results/plots/mageck/{comparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.pdf", comparison=COMPARISONS, cnv=CNV, dbs=DBS, pathway_data=PATHWAY_DATA),
             ])
     if config["stats"]["bagel2"]["run"]:
-        if B_COMPARISONS:
+        if COMPARISONS:
             # Extend targets with BAGEL2 files 
             TARGETS.extend([
-                expand("results/plots/bagel2/{bcomparison}/{bcomparison}.bf.pdf", bcomparison=B_COMPARISONS),
-                expand("results/plots/bagel2/{bcomparison}/{bcomparison}.pr.pdf", bcomparison=B_COMPARISONS),
+                expand("results/plots/bagel2/{comparison}/{comparison}.bf.pdf", comparison=COMPARISONS),
+                expand("results/plots/bagel2/{comparison}/{comparison}.pr.pdf", comparison=COMPARISONS),
             ])
     if config["stats"]["drugz"]["run"]:
         # Extend targets with DrugZ files 
         TARGETS.extend([
-            expand("results/drugz/{bcomparison}.txt", bcomparison=B_COMPARISONS),
+            expand("results/drugz/{comparison}.txt", comparison=COMPARISONS),
         ])
     return TARGETS
 
@@ -163,7 +163,8 @@ def comparisons():
 
 
 def mageck_control():
-    """Load control genes for MAGeCK
+    """
+    Load control genes for MAGeCK
     """
     if config["stats"]["mageck"]["mageck_control_genes"] == "all": # Use all genes as controls
         control = ""
@@ -185,19 +186,25 @@ def extra_mageck_args():
     # Base args
     args = config["stats"]["mageck"]["extra_mageck_arguments"]
     if not config["stats"]["mageck"]["disable_crisprcleanr"]:
-        args += " --norm-method none" # Disable normalisation in MAGeCK
+        args += " --norm-method none " # Disable normalisation in MAGeCK
+    else:
+        args += "--normcounts-to-file "
     return args
 
 
-def mageck_input():
+def mageck_input(wildcards):
     """
     Defines MAGeCK rule input file(s) 
     """
-    # Base input
-    input_data = {"counts": "results/count/counts-aggregated.tsv"}
+    input_data = {}
 
     if config["stats"]["mageck"]["apply_CNV_correction"]:
         input_data["cnv"] = "resources/cnv_data.txt"
+
+    if config["stats"]["mageck"]["disable_crisprcleanr"]:
+        input_data["counts"] = "results/count/counts-aggregated.tsv"
+    else:
+        input_data["counts"] = "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(wildcards=wildcards)
 
     return input_data
 
@@ -213,7 +220,7 @@ def drugz_input(wildcards):
     if config["stats"]["drugz"]["disable_crisprcleanr"]:
         input_data["counts"] = "results/count/counts-aggregated.tsv"
     else:
-        input_data["counts"] = "results/count/crisprcleanr/corrected_counts_{wildcards.mcomparison}.tsv".format(wildcards=wildcards)
+        input_data["counts"] = "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(wildcards=wildcards)
     
     return input_data
 
