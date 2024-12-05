@@ -15,26 +15,26 @@ def targets():
     if config["stats"]["mageck"]["run"]:
         # Extend targets with MAGeCK files    
         TARGETS.extend([
-            expand("results/mageck_plots/{mcomparison}/{cnv}/{mcomparison}.lfc_pos.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
-            expand("results/mageck_plots/{mcomparison}/{cnv}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
-            expand("results/mageck_plots/{mcomparison}/{cnv}/{mcomparison}.sgrank.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
+            expand("results/plots/mageck/{mcomparison}/{cnv}/{mcomparison}.lfc_pos.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
+            expand("results/plots/mageck/{mcomparison}/{cnv}/{mcomparison}.lfc_neg.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
+            expand("results/plots/mageck/{mcomparison}/{cnv}/{mcomparison}.sgrank.pdf", mcomparison=M_COMPARISONS, cnv=CNV),
         ])
         if config["stats"]["pathway_analysis"]["run"]:
             TARGETS.extend([
                 expand("results/mageck/{mcomparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.csv", mcomparison=M_COMPARISONS, cnv=CNV, pathway_data=PATHWAY_DATA, dbs=DBS),
-                expand("results/mageck_plots/{mcomparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.pdf", mcomparison=M_COMPARISONS, cnv=CNV, dbs=DBS, pathway_data=PATHWAY_DATA),
+                expand("results/plots/mageck/{mcomparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.pdf", mcomparison=M_COMPARISONS, cnv=CNV, dbs=DBS, pathway_data=PATHWAY_DATA),
             ])
     if config["stats"]["bagel2"]["run"]:
         if B_COMPARISONS:
             # Extend targets with BAGEL2 files 
             TARGETS.extend([
-                expand("results/bagel2_plots/{bcomparison}/{bcomparison}.bf.pdf", bcomparison=B_COMPARISONS),
-                expand("results/bagel2_plots/{bcomparison}/{bcomparison}.pr.pdf", bcomparison=B_COMPARISONS),
+                expand("results/plots/bagel2/{bcomparison}/{bcomparison}.bf.pdf", bcomparison=B_COMPARISONS),
+                expand("results/plots/bagel2/{bcomparison}/{bcomparison}.pr.pdf", bcomparison=B_COMPARISONS),
             ])
     if config["stats"]["drugz"]["run"]:
         # Extend targets with DrugZ files 
         TARGETS.extend([
-            expand("results/drugz/{mcomparison}.txt", mcomparison=M_COMPARISONS),
+            expand("results/drugz/{bcomparison}.txt", bcomparison=B_COMPARISONS),
         ])
     return TARGETS
 
@@ -147,31 +147,19 @@ def sample_names():
 
 def comparisons():
     """
-    Load comparisons for MAGeCK and/or BAGEL2
+    Load comparisons for MAGeCK and BAGEL2
     """
-    COMPARISONS = pd.read_csv("config/stats.csv")
-    M_COMPARISONS = COMPARISONS[["test","control"]].agg('_vs_'.join, axis=1).tolist()
+    CSV = pd.read_csv("config/stats.csv")
+    COMPARISONS = CSV[["test","control"]].agg('_vs_'.join, axis=1).tolist()
     
-    M_COMPARISONS = [x.replace(";","-") for x in M_COMPARISONS] # snakemake report does not support ; in filenames
+    COMPARISONS = [x.replace(";","-") for x in COMPARISONS] # snakemake report does not support ; in filenames
 
     if "--paired" in config["stats"]["mageck"]["extra_mageck_arguments"]:
         # Remove comparisons with unequal number of test and control samples
         # i.e. the number of - is not zero or an even number
-        M_COMPARISONS = [x for x in M_COMPARISONS if x.count("-") % 2 == 0]
-
-    # Get comparisons for BAGEL2
-    B_COMPARISONS = COMPARISONS[COMPARISONS["bagel2"] == "y"]
-    
-    if len(B_COMPARISONS) != 0:
-        B_COMPARISONS = B_COMPARISONS[["test","control"]].agg('_vs_'.join, axis=1).tolist()
-        B_COMPARISONS = [x.replace(";","-") for x in B_COMPARISONS]
-    
-        # Remove comparisons with pooled control samples (not supported by BAGEL2)
-        B_COMPARISONS = [x for x in B_COMPARISONS if not "-" in x.split("_vs_")[1]]
-    else:
-        B_COMPARISONS = None
-                
-    return M_COMPARISONS, B_COMPARISONS
+        COMPARISONS = [x for x in COMPARISONS if x.count("-") % 2 == 0]
+                    
+    return COMPARISONS
 
 
 def mageck_control():
@@ -187,7 +175,19 @@ def mageck_control():
         control = f"--control-gene {file}" 
         
     return control
-  
+
+
+def extra_mageck_args():
+    """
+    Defines extra arguments for MAGeCK, including disabling normalisation 
+    if CRISPRcleanR is used
+    """
+    # Base args
+    args = config["stats"]["mageck"]["extra_mageck_arguments"]
+    if not config["stats"]["mageck"]["disable_crisprcleanr"]:
+        args += " --norm-method none" # Disable normalisation in MAGeCK
+    return args
+
 
 def mageck_input():
     """
@@ -199,6 +199,22 @@ def mageck_input():
     if config["stats"]["mageck"]["apply_CNV_correction"]:
         input_data["cnv"] = "resources/cnv_data.txt"
 
+    return input_data
+
+
+def drugz_input(wildcards):
+    """
+    Defines DrugZ rule input file(s) 
+    
+    """
+    # Base input
+    input_data = {"drugz": "resources/drugz"}
+    
+    if config["stats"]["drugz"]["disable_crisprcleanr"]:
+        input_data["counts"] = "results/count/counts-aggregated.tsv"
+    else:
+        input_data["counts"] = "results/count/crisprcleanr/corrected_counts_{wildcards.mcomparison}.tsv".format(wildcards=wildcards)
+    
     return input_data
 
 
