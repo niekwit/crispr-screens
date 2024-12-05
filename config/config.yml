@@ -29,7 +29,8 @@ stats:
   
   mageck:
     run: True # Perform mageck analysis
-    disable_crisprcleanr: True # Disable crisprcleanr correction of counts
+    # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
+    disable_crisprcleanr: True 
     extra_mageck_arguments: "" 
     mageck_control_genes: all # All or file with control genes
     fdr: 0.25 # FDR threshold for downstream mageck analysis
@@ -38,7 +39,8 @@ stats:
   
   drugz:
     run: False # Perform drugZ analysis
-    disable_crisprcleanr: True # Disable crisprcleanr correction of counts
+    # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
+    disable_crisprcleanr: True
     extra: "" # Extra arguments for drugZ
 
   pathway_analysis: 
