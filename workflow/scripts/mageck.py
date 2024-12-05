@@ -6,7 +6,7 @@ log = snakemake.log_fmt_shell(stdout=True, stderr=True)
 config = snakemake.config
 control = snakemake.params["control"]
 extra = snakemake.params["extra"]
-comparison = snakemake.wildcards["mcomparison"]
+comparison = snakemake.wildcards["comparison"]
 count_table = snakemake.input["counts"]
 dir_name = snakemake.params["dir_name"]
 
@@ -31,7 +31,6 @@ control_sample = comparison.split("_vs_")[1].replace("-", ",")
 
 shell(
     "mageck test "
-    "--normcounts-to-file "
     "-k {count_table} "
     "-t {test_sample} "
     "-c {control_sample} "
