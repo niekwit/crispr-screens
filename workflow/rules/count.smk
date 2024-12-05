@@ -87,33 +87,33 @@ rule normalise_count_table:
     script:
         "../scripts/normalise_count_table.py"
 
-
-rule crisprcleanr:
-    input:
-        counts="results/count/counts-aggregated.tsv",
-        fasta=fasta,
-    output:
-        # Input for MAGeCK/DrugZ (if run)
-        corr_counts="results/count/crisprcleanr/corrected_counts_{comparison}.tsv",
-        # Input for BAGEL2
-        corr_lfc="results/count/crisprcleanr/corrected_lfc_{comparison}.foldchange",
-        # QC plots
-        roc="results/plots/crisprcleanr/roc_{comparison}.pdf",
-        pr="results/plots/crisprcleanr/pr_{comparison}.pdf",
-        drnk="results/plots/crisprcleanr/depletion_rank_{comparison}.pdf",
-    params:
-        lib_name=config["stats"]["crisprcleanr"]["library_name"],
-        lib=config["stats"]["crisprcleanr"]["library_file"],
-        control=lambda wc, output: wc.comparison.split("_vs_")[1].replace("-", ","),
-        test=lambda wc, output: wc.comparison.split("_vs_")[0].replace("-", ","),
-        ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
-        cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"]
-    conda:
-        "../envs/stats.yaml"
-    threads: 2
-    resources:
-        runtime=30
-    log:
-        "logs/count/crisprcleanr_{comparison}.log"
-    script:
-        "../scripts/crisprcleaner.R"
+if config["stats"]["bagel2"]["run"] or not config["stats"]["mageck"]["disable_crispr_cleanr"] and not config["stats"]["mageck"]["disable_crispr_cleanr"] config["stats"]["mageck"]["disable_crispr_cleanr"]
+    rule crisprcleanr:
+        input:
+            counts="results/count/counts-aggregated.tsv",
+            fasta=fasta,
+        output:
+            # Input for MAGeCK/DrugZ (if run)
+            corr_counts="results/count/crisprcleanr/corrected_counts_{comparison}.tsv",
+            # Input for BAGEL2
+            corr_lfc="results/count/crisprcleanr/corrected_lfc_{comparison}.foldchange",
+            # QC plots
+            roc="results/plots/crisprcleanr/roc_{comparison}.pdf",
+            pr="results/plots/crisprcleanr/pr_{comparison}.pdf",
+            drnk="results/plots/crisprcleanr/depletion_rank_{comparison}.pdf",
+        params:
+            lib_name=config["stats"]["crisprcleanr"]["library_name"],
+            lib=config["stats"]["crisprcleanr"]["library_file"],
+            control=lambda wc, output: wc.comparison.split("_vs_")[1].replace("-", ","),
+            test=lambda wc, output: wc.comparison.split("_vs_")[0].replace("-", ","),
+            ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
+            cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"]
+        conda:
+            "../envs/stats.yaml"
+        threads: 2
+        resources:
+            runtime=30
+        log:
+            "logs/count/crisprcleanr_{comparison}.log"
+        script:
+            "../scripts/crisprcleaner.R"
