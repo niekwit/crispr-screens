@@ -2,9 +2,11 @@ import logging
 import pandas as pd
 import numpy as np
 from Bio.Seq import Seq
+from Bio import Align
 import pyranges as pr
 import pyfaidx as px
 from tqdm import tqdm
+import concurrent.futures
 
 """
 Annotate each sgRNA with:
@@ -37,39 +39,16 @@ sequences = []
 
 genes_not_found = []
 
-for sgrna in tqdm(sgrnas.keys()):
-    # Get gene name
+def process_sgrna(sgrna):
     gene = sgrna.split("_")[0]
-    genes.append(gene)
-    
-    # Subset GTF for gene
     gene_gtf = GTF[GTF["gene_name"] == gene]
     if len(gene_gtf) == 0:
-        genes_not_found.append(gene)
-        # Add NaN values to all lists
-        chromosomes.append(np.nan)
-        strands.append(np.nan)
-        sequences.append(np.nan)
-        sg_starts.append(np.nan)
-        sg_ends.append(np.nan)
-        exon_numbers.append(np.nan)
-        continue
-        
-    #assert len(gene_gtf) > 0, f"Gene {gene} not found in GTF"
+        return (gene, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, True)
     
-    # Get chromosome
     chrom = gene_gtf["Chromosome"].values[0]
-    chromosomes.append(chrom)
-    
-    # Get strand
     strand = gene_gtf["Strand"].values[0]
-    strands.append(strand)
-    
-    # Get sgRNA sequence
     seq = sgrnas[sgrna][0:20].seq
-    sequences.append(seq)
-        
-    # Get start and end of sgRNA sequence inside gene
+    
     gene_start = gene_gtf[gene_gtf["Feature"] == "gene"]["Start"].values
     assert len(gene_start) == 1, f"Gene {gene} has multiple start positions: {gene_start}"
     gene_start = gene_start[0]
@@ -78,59 +57,38 @@ for sgrna in tqdm(sgrnas.keys()):
     gene_end = gene_end[0]
     gene_seq = FASTA[chrom][gene_start:gene_end].seq
     
-    # Find start and end of sgRNA sequence inside gene
     sg_start = gene_seq.find(seq)
-        
-    if sg_start == -1:
-        #logging.warning(f"Could not find sgRNA sequence {seq} in gene {gene}")
-        seq = str(Seq(seq).reverse_complement())
+    if (sg_start == -1):
+        gene_seq = str(Seq(gene_seq).reverse_complement())
         sg_start = gene_seq.find(seq)
         if sg_start == -1:
             raise ValueError(f"Could not find sgRNA sequence {seq} in gene {gene}")
     sg_end = sg_start + len(seq)
-    # Convert coordinates inside gene to genome coordinates
-    # Also convert to 1-based coordinates
     sg_start = gene_start + sg_start + 1
-    sg_starts.append(sg_start)
     sg_end = gene_start + sg_end + 1
+    
+    #return (gene, chrom, sg_start, sg_end, strand, np.nan, seq)
+    return (gene, chrom, sg_start, sg_end, strand, np.nan, seq, False)
+
+# Set up parallel processing
+threads = snakemake.threads
+with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+    sgrna_keys = list(sgrnas.keys())
+    results = list(tqdm(executor.map(process_sgrna, sgrna_keys), total=len(sgrna_keys)))
+
+for result in results:
+    gene, chrom, sg_start, sg_end, strand, exon_number, seq = result
+    gene, chrom, sg_start, sg_end, strand, exon_number, seq, gene_not_found = result
+    if gene_not_found:
+        genes_not_found.append(gene)
+    chromosomes.append(chrom)
+    sg_starts.append(sg_start)
     sg_ends.append(sg_end)
+    strands.append(strand)
+    exon_numbers.append(exon_number)
+    sequences.append(seq)
     
-    # Get exon number sgRNA is in:
-    # Get all exons of gene
-    # Check which exon overlaps with sgRNA targeting coordinates
-    # NOTE: sgRNA may also be part in intron
-    exons = GTF[GTF["gene_name"] == gene]
-    exons = exons[exons["Feature"] == "exon"]
-    
-    # Check for sgRNA-exon overlap within exon 
-    exons_within = exons[(exons["Start"] <= sg_start) & (exons["End"] >= sg_end)]
-    
-    # Check for sgRNA-exon partial overlap upstream
-    exons_partial_upstream = exons[(exons["Start"] >= sg_start) & ((exons["End"] >= sg_end) & (exons["Start"] <= sg_end))] 
-    
-    # Check for sgRNA-exon partial overlap downstream
-    exons_partial_downstream = exons[(exons["Start"] <= sg_start) & ((exons["End"] <= sg_end) & (exons["End"] >= sg_start))]
-    
-    # Combine all exons
-    all_exons = pd.concat([exons_within, exons_partial_upstream, exons_partial_downstream])
-    found_exons = all_exons["exon_number"].values
-    if len(all_exons["exon_id"].values) == 1:
-        exon_numbers.append(found_exons[0])
-    else:
-        # Find canonical exon
-        canonical_exon = all_exons[all_exons["tag"] == "Ensembl_canonical"]
-        if len(canonical_exon) == 1:
-            exon_numbers.append(canonical_exon["exon_number"].values[0])
-        else:
-            # Check if all exon_numbers are identical
-            if len(set(found_exons)) == 1:
-                exon_numbers.append(found_exons[0])
-            else:
-                # Just pick the first exon
-                #logging.warning(f"sgRNA {sgrna} targets multiple exons: {found_exons} (picked first)")
-                #exon_numbers.append(found_exons[0])
-                raise ValueError(f"sgRNA {sgrna} targets multiple exons: {found_exons}")
-       
+           
 # Create data frame
 df = pd.DataFrame({
     "CODE": list(sgrnas.keys()),
