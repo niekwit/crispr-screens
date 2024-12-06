@@ -185,7 +185,7 @@ def extra_mageck_args():
     """
     # Base args
     args = config["stats"]["mageck"]["extra_mageck_arguments"]
-    if not config["stats"]["mageck"]["disable_crisprcleanr"]:
+    if config["stats"]["mageck"]["apply_crisprcleanr"]:
         args += " --norm-method none " # Disable normalisation in MAGeCK
     else:
         args += "--normcounts-to-file "
