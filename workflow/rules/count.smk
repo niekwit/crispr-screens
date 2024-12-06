@@ -87,7 +87,7 @@ rule normalise_count_table:
     script:
         "../scripts/normalise_count_table.py"
 
-if config["stats"]["bagel2"]["run"] or not config["stats"]["mageck"]["disable_crispr_cleanr"] and not config["stats"]["mageck"]["disable_crispr_cleanr"] config["stats"]["mageck"]["disable_crispr_cleanr"]
+if config["stats"]["bagel2"]["run"] or (not config["stats"]["mageck"]["disable_crispr_cleanr"] and config["stats"]["drugz"]["disable_crispr_cleanr"]):
     rule crisprcleanr:
         input:
             counts="results/count/counts-aggregated.tsv",
