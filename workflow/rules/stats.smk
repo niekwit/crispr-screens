@@ -39,7 +39,6 @@ if config["stats"]["mageck"]["run"]:
             rnw="results/mageck/{comparison}/{cnv}/{comparison}_summary.Rnw",
             gs=report("results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt", caption="../report/mageck.rst", category="MAGeCK"),
             ss="results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
-            norm="results/mageck/{comparison}/{cnv}/{comparison}.normalized.txt",
         params:
             control=mageck_control(),
             dir_name=lambda wc, output: os.path.dirname(output["rnw"]),
@@ -90,27 +89,25 @@ if config["stats"]["mageck"]["run"]:
             "../scripts/sgrank_plot.R"
 
     
-    rule pathway_analysis:
+    rule gprofiler:
         input:
             txt="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
         output:
-            csv=expand("results/mageck/{{comparison}}/{{cnv}}/pathway_analysis/{dbs}_{pathway_data}.csv", dbs=DBS, pathway_data=PATHWAY_DATA),
-            plots=report(expand("results/plots/mageck/{{comparison}}/{{cnv}}/pathway_analysis/{dbs}_{pathway_data}.pdf", dbs=DBS, pathway_data=PATHWAY_DATA), caption="../report/pathway_analysis.rst", category="Pathway analysis MAGeCK plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "pathway analysis"})
+            csv="results/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",
+            pdf=report("results/plots/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf", caption="../report/pathway_analysis.rst", category="gprofiler plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "pathway analysis"})
         params:
-            dbs=DBS,
             fdr=config["stats"]["mageck"]["fdr"],
             top_genes=config["stats"]["pathway_analysis"]["top_genes"],
             data_type=PATHWAY_DATA,
-            terms=config["stats"]["pathway_analysis"]["terms"],
         threads: 1
         resources:
             runtime=5
         conda:
             "../envs/stats.yaml"
         log:
-            "logs/pathway_analysis_{comparison}_{cnv}.log"
+            "logs/gprofiler/{comparison}_{cnv}_{pathway_data}.log"
         script:
-            "../scripts/pathway_analysis.R"
+            "../scripts/gprofiler.R"
     
 if config["stats"]["bagel2"]["run"]:
     if COMPARISONS:
