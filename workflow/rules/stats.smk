@@ -77,7 +77,7 @@ if config["stats"]["mageck"]["run"]:
         output:
             report("results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank.pdf", caption="../report/sgrank.rst", category="MAGeCK plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "sgrank plot"})
         params:
-            fdr=config["stats"]["mageck"]["fdr"],
+            fdr=config["stats"]["pathway_analysis"]["fdr"],
         threads: 1
         resources:
             runtime=5
@@ -93,19 +93,20 @@ if config["stats"]["mageck"]["run"]:
         input:
             txt="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
         output:
-            csv="results/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",
-            pdf=report("results/plots/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf", caption="../report/pathway_analysis.rst", category="gprofiler plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "pathway analysis"})
+            csv="results/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",
+            pdf=report("results/plots/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf", caption="../report/pathway_analysis.rst", category="gprofiler plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "pathway analysis"})
         params:
-            fdr=config["stats"]["mageck"]["fdr"],
+            fdr=config["stats"]["pathway_analysis"]["fdr"],
             top_genes=config["stats"]["pathway_analysis"]["top_genes"],
             data_type=PATHWAY_DATA,
+            data="mageck"
         threads: 1
         resources:
             runtime=5
         conda:
             "../envs/stats.yaml"
         log:
-            "logs/gprofiler/{comparison}_{cnv}_{pathway_data}.log"
+            "logs/gprofiler/mageck/{comparison}_{cnv}_{pathway_data}.log"
         script:
             "../scripts/gprofiler.R"
     
@@ -203,6 +204,27 @@ if config["stats"]["bagel2"]["run"]:
                 "../scripts/plot_pr.R"
 
 
+        rule gprofiler:
+            input:
+                txt="results/bagel2/{comparison}/{comparison}.pr",
+            output:
+                csv="results/bagel2/gprofiler/{comparison}/{pathway_data}.csv",
+                pdf=report("results/plots/bagel2/gprofiler/{comparison}/{pathway_data}.pdf", caption="../report/pathway_analysis.rst", category="gprofiler plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "pathway analysis"})
+            params:
+                fdr=config["stats"]["pathway_analysis"]["fdr"],
+                top_genes=config["stats"]["pathway_analysis"]["top_genes"],
+                data_type=PATHWAY_DATA,
+                data="bagel2"
+            threads: 1
+            resources:
+                runtime=5
+            conda:
+                "../envs/stats.yaml"
+            log:
+                "logs/gprofiler/bagel2/{comparison}_{pathway_data}.log"
+            script:
+                "../scripts/gprofiler.R"
+
 if config["stats"]["drugz"]["run"]:
     rule install_drugz:
         output:
@@ -241,3 +263,26 @@ if config["stats"]["drugz"]["run"]:
             "-x {params.test} "
             "{params.extra} "
             "-o {output} 2> {log} "
+
+    
+    rule gprofiler:
+            input:
+                txt="results/drugz/{comparison}.txt",
+            output:
+                csv="results/drugz/gprofiler/{comparison}/{pathway_data}.csv",
+                pdf=report("results/plots/drugz/gprofiler/{comparison}/{pathway_data}.pdf", caption="../report/pathway_analysis.rst", category="gprofiler plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "pathway analysis"})
+            params:
+                fdr=config["stats"]["pathway_analysis"]["fdr"],
+                top_genes=config["stats"]["pathway_analysis"]["top_genes"],
+                data_type=PATHWAY_DATA,
+                data="bagel2"
+            threads: 1
+            resources:
+                runtime=5
+            conda:
+                "../envs/stats.yaml"
+            log:
+                "logs/gprofiler/bagel2/{comparison}_{pathway_data}.log"
+            script:
+                "../scripts/gprofiler.R"
+
