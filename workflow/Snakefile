@@ -40,7 +40,9 @@ fasta, csv = fasta()
 include: "rules/qc.smk"
 include: "rules/trim.smk"
 include: "rules/count.smk"
-include: "rules/stats.smk"
+include: "rules/mageck.smk"
+include: "rules/bagel2.smk"
+include: "rules/drugz.smk"
 
 # Set target rule
 rule all:
