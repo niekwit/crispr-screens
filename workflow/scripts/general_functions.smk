@@ -1,8 +1,10 @@
 import os
 import glob
-import sys
-import re
+import datetime
 import pandas as pd
+from snakemake.utils import min_version, validate
+from snakemake.logging import logger
+from snakemake.shell import shell
 
 def targets():
     TARGETS = [
@@ -21,8 +23,8 @@ def targets():
         ])
         if config["stats"]["pathway_analysis"]["run"]:
             TARGETS.extend([
-                expand("results/mageck/{comparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.csv", comparison=COMPARISONS, cnv=CNV, pathway_data=PATHWAY_DATA, dbs=DBS),
-                expand("results/plots/mageck/{comparison}/{cnv}/pathway_analysis/{dbs}_{pathway_data}.pdf", comparison=COMPARISONS, cnv=CNV, dbs=DBS, pathway_data=PATHWAY_DATA),
+                expand("results/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",pathway_data=PATHWAY_DATA, comparison=COMPARISONS, cnv=CNV),
+                expand("results/plots/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf", pathway_data=PATHWAY_DATA, comparison=COMPARISONS, cnv=CNV),
             ])
     if config["stats"]["bagel2"]["run"]:
         if COMPARISONS:
@@ -40,78 +42,17 @@ def targets():
 
 
 def fasta():
-    fasta = glob.glob("resources/*.*a") # gets both .fa and .fasta files
 
-    # If no fasta file is available, convert csv file to fasta file
-    if len(fasta) == 0:
-        csv = glob.glob("resources/*.csv")
-        
-        try:
-            if len(csv) == 0:
-                print("ERROR: No fasta/csv file in resources directory")
-                sys.exit(1)
-            elif len(csv) > 1:
-                print("ERROR: More than one csv file in resources directory")
-                sys.exit(1)
-            else:
-                csv_to_fasta(csv[0], 
-                            config["csv"]["name_column"], 
-                            config["csv"]["sequence_column"])
-                fasta = glob.glob("resources/*.*a")
-        except KeyError:
-            print("ERROR: No fasta file in resources directory and no csv file information specified in config.yml")
-            sys.exit(1)
+    csv = glob.glob("resources/*.csv")
     
-    # Check that only one fasta file is given in resources directory
-    assert len(fasta) == 1, "ERROR: There should be only one fasta file in the resources folder"
-    
-    # Check if fasta file is correct (same amount of lines starting with and without >)
-    with open(fasta[0], "r") as f:
-        lines = f.readlines()
-        lines_seq = [x for x in lines if not x.startswith(">")]
-        lines_name = [x for x in lines if x.startswith(">")]
-    assert len(lines_seq) == len(lines_name), "Fasta file is not correct"
-    
-    # Check if sgRNA names follow correct format (GENE_sgGENE_number)
-    # Gene names may contain letters, numbers, hyphens, and periods
-    bad_sgrna_names = []
-    for line in lines_name:
-        if not re.match(r">[A-Za-z0-9\-\.]+_sg[A-Za-z0-9\-\.]+_[0-9]+", line):
-            bad_sgrna_names.append(line)
-    if len(bad_sgrna_names) != 0:
-        bad_sgrna_names = "".join(bad_sgrna_names)
-        print(f"ERROR: Incorrect sgRNA names in fasta file (format as GENE_sgGENE_number):\n{bad_sgrna_names}")
-        sys.exit(1)
-
-    return fasta[0]
-
-
-def csv_to_fasta(csv, column_gene, column_seq):
-    """
-    Convert csv file to fasta file. Gene and sequence column numbers must be specified in config.yml.
-    """
-    df = pd.read_csv(csv)
-    fasta = csv.replace(".csv",".fasta")
-    
-    # Enumerate number of sequences per gene in new column in csv
-    df["seq_number"] = df.groupby(df.columns[column_gene - 1]).cumcount() + 1
-    seq_number_loc = df.columns.get_loc("seq_number")
-        
-    # Create sgRNA names
-    sgrna = []
-    for row in zip(df.iloc[:, column_gene - 1], df.iloc[:, seq_number_loc]):
-        sgrna.append(f">{row[0]}_sg{row[0]}_{row[1]}")
-    df["sgrna"] = sgrna
-    
-    # Only keep sgRNA name and sequence columns
-    df = df.iloc[:, [seq_number_loc + 1, column_seq - 1]]
-    
-    # Write fasta file
-    df.to_csv(fasta, 
-              sep="\n", 
-              index=False, 
-              header=False)
-        
+    if len(csv) == 0:
+        raise ValueError("No csv file in resources directory")
+    elif len(csv) > 1:
+        raise ValueError("More than one csv file in resources directory")
+    else:
+        csv = csv[0]
+        return csv.replace(".csv",".fasta"), csv
+       
 
 def cut_adapt_arg(config):
     """
@@ -141,6 +82,19 @@ def sample_names():
     assert len(fastq) != 0, "No fastq files (.fastq.gz) found in reads directory"
     
     sample_names = [os.path.basename(x).replace(".fastq.gz","") for x in fastq]
+    
+    # Check if this matches the samples in stats.csv
+    # Check this now, otherwise it will fail later with MAGeCK
+    stats_csv = pd.read_csv("config/stats.csv")
+    samples = stats_csv["test"].tolist()
+    samples.extend(stats_csv["control"].tolist())
+    
+    not_found = []
+    for sample in samples:
+        if sample not in sample_names:
+            not_found.append(sample)
+    if not_found:
+        raise ValueError(f"Sample(s) {', '.join(not_found)} not found in reads directory")
         
     return sample_names
 
