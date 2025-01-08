@@ -10,8 +10,8 @@ dependencies:
   - r-ggrepel=0.9.4
   - r-ineq=0.2_13
   - r-reshape2=1.4.4
-  - r-enrichr=3.2
   - bioconda::r-crisprcleanr=3.0.0
+  - conda-forge::r-gprofiler2=0.2.3
   - python=3.10.12
   - mageck=0.5.9
   - numpy<1.24
