@@ -1,9 +1,4 @@
-import pandas as pd
-import datetime
 include: "scripts/general_functions.smk"
-from snakemake.utils import min_version, validate
-from snakemake.logging import logger
-from snakemake.shell import shell
 
 # Workflow version
 VERSION = "v0.8.0" 
@@ -37,10 +32,9 @@ SAMPLES = sample_names()
 COMPARISONS = comparisons()
 CNV = cnv()
 PATHWAY_DATA = pathway_data()
-DBS = config["stats"]["pathway_analysis"]["dbs"]
 
-# Load fasta
-fasta = fasta()
+# Get fasta/csv paths
+fasta, csv = fasta()
 
 # Import rules
 include: "rules/qc.smk"
