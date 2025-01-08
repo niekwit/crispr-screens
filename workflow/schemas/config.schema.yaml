@@ -11,15 +11,19 @@ properties:
       sg_length:
         type: integer
         description: Length of sgRNA sequence
+      
       vector:
         type: string
         description: Vector sequence to be removed from reads (N for none)
+      
       left_trim:
         type: integer
         description: Trim n bases from 5' end of reads
+      
       species:
         type: string
         description: Species of the reference genome
+    
     required:
       - sg_length
       - vector
@@ -29,12 +33,19 @@ properties:
   csv:
     type: object
     properties:
+      
       name_column:
         type: integer
         description: Column number with gene names
+      
       sequence_column:
         type: integer
         description: Column number with sgRNA sequences
+
+      gene_column:
+        type: integer
+        description: Column number with gene names
+    
     required:
       - name_column
       - sequence_column
@@ -52,15 +63,19 @@ properties:
           run:
             type: boolean
             description: Perform bagel2 analysis
+          
           custom_gene_lists:
             type: object
             properties:
+              
               essential_genes:
                 type: string
                 description: Path to custom gene list for bagel2 analysis
+              
               non_essential_genes:
                 type: string
                 description: Path to custom gene list for bagel2 analysis
+        
         required:
           - run
           - custom_gene_lists
@@ -71,21 +86,26 @@ properties:
           run:
             type: boolean
             description: Perform mageck analysis
+          
           extra_mageck_arguments:
             type: string
             description: Extra arguments for mageck
           mageck_control_genes:
             type: string
             description: All or path to file with control genes
+          
           fdr:
             type: number
             description: FDR threshold for downstream mageck analysis
+          
           apply_CNV_correction:
             type: boolean
             description: Apply CNV correction to mageck results
+          
           cell_line:
             type: string
             description: Cell line for CNV correction
+        
         required:
           - run
           - extra_mageck_arguments
@@ -100,9 +120,11 @@ properties:
           run:
             type: boolean
             description: Perform drugZ analysis
+          
           extra:
             type: string
             description: Extra arguments for drugZ
+        
         required:
           - run
           - extra
@@ -113,26 +135,19 @@ properties:
           run:
             type: boolean
             description: Perform pathway analysis on mageck results
+          
           data:
             type: string
             description: enriched, depleted, or both
-          dbs:
-            type: array
-            items:
-              type: string
-            description: List of databases to use for pathway analysis
+
           top_genes:
             type: integer
             description: Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
-          terms:
-            type: integer
-            description: Number of terms to plot
+
         required:
           - run
           - data
-          - dbs
           - top_genes
-          - terms
 
 required:
   - lib_info
