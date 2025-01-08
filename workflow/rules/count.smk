@@ -1,3 +1,16 @@
+rule create_fasta:
+    input:
+        csv=csv,
+    output:
+        fasta=fasta
+    conda:
+        "../envs/stats.yaml"
+    log:
+        "logs/create_fasta.log"
+    script:
+        "../scripts/csv_to_fasta.py"
+
+
 rule hisat2_index:
     input:
         fasta=fasta,
@@ -58,7 +71,7 @@ rule count:
 rule aggregate_counts:
     input:
         files=expand("results/count/{sample}.guidecounts.txt", sample=SAMPLES),
-        fasta=fasta,
+        csv=csv,
     output:
         "results/count/counts-aggregated.tsv"
     threads: 1
