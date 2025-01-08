@@ -12,7 +12,7 @@ counts <- read.table(snakemake@input[["counts"]], header = TRUE)
 fasta <- snakemake@input[["fasta"]]
 control.name <- snakemake@params[["control"]]
 test.name <- snakemake@params[["test"]]
-library.annotation <- read_delim(snakemake@params[["lib"]], delim = NULL)
+library.name <- snakemake@params[["lib_name"]]
 comparison <- snakemake@wildcards[["comparison"]]
 cell.line <- snakemake@params[["cell_line"]]
 corrected.fc.file <- snakemake@output[["corr_lfc"]]
@@ -46,25 +46,25 @@ non.control.columns <- setdiff(3:ncol(counts), control.columns)
 counts <- counts %>%
   select(1, 2, all_of(control.columns), all_of(non.control.columns))
 
-# Load fasta file and create library annotation file
-sequences <- read.table(fasta, 
-                        header = FALSE,
-                        comment.char = ">")
-names <- read.table(fasta, header = FALSE) %>%
-  # Remove lines not starting with ">"
-  filter(grepl("^>", V1)) %>%
-  # Remove ">" from the beginning of the line
-  mutate(V1 = gsub("^>", "", V1))
-
-full.annotations <- data.frame(CODE = names$V1, seq = sequences$V1) %>%
-  # Create GENE column by removing everything after the first underscore
-  #mutate(GENES = gsub("_.*", "", CODE)) %>%
-  left_join(library.annotation, by = "seq") %>%
-  # Row names as CODE
-  column_to_rownames(var = "CODE") %>%
-  mutate(CODE = rownames(.)) %>%
-  # Remove chr from chromosome name
-  mutate(CHRM = gsub("chr", "", CHRM))
+# Check if library name is in available libraries
+available.libs <- c("AVANA_Library", "Brunello_Library", "GeCKO_Library_v2", "KY_Library_v1.0",
+                    "KY_Library_v1.1", "MiniLibCas9_Library", "Whitehead_Library")
+if (!library.name %in% available.libs) {
+  # Library data not available so load from provided file
+  full.annotations <- read_delim(snakemake@params[["lib"]], delim = NULL)
+  
+  # Check if required columns are present in library file
+  required.columns <- c("seq", "GENES", "CODE", "CHRM", "STARTpos", "ENDpos", "STRAND")
+  if (!all(required.columns %in% colnames(full.annotations))) {
+    stop("Library file does not contain all required columns: ", 
+         paste(setdiff(required.columns, colnames(full.annotations)), collapse = ", "))
+  }
+} else {
+  # Load library data from CRISPRcleanR package
+  data(list = library.name)
+  full.annotations <- get(library.name)
+  rm(list = library.name)
+}
 
 # Determine how many control samples are in the count table
 ncontrols <- length(control.columns)
