@@ -23,8 +23,8 @@ def targets():
         ])
         if config["stats"]["pathway_analysis"]["run"]:
             TARGETS.extend([
-                expand("results/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",pathway_data=PATHWAY_DATA, comparison=COMPARISONS, cnv=CNV),
-                expand("results/plots/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf", pathway_data=PATHWAY_DATA, comparison=COMPARISONS, cnv=CNV),
+                expand("results/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",pathway_data=PATHWAY_DATA, comparison=COMPARISONS, cnv=CNV),
+                expand("results/plots/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf", pathway_data=PATHWAY_DATA, comparison=COMPARISONS, cnv=CNV),
             ])
     if config["stats"]["bagel2"]["run"]:
         if COMPARISONS:
@@ -33,11 +33,21 @@ def targets():
                 expand("results/plots/bagel2/{comparison}/{comparison}.bf.pdf", comparison=COMPARISONS),
                 expand("results/plots/bagel2/{comparison}/{comparison}.pr.pdf", comparison=COMPARISONS),
             ])
+        if config["stats"]["pathway_analysis"]["run"]:
+            TARGETS.extend([
+                expand("results/bagel2/gprofiler/{comparison}/{pathway_data}.csv", pathway_data=PATHWAY_DATA, comparison=COMPARISONS),
+                expand("results/plots/bagel2/gprofiler/{comparison}/{pathway_data}.pdf", pathway_data=PATHWAY_DATA, comparison=COMPARISONS),
+            ])
     if config["stats"]["drugz"]["run"]:
         # Extend targets with DrugZ files 
         TARGETS.extend([
             expand("results/drugz/{comparison}.txt", comparison=COMPARISONS),
         ])
+        if config["stats"]["pathway_analysis"]["run"]:
+            TARGETS.extend([
+                expand("results/drugz/gprofiler/{comparison}/{pathway_data}.csv", pathway_data=PATHWAY_DATA, comparison=COMPARISONS),
+                expand("results/plots/drugz/gprofiler/{comparison}/{pathway_data}.pdf", pathway_data=PATHWAY_DATA, comparison=COMPARISONS),
+            ])
     return TARGETS
 
 
