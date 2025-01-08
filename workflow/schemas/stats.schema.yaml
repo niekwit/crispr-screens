@@ -10,12 +10,7 @@ properties:
     type: string
     pattern: "^[a-zA-Z0-9_;].+$"
     description: Control sample
-  bagel2:
-    type: string
-    enum: ["y", "n"]
-    description: Run BAGEL2 (y/n)
 
 required:
   - test
   - control
-  - bagel2
