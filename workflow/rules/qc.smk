@@ -100,4 +100,4 @@ rule plot_missed_sgrnas:
     conda:
         "../envs/stats.yaml"
     script:
-        "../scripts/missed_sgrnas.R"
+        "../scripts/plot_missed_sgrnas.R"
