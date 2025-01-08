@@ -4,8 +4,11 @@ lib_info:
     left_trim : 0 # Trim n bases from 5' end of reads
     species: human
 
-csv: # If no fasta is available, provide a csv file with sgRNA sequences
-  name_column: 3 # Column number with gene names
+csv: 
+  # If no fasta is available, provide a csv file with sgRNA sequences
+  # 0-based column numbers
+  name_column: 3 # Column number with sgRNA names 
+  gene_column: 1 # Column number with gene names
   sequence_column: 2 # Column number with sgRNA sequences
 
 mismatch: 0 # Mismatches allowed during alignment
@@ -15,8 +18,17 @@ stats:
     # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better
     # It is optional for MAGeCK and DrugZ
     # Path to library file for crisprcleanr with sgRNA annotations
-    # With column names: GENE,seq,CODE,CHRM,STARTpos,ENDpos,EXONE,STRAND
+    # With column names: GENE,seq,CODE,CHRM,STARTpos,ENDpos,EXONE(optional),STRAND
+    # If library name is one of the following, the library info is loaded from the crisprcleanr library database:
+    # AVANA_Library (https://doi.org/10.1038/ng.3984)
+    # Brunello_Library (https://doi.org/10.1038/nbt.3437)
+    # GeCKO_Library_v2 (https://doi.org/10.1038/nmeth.3047)
+    # KY_Library_v1.0 (https://doi.org/10.1016/j.celrep.2016.09.079)
+    # KY_Library_v1.1 (https://doi.org/10.1016/j.celrep.2016.09.079)
+    # MiniLibCas9_Library (https://doi.org/10.1186/s13059-021-02268-4)
+    # Whitehead_Library (https://doi.org/10.1126/science.aac7041)
     library_name: TKOv3
+    # If library name is not one of the above, provide the path to the library file instead
     library_file: resources/lib_annotation.csv
 
   bagel2:
@@ -44,8 +56,6 @@ stats:
     extra: "" # Extra arguments for drugZ
 
   pathway_analysis: 
-    run: True # Perform pathway analysis on mageck results
+    run: False # Perform pathway analysis on mageck results
     data: both # enriched, depleted, or both
-    dbs: ["GO_Molecular_Function_2023","GO_Biological_Process_2023","Reactome_2022"]
     top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
-    terms: 10 # Number of terms to plot
