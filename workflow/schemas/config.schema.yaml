@@ -140,6 +140,12 @@ properties:
             type: string
             description: enriched, depleted, or both
 
+          fdr:
+            type: number
+            minimum: 0
+            maximum: 1
+            description: FDR threshold for significant genes
+
           top_genes:
             type: integer
             description: Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
@@ -147,6 +153,7 @@ properties:
         required:
           - run
           - data
+          - fdr
           - top_genes
 
 required:

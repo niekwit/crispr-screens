@@ -42,7 +42,6 @@ stats:
     apply_crisprcleanr: False 
     extra_mageck_arguments: "" 
     mageck_control_genes: all # All or file with control genes
-    fdr: 0.25 # FDR threshold for downstream mageck analysis
     apply_CNV_correction: False # Apply CNV correction to mageck results
     cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
   
@@ -55,4 +54,5 @@ stats:
   pathway_analysis: 
     run: False # Perform pathway analysis on mageck results
     data: both # enriched, depleted, or both
+    fdr: 0.25 # FDR threshold for significant genes
     top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
