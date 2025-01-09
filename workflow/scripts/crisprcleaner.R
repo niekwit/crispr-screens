@@ -76,14 +76,14 @@ if (!library.name %in% available.libs) {
 # Remove chr from chromosome name
 full.annotations$CHRM <- gsub("chr", "", full.annotations$CHRM)
 
-# Check if any non-existing chromosome are in annotations
+# Check if any non-existing chromosome exist in annotations
 # This would happen with sgRNAs targeting non-genomic sequences, eg. EGFP
-# Otherwise it will confuse CRISPRcleanR
 non.real.chr <- setdiff(unique(full.annotations$CHRM), c(1:24,"X","Y"))
 non.real.chr.count <- length(non.real.chr)
 if (non.real.chr.count > 0) {
   # Convert any non-real chromosome to an integer
   # Assign these chromosomes a number higher than 24
+  # This is to avoid confusing CRISPRcleanR
   print(paste("Non-existing chromosomes found in annotations:", paste(non.real.chr, collapse = ", ")))
   print("Assigning them a chromosome number higher than 24")
   new.chr.names <- 25:(24 + non.real.chr.count)
