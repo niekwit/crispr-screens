@@ -103,7 +103,8 @@ def sample_names():
     not_found = []
     for sample in samples:
         if sample not in sample_names:
-            not_found.append(sample)
+            if not ";" in sample:
+                not_found.append(sample)
     if not_found:
         raise ValueError(f"Sample(s) {', '.join(not_found)} not found in reads directory")
         
