@@ -15,34 +15,52 @@ pdf <- snakemake@output[["pdf"]]
 top_genes <- snakemake@params[["top_genes"]]
 fdr <- snakemake@params[["fdr"]]
 comparison <- snakemake@wildcards[["comparison"]]
-dt <- snakemake@params[["data_type"]]
+dt <- snakemake@wildcards[["pathway_data"]]
+data <- snakemake@params[["data"]]
 
-# Load MAGeCK results
+### Load data and extract genes
 df <- read.delim(txt)
 
-### Run gprofiler2
-if (dt == "enriched") {
-  rank <- "pos.rank"
-  dt_fdr <- "pos.fdr"
-} else {
-  rank <- "neg.rank"
-  dt_fdr <- "neg.fdr"
-} 
+if (data == "mageck") {
+  if (dt == "enriched") {
+    rank <- "pos.rank"
+    dt_fdr <- "pos.fdr"
+  } else {
+    rank <- "neg.rank"
+    dt_fdr <- "neg.fdr"
+  } 
+  id_column <- "id"
+} else if (data == "bagel2") {
+  # BAGEL2 will only have data for depleted genes
+  rank <- "BF"
+  dt_fdr <- "FDR"
+  id_column <- "Gene"
+} else if (data == "drugz") {
+  if (dt == "enriched") {
+    rank <- "rank_supp"
+    dt_fdr <- "fdr_supp"
+  } else {
+    rank <- "rank_synth"
+    dt_fdr <- "fdr_synth"
+  } 
+  id_column <- "GENE"
+}
 
 if (top_genes > 0) {
   genes <- df %>%
     arrange(get(rank)) %>%
     head(top_genes) %>%
-    pull(id)
+    pull(get(id_column))
 } else {
   genes <- df %>%
-    filter(dt_fdr < fdr) %>%
-    pull(id)
+    filter(get(dt_fdr) < fdr) %>%
+    pull(get(id_column))
 }
+
 # Print genes to stdout on a separate line
 cat("Genes for", dt, "analysis:\n", paste(genes, collapse = "\n"), "\n")
 
-# Run gprofiler2
+### Run gprofiler2
 res <- gost(genes,
             sources = c("GO:BP", "GO:MF", "KEGG", "REAC"),
             correction_method = "fdr",
@@ -57,15 +75,16 @@ if (!is.null(res)) {
   clean_result_df <- result_df %>%
     mutate(across(where(is.list), ~ map_chr(.x, ~ paste(.x, collapse = ";"))))
   
+  # Remove evidence_codes column
+  clean_result_df <- clean_result_df %>%
+    dplyr::select(-evidence_codes)
+  
   # Save results
   write.csv(clean_result_df, csv, row.names = FALSE)
 } else {
   warning("No significant results returned by gprofiler2.")
   write.csv(data.frame(), csv, row.names = FALSE)  # Write an empty CSV if no results
 }
-
-# Save results
-#write.csv(as.data.frame(res[[1]]), csv, row.names = FALSE)
 
 ### Plot results
 if (!is.null(res)) {
@@ -97,3 +116,7 @@ if (!is.null(res)) {
   dev.off()
 }
 file.remove("Rplots.pdf", showWarnings = FALSE)  # Remove the default Rplots.pdf
+
+# close redirection of output/messages
+sink(log, type = "output")
+sink(log, type = "message")
