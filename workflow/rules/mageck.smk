@@ -97,7 +97,6 @@ rule gprofiler_mageck:
     params:
         fdr=config["stats"]["pathway_analysis"]["fdr"],
         top_genes=config["stats"]["pathway_analysis"]["top_genes"],
-        data_type=PATHWAY_DATA,
         data="mageck"
     threads: 1
     resources:

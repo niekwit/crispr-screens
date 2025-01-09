@@ -64,7 +64,6 @@ rule gprofiler_drugz:
     params:
         fdr=config["stats"]["pathway_analysis"]["fdr"],
         top_genes=config["stats"]["pathway_analysis"]["top_genes"],
-        data_type=PATHWAY_DATA,
         data="drugz"
     threads: 1
     resources:

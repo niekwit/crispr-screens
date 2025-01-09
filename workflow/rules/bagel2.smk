@@ -99,7 +99,6 @@ rule gprofiler_bagel2:
     params:
         fdr=config["stats"]["pathway_analysis"]["fdr"],
         top_genes=config["stats"]["pathway_analysis"]["top_genes"],
-        data_type=PATHWAY_DATA,
         data="bagel2"
     threads: 1
     resources:
