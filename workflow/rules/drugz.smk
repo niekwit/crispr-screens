@@ -37,6 +37,24 @@ rule drugz:
         "-o {output} 2> {log} "
 
 
+rule plot_drugz_results:
+    input:
+        txt="results/drugz/{comparison}.txt"
+    output:
+        pdf=report("results/plots/drugz/dot_plot_{comparison}.pdf", caption="../report/drugz.rst", category="DrugZ plots", subcategory="{comparison}", labels={"Comparison":"{comparison}", "Figure":"DrugZ output"})
+    params:
+        fdr=config["stats"]["pathway_analysis"]["fdr"], 
+    threads: 1
+    resources:
+        runtime=5
+    conda:
+        "../envs/stats.yaml"
+    log:
+        "logs/drugz_plots/{comparison}.log"
+    script:
+        "../scripts/plot_drugz_results.R"
+
+
 rule gprofiler_drugz:
     input:
         txt="results/drugz/{comparison}.txt",
