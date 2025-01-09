@@ -67,7 +67,7 @@ rule lfc_plots:
     log:
         "logs/mageck_plots/lfc_{comparison}_{cnv}.log"
     script:
-        "../scripts/lfc_plots.R"
+        "../scripts/plot_lfc.R"
 
 
 rule sg_rank_plot:
@@ -85,7 +85,7 @@ rule sg_rank_plot:
     log:
         "logs/mageck_plots/sgrank_{comparison}_{cnv}.log"
     script:
-        "../scripts/sgrank_plot.R"
+        "../scripts/plot_sgrank.R"
 
 
 rule gprofiler_mageck:
