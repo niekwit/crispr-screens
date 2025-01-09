@@ -90,13 +90,10 @@ properties:
           extra_mageck_arguments:
             type: string
             description: Extra arguments for mageck
+          
           mageck_control_genes:
             type: string
             description: All or path to file with control genes
-          
-          fdr:
-            type: number
-            description: FDR threshold for downstream mageck analysis
           
           apply_CNV_correction:
             type: boolean
@@ -110,7 +107,6 @@ properties:
           - run
           - extra_mageck_arguments
           - mageck_control_genes
-          - fdr
           - apply_CNV_correction
           - cell_line
 
