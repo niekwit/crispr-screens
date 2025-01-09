@@ -9,17 +9,19 @@ library(CRISPRcleanR)
 
 # Load Snakemake variable
 counts <- read.table(snakemake@input[["counts"]], header = TRUE)
-fasta <- snakemake@input[["fasta"]]
 control.name <- snakemake@params[["control"]]
 test.name <- snakemake@params[["test"]]
 library.name <- snakemake@params[["lib_name"]]
 comparison <- snakemake@wildcards[["comparison"]]
-cell.line <- snakemake@params[["cell_line"]]
 corrected.fc.file <- snakemake@output[["corr_lfc"]]
 corrected.counts.file <- snakemake@output[["corr_counts"]]
 ceg <- snakemake@params[["ceg"]]
 cneg <- snakemake@params[["cneg"]]
 
+print(paste("Running CRISPRcleanR for", comparison))
+
+# Create output directory
+print("Creating output directory...")
 out.dir <- dirname(corrected.fc.file)
 dir.create(out.dir, showWarnings = FALSE)
 
@@ -50,8 +52,12 @@ counts <- counts %>%
 available.libs <- c("AVANA_Library", "Brunello_Library", "GeCKO_Library_v2", "KY_Library_v1.0",
                     "KY_Library_v1.1", "MiniLibCas9_Library", "Whitehead_Library")
 if (!library.name %in% available.libs) {
+  print(paste("Loading sgRNA information from", snakemake@params[["lib"]]))
   # Library data not available so load from provided file
-  full.annotations <- read_delim(snakemake@params[["lib"]], delim = NULL)
+  full.annotations <- read.csv(snakemake@params[["lib"]])
+  
+  # Rown names should be same as CODE column
+  rownames(full.annotations) <- full.annotations$CODE
   
   # Check if required columns are present in library file
   required.columns <- c("seq", "GENES", "CODE", "CHRM", "STARTpos", "ENDpos", "STRAND")
@@ -60,16 +66,38 @@ if (!library.name %in% available.libs) {
          paste(setdiff(required.columns, colnames(full.annotations)), collapse = ", "))
   }
 } else {
+  print(paste("Loading sgRNA information from CRISPRcleanR:", library.name))
   # Load library data from CRISPRcleanR package
   data(list = library.name)
   full.annotations <- get(library.name)
   rm(list = library.name)
 }
 
+# Remove chr from chromosome name
+full.annotations$CHRM <- gsub("chr", "", full.annotations$CHRM)
+
+# Check if any non-existing chromosome are in annotations
+# This would happen with sgRNAs targeting non-genomic sequences, eg. EGFP
+# Otherwise it will confuse CRISPRcleanR
+non.real.chr <- setdiff(unique(full.annotations$CHRM), c(1:24,"X","Y"))
+non.real.chr.count <- length(non.real.chr)
+if (non.real.chr.count > 0) {
+  # Convert any non-real chromosome to an integer
+  # Assign these chromosomes a number higher than 24
+  print(paste("Non-existing chromosomes found in annotations:", paste(non.real.chr, collapse = ", ")))
+  print("Assigning them a chromosome number higher than 24")
+  new.chr.names <- 25:(24 + non.real.chr.count)
+  for (i in 1:non.real.chr.count) {
+    print(paste("Converting", non.real.chr[i], "to", new.chr.names[i]))
+    full.annotations$CHRM <- gsub(non.real.chr[i], new.chr.names[i], full.annotations$CHRM)
+  }
+}
+
 # Determine how many control samples are in the count table
 ncontrols <- length(control.columns)
 
 # Perform normalisation of raw counts and compute sgRNA log fold-changes
+print("Normalising raw counts and computing sgRNA log fold-changes...")
 normANDfcs <- ccr.NormfoldChanges(Dframe=counts,
                                   min_reads = 30,
                                   EXPname = comparison,
@@ -82,14 +110,17 @@ normANDfcs <- ccr.NormfoldChanges(Dframe=counts,
 full.annotations <- full.annotations[rownames(full.annotations) %in% normANDfcs$logFCs$sgRNA,] 
 
 # Correct fold changes according to position
+print("Sorting sgRNAs based on there chromosomal location...")
 gwSortedFCs <- ccr.logFCs2chromPos(normANDfcs$logFCs, full.annotations)
 
+print("Correcting fold changes based on chromosomal position...")
 # Correct biases due to gene independent responses to CRISPR-Cas9 targeting
 correctedFCs<-ccr.GWclean(gwSortedFCs, 
                           display = FALSE, 
                           label = comparison)
 
 # Correct counts based on corrected fold changes (new input file for MAGeCK)
+print("Correcting counts based on corrected fold changes...")
 correctedCounts <- ccr.correctCounts(comparison,
                                      normANDfcs$norm_counts,
                                      correctedFCs,
@@ -97,7 +128,8 @@ correctedCounts <- ccr.correctCounts(comparison,
                                      minTargetedGenes = 3,
                                      OutDir = out.dir)
 
-# Count table already in MAGeCK format
+# Count table already in MAGeCK/DrugZ format
+print("Saving corrected count table...")
 write.table(correctedCounts, 
             corrected.counts.file, 
             sep = "\t", 
