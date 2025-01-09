@@ -84,22 +84,6 @@ rule aggregate_counts:
     script:
         "../scripts/aggregate_counts.py"
 
-
-rule normalise_count_table:
-    input:
-        counts="results/count/counts-aggregated.tsv"
-    output:
-        norm_counts=temp("results/count/counts-aggregated_normalised.csv")
-    conda:
-        "../envs/stats.yaml"
-    threads: 1
-    resources:
-        runtime=5
-    log:
-        "logs/count/normalise_counts.log"
-    script:
-        "../scripts/normalise_count_table.py"
-
 if config["stats"]["bagel2"]["run"] or config["stats"]["mageck"]["apply_crisprcleanr"] or config["stats"]["drugz"]["apply_crisprcleanr"]:
     rule crisprcleanr:
         input:
