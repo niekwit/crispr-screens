@@ -35,13 +35,14 @@ def targets():
             ])
         if config["stats"]["pathway_analysis"]["run"]:
             TARGETS.extend([
-                expand("results/bagel2/gprofiler/{comparison}/{pathway_data}.csv", pathway_data=PATHWAY_DATA, comparison=COMPARISONS),
-                expand("results/plots/bagel2/gprofiler/{comparison}/{pathway_data}.pdf", pathway_data=PATHWAY_DATA, comparison=COMPARISONS),
+                expand("results/bagel2/gprofiler/{comparison}/{pathway_data}.csv", pathway_data=["depleted"], comparison=COMPARISONS),
+                expand("results/plots/bagel2/gprofiler/{comparison}/{pathway_data}.pdf", pathway_data=["depleted"], comparison=COMPARISONS),
             ])
     if config["stats"]["drugz"]["run"]:
         # Extend targets with DrugZ files 
         TARGETS.extend([
             expand("results/drugz/{comparison}.txt", comparison=COMPARISONS),
+            expand("results/plots/drugz/dot_plot_{comparison}.pdf", comparison=COMPARISONS),
         ])
         if config["stats"]["pathway_analysis"]["run"]:
             TARGETS.extend([
