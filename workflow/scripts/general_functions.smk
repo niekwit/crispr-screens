@@ -196,6 +196,8 @@ def cnv():
     Returns value for CNV wildcard.
     """
     if config["stats"]["mageck"]["apply_CNV_correction"]:
+        # First check if CNV data is present for selected cell line
+        check_cnv_cell_line()
         return ["CNV-corrected"]
     else:
         return ["not-CNV-corrected"]
@@ -210,3 +212,15 @@ def pathway_data():
         return ["enriched", "depleted"]
     else:
         return [data]
+    
+    
+def check_cnv_cell_line():
+    """
+    Check if CNV data is present for selected cell line
+    """
+    # Read cnv_cell_lines.txt to list
+    with open("workflow/scripts/cnv_cell_lines.txt") as f:
+        cell_lines = f.read().splitlines()
+    cell_line = config["stats"]["mageck"]["cell_line"]
+    if cell_line not in cell_lines:
+        raise ValueError(f"CNV data not found for cell line {cell_line}")
