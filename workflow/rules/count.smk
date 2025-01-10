@@ -111,6 +111,6 @@ if config["stats"]["bagel2"]["run"] or config["stats"]["mageck"]["apply_crisprcl
         resources:
             runtime=30
         log:
-            "logs/count/crisprcleanr_{comparison}.log"
+            "logs/crisprcleanr/{comparison}.log"
         script:
             "../scripts/crisprcleaner.R"
