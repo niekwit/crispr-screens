@@ -100,7 +100,7 @@ if config["stats"]["bagel2"]["run"] or config["stats"]["mageck"]["apply_crisprcl
             drnk="results/plots/crisprcleanr/depletion_rank_{comparison}.pdf",
         params:
             lib_name=config["stats"]["crisprcleanr"]["library_name"],
-            lib=config["stats"]["crisprcleanr"]["library_file"],
+            lib=csv,
             control=lambda wc, output: wc.comparison.split("_vs_")[1].replace("-", ","),
             test=lambda wc, output: wc.comparison.split("_vs_")[0].replace("-", ","),
             ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],

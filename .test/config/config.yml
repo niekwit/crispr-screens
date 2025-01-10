@@ -1,8 +1,9 @@
 lib_info:
-    sg_length: 17
-    vector: "N" # Vector sequence to be removed from reads (N for none)
-    left_trim : 1 # Trim n bases from 5' end of reads
-    species: human
+  library_file: resources/bassik.csv
+  sg_length: 17
+  vector: "N" # Vector sequence to be removed from reads (N for none)
+  left_trim : 1 # Trim n bases from 5' end of reads
+  species: human
 
 csv: # If no fasta is available, provide a csv file with sgRNA sequences
   name_column: 0 # Column number with sgRNA names
@@ -27,8 +28,6 @@ stats:
     # MiniLibCas9_Library (https://doi.org/10.1186/s13059-021-02268-4)
     # Whitehead_Library (https://doi.org/10.1126/science.aac7041)
     library_name: TKOv3
-    # If library name is not one of the above, provide the path to the library file instead
-    library_file: resources/bassik.csv
 
   bagel2:
     run: False # Perform bagel2 analysis

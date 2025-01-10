@@ -53,16 +53,13 @@ def targets():
 
 
 def fasta():
-
-    csv = glob.glob("resources/*.csv")
-    
-    if len(csv) == 0:
-        raise ValueError("No csv file in resources directory")
-    elif len(csv) > 1:
-        raise ValueError("More than one csv file in resources directory")
-    else:
-        csv = csv[0]
-        return csv.replace(".csv",".fasta"), csv
+    """
+    Get fasta and csv file paths
+    """
+    csv = config["lib_info"]["library_file"]
+    if not os.path.exists(csv):
+        raise ValueError(f"Library file {csv} does not exist")
+    return csv.replace(".csv",".fasta"), csv
        
 
 def cut_adapt_arg(config):
@@ -224,3 +221,4 @@ def check_cnv_cell_line():
     cell_line = config["stats"]["mageck"]["cell_line"]
     if cell_line not in cell_lines:
         raise ValueError(f"CNV data not found for cell line {cell_line}")
+    
