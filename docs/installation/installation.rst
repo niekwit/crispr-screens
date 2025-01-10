@@ -1,9 +1,9 @@
-Conda/Mamba
+Conda
 ===========
 
 For reproducibility, `crispr-screens` uses (containerized) Conda environments.
 
-To install Mamba, a must faster drop-in replacement for Conda, `(Miniforge) <https://github.com/conda-forge/miniforge>`_ on a Unix system (recommended) run:
+To install the `(Miniforge) <https://github.com/conda-forge/miniforge>`_  run on Unix-like platform:
 
 .. code-block:: console
 
@@ -14,17 +14,17 @@ To install Mamba, a must faster drop-in replacement for Conda, `(Miniforge) <htt
 Snakemake
 =========
 
-To install Snakemake create the following environment with `mamba`:
+To install Snakemake create the following environment with `conda`:
 
 .. code-block:: console
 
-    $ mamba create -n snakemake snakemake=8.25.5
+    $ conda create -n snakemake snakemake=8.25.5
 
 Activate the environment as follows:
 
 .. code-block:: console
 
-    $ mamba activate snakemake
+    $ conda activate snakemake
 
 If you want to deploy Snakemake on an HPC system using slurm also run:
 
@@ -64,12 +64,12 @@ On CentOS/RHEL:
     $ sudo yum install -y epel-release
     $ sudo yum install -y libseccomp-devel squashfs-tools fakeroot cryptsetup wget git
 
-Finally, install Apptainer with Mamba:
+Finally, install Apptainer with conda:
 
 .. code-block:: console
 
-    $ mamba activate snakemake
-    $ mamba install conda-forge::apptainer
+    $ conda activate snakemake
+    $ conda install conda-forge::apptainer
 
 Installation on HPC systems
 ---------------------------
