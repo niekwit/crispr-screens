@@ -18,7 +18,7 @@ To install Snakemake create the following environment with `mamba`:
 
 .. code-block:: console
 
-    $ mamba create -n snakemake snakemake=8.12
+    $ mamba create -n snakemake snakemake=8.25.5
 
 Activate the environment as follows:
 
@@ -96,8 +96,8 @@ To obtain the workflow code, run snakefetch from the analysis directory:
 
    $ mkdir my_experiment
    $ cd my_experiment
-   $ snakefetch --outdir . --repo-version v0.7.0 --url https://github.com/niekwit/crispr-screens
-   Downloading archive file for version v0.7.0 from https://github.com/niekwit/crispr-screens...
+   $ snakefetch --outdir . --repo-version v0.8.0 --url https://github.com/niekwit/crispr-screens
+   Downloading archive file for version v0.8.0 from https://github.com/niekwit/crispr-screens...
    Extracting config and workflow directories from tar.gz file to /path/to/analysis...
    Done!
 
