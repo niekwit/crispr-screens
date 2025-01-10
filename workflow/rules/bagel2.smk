@@ -23,6 +23,7 @@ rule bagel2bf:
         ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
         cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"]
     threads: 2
+    retries: 3 # Regression sometimes fails
     resources:
         runtime=15
     conda:
