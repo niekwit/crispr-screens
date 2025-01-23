@@ -97,7 +97,7 @@ if (non.real.chr.count > 0) {
 ncontrols <- length(control.columns)
 
 # Perform normalisation of raw counts and compute sgRNA log fold-changes
-print("Normalising raw counts and computing sgRNA log fold-changes...")
+print(paste("Normalising raw counts and computing sgRNA log fold-changes against ", control.name), "...")
 normANDfcs <- ccr.NormfoldChanges(Dframe=counts,
                                   min_reads = 30,
                                   EXPname = comparison,
