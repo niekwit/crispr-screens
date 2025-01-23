@@ -21,3 +21,4 @@ dependencies:
   - seaborn=0.12.2
   - click=8.1.7
   - hisat2=2.2.1
+  - conda-forge::git=2.47.1
