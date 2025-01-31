@@ -1,8 +1,8 @@
 lib_info:
   library_file: resources/bassik.csv
-  sg_length: 20
-  vector: "N" # Vector sequence to be removed from reads (N for none)
   left_trim : 0 # Trim n bases from 5' end of reads
+  vector: "N" # Vector sequence to be removed from reads (N for none)
+  sg_length: 20
   species: human
 
 csv: 
@@ -36,6 +36,7 @@ stats:
       # Use "none" to use BAGEL2 default gene lists
       essential_genes: none
       non_essential_genes: none
+    extra: "" # Extra arguments for bagel2
   
   mageck:
     run: True # Perform mageck analysis
@@ -57,3 +58,4 @@ stats:
     data: both # enriched, depleted, or both
     fdr: 0.25 # FDR threshold for significant genes
     top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+    

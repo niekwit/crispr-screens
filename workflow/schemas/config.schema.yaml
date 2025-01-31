@@ -8,152 +8,88 @@ properties:
   lib_info:
     type: object
     properties:
-      sg_length:
-        type: integer
-        description: Length of sgRNA sequence
-      
-      vector:
+      library_file:
         type: string
-        description: Vector sequence to be removed from reads (N for none)
-      
       left_trim:
         type: integer
-        description: Trim n bases from 5' end of reads
-      
+      vector:
+        type: string
+      sg_length:
+        type: integer
       species:
         type: string
-        description: Species of the reference genome
-    
-    required:
-      - sg_length
-      - vector
-      - left_trim
-      - species
 
   csv:
     type: object
     properties:
-      
       name_column:
         type: integer
-        description: Column number with gene names
-      
-      sequence_column:
-        type: integer
-        description: Column number with sgRNA sequences
-
       gene_column:
         type: integer
-        description: Column number with gene names
-    
-    required:
-      - name_column
-      - sequence_column
+      sequence_column:
+        type: integer
 
   mismatch:
     type: integer
-    description: Mismatches allowed during alignment
+    minimum: 0
+    maximum: 2
 
   stats:
     type: object
     properties:
+      crisprcleanr:
+        type: object
+        properties:
+          library_name:
+            type: string
+
       bagel2:
         type: object
         properties:
           run:
             type: boolean
-            description: Perform bagel2 analysis
-          
           custom_gene_lists:
             type: object
             properties:
-              
               essential_genes:
                 type: string
-                description: Path to custom gene list for bagel2 analysis
-              
               non_essential_genes:
                 type: string
-                description: Path to custom gene list for bagel2 analysis
-        
-        required:
-          - run
-          - custom_gene_lists
 
       mageck:
         type: object
         properties:
           run:
             type: boolean
-            description: Perform mageck analysis
-          
+          apply_crisprcleanr:
+            type: boolean
           extra_mageck_arguments:
             type: string
-            description: Extra arguments for mageck
-          
           mageck_control_genes:
             type: string
-            description: All or path to file with control genes
-          
           apply_CNV_correction:
             type: boolean
-            description: Apply CNV correction to mageck results
-          
           cell_line:
             type: string
-            description: Cell line for CNV correction
-        
-        required:
-          - run
-          - extra_mageck_arguments
-          - mageck_control_genes
-          - apply_CNV_correction
-          - cell_line
 
       drugz:
         type: object
         properties:
           run:
             type: boolean
-            description: Perform drugZ analysis
-          
+          apply_crisprcleanr:
+            type: boolean
           extra:
             type: string
-            description: Extra arguments for drugZ
-        
-        required:
-          - run
-          - extra
 
       pathway_analysis:
         type: object
         properties:
           run:
             type: boolean
-            description: Perform pathway analysis on mageck results
-          
           data:
             type: string
-            description: enriched, depleted, or both
-
           fdr:
             type: number
-            minimum: 0
-            maximum: 1
-            description: FDR threshold for significant genes
-
           top_genes:
             type: integer
-            description: Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
-
-        required:
-          - run
-          - data
-          - fdr
-          - top_genes
-
-required:
-  - lib_info
-  - csv
-  - mismatch
-  - stats
