@@ -21,7 +21,8 @@ rule bagel2bf:
     params:
         species=config["lib_info"]["species"],
         ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
-        cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"]
+        cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"],
+        extra=config["stats"]["bagel2"]["extra_args"]["bf"],
     threads: 2
     retries: 3 # Regression sometimes fails
     resources:
@@ -46,6 +47,7 @@ rule bagel2pr:
         species=config["lib_info"]["species"],
         ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
         cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"],
+        extra=config["stats"]["bagel2"]["extra_args"]["pr"],
     threads: 2
     resources:
         runtime=15

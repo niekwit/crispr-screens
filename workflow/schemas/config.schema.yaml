@@ -8,26 +8,41 @@ properties:
   lib_info:
     type: object
     properties:
-      sg_length:
-        type: integer
-        description: Length of sgRNA sequence
-      
-      vector:
+      library_file:
         type: string
-        description: Vector sequence to be removed from reads (N for none)
-      
-      left_trim:
-        type: integer
-        description: Trim n bases from 5' end of reads
+        description: Path to the library file with sgRNA annotations
+
+      cutadapt:
+        type: object
+        properties:
+          g:
+            type: string
+            description: 5' adapter sequence to trim
+
+          a:
+            type: string
+            description: 3' adapter sequence to trim
+
+          u:
+            type: string
+            description: Trim u bases (before a/g trimming)
+
+          l:
+            type: integer
+            description: Shorten reads to l bases
+
+          extra:
+            type: string
+            description: Extra arguments for cutadapt
+
       
       species:
         type: string
-        description: Species of the reference genome
-    
+        description: Species of the library (e.g., human, mouse)
+
     required:
-      - sg_length
-      - vector
-      - left_trim
+      - library_file
+      - cutadapt
       - species
 
   csv:
@@ -75,10 +90,22 @@ properties:
               non_essential_genes:
                 type: string
                 description: Path to custom gene list for bagel2 analysis
+          
+          extra_args:
+            type: object
+            properties:
+              bf:
+                type: string
+                description: Extra arguments for bagel2 bf subcommand
+              
+              pr:
+                type: string
+                description: Extra arguments for bagel2 pr subcommand
         
         required:
           - run
           - custom_gene_lists
+          - extra_args
 
       mageck:
         type: object

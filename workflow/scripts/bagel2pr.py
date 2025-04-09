@@ -10,6 +10,7 @@ bf = snakemake.input["bf"]
 pr = snakemake.output[0]
 ceg = snakemake.params["ceg"]
 cneg = snakemake.params["cneg"]
+extra = snakemake.params["extra"]
 
 # Set up logging
 log_stdout = snakemake.log["stdout"]
@@ -35,6 +36,6 @@ else:
     neg = cneg
 
 # Prepare command and log, and run
-command = f"python {b2dir}/BAGEL.py pr -i {bf} -o {pr} -e {eg} -n {neg} > {log_stdout} 2> {log_stderr}"
+command = f"python {b2dir}/BAGEL.py pr -i {bf} -o {pr} -e {eg} -n {neg} {extra} > {log_stdout} 2> {log_stderr}"
 logging.debug(command)
 shell(command)
