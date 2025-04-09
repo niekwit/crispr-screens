@@ -60,12 +60,14 @@ def fasta():
     if not os.path.exists(csv):
         raise ValueError(f"Library file {csv} does not exist")
     return csv.replace(".csv",".fasta"), csv
-       
+ 
 
 def cut_adapt_arg(config):
     """
     Generates Cutadapt argument for removing vector sequence
     """
+    '''
+    This is the original code, but it kept just as a comment
     left_trim = config["lib_info"]["left_trim"]
     vector = config["lib_info"]["vector"]
     if vector.lower() == "n":
@@ -76,6 +78,17 @@ def cut_adapt_arg(config):
     
     if left_trim != 0:
         cut_arg += f" -u {str(left_trim)}"
+    '''
+    if config["lib_info"]["cutadapt"]["g"]:
+        cut_arg = f"-g {config['lib_info']['cutadapt']['g']}"
+    if config["lib_info"]["cutadapt"]["a"]:
+        cut_arg = f"{cut_arg} -a {config['lib_info']['cutadapt']['a']}"
+    if config["lib_info"]["cutadapt"]["u"]:
+        cut_arg = f"{cut_arg} -u {config['lib_info']['cutadapt']['u']}"
+    if config["lib_info"]["cutadapt"]["l"]:
+        cut_arg = f"{cut_arg} -l {config['lib_info']['cutadapt']['l']}"
+    if config["lib_info"]["cutadapt"]["extra"]:
+        cut_arg = f"{cut_arg} {config['lib_info']['cutadapt']['extra']}"
 
     return cut_arg
 
