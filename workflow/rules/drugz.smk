@@ -17,6 +17,7 @@ rule drugz:
         unpack(drugz_input)
     output:
         report("results/drugz/{comparison}.txt", caption="../report/drugz.rst", category="DrugZ", subcategory="{comparison}", labels={"Comparison":"{comparison}", "Figure":"DrugZ output"})
+        fc="results/drugz/{comparison}.foldchange.txt",
     params:
         test=lambda wc, output: wc.comparison.split("_vs_")[0].replace("-", ","),
         control=lambda wc, output: wc.comparison.split("_vs_")[1].replace("-", ","),
@@ -33,6 +34,7 @@ rule drugz:
         "-i {input.counts} "
         "-c {params.control} "
         "-x {params.test} "
+        "-f {output.fc}"
         "{params.extra} "
         "-o {output} 2> {log} "
 
