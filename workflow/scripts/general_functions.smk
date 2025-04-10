@@ -245,11 +245,11 @@ def mageck_input(wildcards):
         input_data["cnv"] = "resources/cnv_data.txt"
 
     if config["stats"]["mageck"]["apply_crisprcleanr"]:
-        input_data["counts"] = (
-            "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
+        input_data[
+            "counts"
+            ] = "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
                 wildcards=wildcards
             )
-        )
     else:
         input_data["counts"] = "results/count/counts-aggregated.tsv"
 
@@ -265,11 +265,11 @@ def drugz_input(wildcards):
     input_data = {"drugz": "resources/drugz"}
 
     if config["stats"]["drugz"]["apply_crisprcleanr"]:
-        input_data["counts"] = (
-            "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
+        input_data[
+            "counts"
+            ] = "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
                 wildcards=wildcards
             )
-        )
     else:
         input_data["counts"] = "results/count/counts-aggregated.tsv"
 
