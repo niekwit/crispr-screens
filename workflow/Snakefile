@@ -2,7 +2,7 @@ include: "scripts/general_functions.smk"
 
 # Workflow version
 VERSION = "v0.8.2" 
-DOCKER_VERSION = "v0.8.0" # Docker image version 
+DOCKER_VERSION = "v0.8.1" # Docker image version 
 
 # Set minimum snakemake version
 min_version("8.25.5")
