@@ -12,7 +12,7 @@ library(tidyverse)
 data <- read.delim(snakemake@input[["sg"]])
 
 # load gene rank data
-rank <- read.delim(snakemake@input[["rank"]]) %>%
+rank <- read.delim(snakemake@input[["gene"]]) %>%
   dplyr::select(id, neg.rank, pos.rank) %>%
   rename(Gene = id)
 
