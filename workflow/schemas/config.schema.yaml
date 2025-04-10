@@ -24,7 +24,7 @@ properties:
             description: 3' adapter sequence to trim
 
           u:
-            type: string
+            type: integer
             description: Trim u bases (before a/g trimming)
 
           l:
