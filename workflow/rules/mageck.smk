@@ -72,11 +72,10 @@ rule lfc_plots:
 
 rule sg_rank_plot:
     input:
-        "results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
+        sg="results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
+        gene="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt"
     output:
         report("results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank.pdf", caption="../report/sgrank.rst", category="MAGeCK plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "sgrank plot"})
-    params:
-        fdr=config["stats"]["pathway_analysis"]["fdr"],
     threads: 1
     resources:
         runtime=5
