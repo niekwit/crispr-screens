@@ -9,10 +9,10 @@ sink(log, type = "message")
 library(tidyverse)
 
 # load data
-data <- read.delim(snakemake@input[[sg]])
+data <- read.delim(snakemake@input[["sg"]])
 
 # load gene rank data
-rank <- read.delim(snakemake@input[[rank]]) %>%
+rank <- read.delim(snakemake@input[["rank"]]) %>%
   dplyr::select(id, neg.rank, pos.rank) %>%
   rename(Gene = id)
 
