@@ -16,7 +16,7 @@ rule drugz:
     input:
         unpack(drugz_input)
     output:
-        drugz=report("results/drugz/{comparison}.txt", caption="../report/drugz.rst", category="DrugZ", subcategory="{comparison}", labels={"Comparison":"{comparison}", "Figure":"DrugZ output"})
+        drugz=report("results/drugz/{comparison}.txt", caption="../report/drugz.rst", category="DrugZ", subcategory="{comparison}", labels={"Comparison":"{comparison}", "Figure":"DrugZ output"}),
         fc="results/drugz/{comparison}.foldchange.txt",
     params:
         test=lambda wc, output: wc.comparison.split("_vs_")[0].replace("-", ","),
