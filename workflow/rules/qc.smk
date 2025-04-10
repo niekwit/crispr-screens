@@ -1,48 +1,56 @@
 rule fastqc:
     input:
-        "results/trimmed/{sample}.fastq.gz"
+        "results/trimmed/{sample}.fastq.gz",
     output:
         html="results/qc/fastqc/{sample}.html",
         zip="results/qc/fastqc/{sample}_fastqc.zip",
     params:
-        extra = "--quiet"
+        extra="--quiet",
     log:
-        "logs/fastqc/{sample}.log"
+        "logs/fastqc/{sample}.log",
     threads: 4
     resources:
         runtime=15,
-        mem_mb = 2048,
+        mem_mb=2048,
     wrapper:
         "v5.2.1/bio/fastqc"
 
 
 rule multiqc:
     input:
-        expand("results/qc/fastqc/{sample}_fastqc.zip", sample=SAMPLES)
+        expand("results/qc/fastqc/{sample}_fastqc.zip", sample=SAMPLES),
     output:
-        report("results/qc/multiqc.html", caption="../report/multiqc.rst", category="MultiQC"),
+        report(
+            "results/qc/multiqc.html",
+            caption="../report/multiqc.rst",
+            category="MultiQC",
+        ),
     params:
         extra="",  # Optional: extra parameters for multiqc
     threads: 2
     resources:
         runtime=30,
-        mem_mb = 2048,
+        mem_mb=2048,
     log:
-        "logs/multiqc/multiqc.log"
+        "logs/multiqc/multiqc.log",
     wrapper:
         "v5.2.1/bio/multiqc"
 
 
 rule plot_alignment_rate:
     input:
-        expand("logs/count/{sample}.log", sample=SAMPLES)
+        expand("logs/count/{sample}.log", sample=SAMPLES),
     output:
-        report("results/qc/alignment-rates.pdf", caption="../report/alignment-rates.rst", category="Alignment rates")
+        report(
+            "results/qc/alignment-rates.pdf",
+            caption="../report/alignment-rates.rst",
+            category="Alignment rates",
+        ),
     log:
-        "logs/plot-alignment-rate.log"
+        "logs/plot-alignment-rate.log",
     threads: 1
     resources:
-        runtime=5
+        runtime=5,
     conda:
         "../envs/stats.yaml"
     script:
@@ -51,16 +59,20 @@ rule plot_alignment_rate:
 
 rule plot_coverage:
     input:
-        "results/count/counts-aggregated.tsv"
+        "results/count/counts-aggregated.tsv",
     output:
-        report("results/qc/sequence-coverage.pdf", caption="../report/plot-coverage.rst", category="Sequence coverage")
+        report(
+            "results/qc/sequence-coverage.pdf",
+            caption="../report/plot-coverage.rst",
+            category="Sequence coverage",
+        ),
     params:
-        fasta=fasta
+        fasta=fasta,
     threads: 1
     resources:
-        runtime=5
+        runtime=5,
     log:
-        "logs/plot-coverage.log"
+        "logs/plot-coverage.log",
     conda:
         "../envs/stats.yaml"
     script:
@@ -69,16 +81,20 @@ rule plot_coverage:
 
 rule plot_gini_index:
     input:
-        "results/count/counts-aggregated.tsv"
+        "results/count/counts-aggregated.tsv",
     output:
-        report("results/qc/gini-index.pdf", caption="../report/gini-index.rst", category="Gini index")
+        report(
+            "results/qc/gini-index.pdf",
+            caption="../report/gini-index.rst",
+            category="Gini index",
+        ),
     params:
-        yaml="workflow/envs/plot_settings.yaml"
+        yaml="workflow/envs/plot_settings.yaml",
     threads: 1
     resources:
-        runtime=5
+        runtime=5,
     log:
-        "logs/gini-index.log"
+        "logs/gini-index.log",
     conda:
         "../envs/stats.yaml"
     script:
@@ -87,16 +103,20 @@ rule plot_gini_index:
 
 rule plot_missed_sgrnas:
     input:
-        "results/count/counts-aggregated.tsv"
+        "results/count/counts-aggregated.tsv",
     output:
-        report("results/qc/missed-rgrnas.pdf", caption="../report/missed-rgrnas.rst", category="Missed sgRNAs")
+        report(
+            "results/qc/missed-rgrnas.pdf",
+            caption="../report/missed-rgrnas.rst",
+            category="Missed sgRNAs",
+        ),
     params:
-        yaml="workflow/envs/plot_settings.yaml"
+        yaml="workflow/envs/plot_settings.yaml",
     threads: 1
     resources:
-        runtime=5
+        runtime=5,
     log:
-        "logs/missed-rgrnas.log"
+        "logs/missed-rgrnas.log",
     conda:
         "../envs/stats.yaml"
     script:

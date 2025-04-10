@@ -1,16 +1,17 @@
 if config["stats"]["mageck"]["apply_CNV_correction"]:
     logger.info("Applying CNV correction to MAGeCK analysis")
     check_sum = "33abf0c446f3e5116f35bda5483de28c3e504b1740457e1658b3fc2d22fbfa58"
+
     rule get_CNV_data:
         output:
-            ensure("resources/cnv_data.txt.xz", sha256=check_sum)
+            ensure("resources/cnv_data.txt.xz", sha256=check_sum),
         params:
-            url="https://github.com/niekwit/crispr-screens/raw/main/.resources/CCLE_copynumber_byGene_2013-12-03.txt.xz"
+            url="https://github.com/niekwit/crispr-screens/raw/main/.resources/CCLE_copynumber_byGene_2013-12-03.txt.xz",
         threads: 1
         resources:
-            runtime=10
+            runtime=10,
         log:
-            "logs/get_cnv_data.log"
+            "logs/get_cnv_data.log",
         conda:
             "../envs/stats.yaml"
         shell:
@@ -18,25 +19,30 @@ if config["stats"]["mageck"]["apply_CNV_correction"]:
 
     rule unpack_CNV_data:
         input:
-            "resources/cnv_data.txt.xz"
+            "resources/cnv_data.txt.xz",
         output:
-            "resources/cnv_data.txt"
+            "resources/cnv_data.txt",
         threads: 1
         resources:
-            runtime=10
+            runtime=10,
         log:
-            "logs/unpack_cnv_data.log"
+            "logs/unpack_cnv_data.log",
         conda:
             "../envs/stats.yaml"
         shell:
             "xz -dv {input} 2> {log}"
 
+
 rule mageck:
-    input: 
+    input:
         unpack(mageck_input),
     output:
         rnw="results/mageck/{comparison}/{cnv}/{comparison}_summary.Rnw",
-        gs=report("results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt", caption="../report/mageck.rst", category="MAGeCK"),
+        gs=report(
+            "results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
+            caption="../report/mageck.rst",
+            category="MAGeCK",
+        ),
         ss="results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
     params:
         control=mageck_control(),
@@ -44,46 +50,63 @@ rule mageck:
         extra=extra_mageck_args(),
     threads: 2
     resources:
-        runtime=20
+        runtime=20,
     conda:
         "../envs/stats.yaml"
     log:
-        "logs/mageck/{comparison}_{cnv}.log"
+        "logs/mageck/{comparison}_{cnv}.log",
     script:
         "../scripts/mageck.py"
-        
+
 
 rule lfc_plots:
     input:
         "results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
     output:
-        pos=report("results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf", caption="../report/lfc_pos.rst", category="MAGeCK plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "lfc plot enriched genes"}),
-        neg=report("results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf", caption="../report/lfc_neg.rst", category="MAGeCK plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "lfc plot depleted genes"}),
+        pos=report(
+            "results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf",
+            caption="../report/lfc_pos.rst",
+            category="MAGeCK plots",
+            subcategory="{comparison}",
+            labels={"Comparison": "{comparison}", "Figure": "lfc plot enriched genes"},
+        ),
+        neg=report(
+            "results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf",
+            caption="../report/lfc_neg.rst",
+            category="MAGeCK plots",
+            subcategory="{comparison}",
+            labels={"Comparison": "{comparison}", "Figure": "lfc plot depleted genes"},
+        ),
     threads: 1
     resources:
-        runtime=5
+        runtime=5,
     conda:
         "../envs/stats.yaml"
     log:
-        "logs/mageck_plots/lfc_{comparison}_{cnv}.log"
+        "logs/mageck_plots/lfc_{comparison}_{cnv}.log",
     script:
         "../scripts/plot_lfc.R"
 
 
 rule sg_rank_plot:
     input:
-        "results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
+        sg="results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
+        gene="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
     output:
-        report("results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank.pdf", caption="../report/sgrank.rst", category="MAGeCK plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "sgrank plot"})
-    params:
-        fdr=config["stats"]["pathway_analysis"]["fdr"],
+        report(
+            "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank.pdf",
+            caption="../report/sgrank.rst",
+            category="MAGeCK plots",
+            subcategory="{comparison}",
+            labels={"Comparison": "{comparison}", "Figure": "sgrank plot"},
+        ),
     threads: 1
     resources:
-        runtime=5
+        runtime=5,
     conda:
         "../envs/stats.yaml"
     log:
-        "logs/mageck_plots/sgrank_{comparison}_{cnv}.log"
+        "logs/mageck_plots/sgrank_{comparison}_{cnv}.log",
     script:
         "../scripts/plot_sgrank.R"
 
@@ -93,17 +116,23 @@ rule gprofiler_mageck:
         txt="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
     output:
         csv="results/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",
-        pdf=report("results/plots/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf", caption="../report/pathway_analysis.rst", category="gprofiler plots", subcategory="{comparison}", labels={"Comparison":"{comparison}","Figure": "pathway analysis"})
+        pdf=report(
+            "results/plots/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf",
+            caption="../report/pathway_analysis.rst",
+            category="gprofiler plots",
+            subcategory="{comparison}",
+            labels={"Comparison": "{comparison}", "Figure": "pathway analysis"},
+        ),
     params:
         fdr=config["stats"]["pathway_analysis"]["fdr"],
         top_genes=config["stats"]["pathway_analysis"]["top_genes"],
-        data="mageck"
+        data="mageck",
     threads: 1
     resources:
-        runtime=10
+        runtime=10,
     conda:
         "../envs/stats.yaml"
     log:
-        "logs/gprofiler/mageck/{comparison}_{cnv}_{pathway_data}.log"
+        "logs/gprofiler/mageck/{comparison}_{cnv}_{pathway_data}.log",
     script:
         "../scripts/gprofiler.R"

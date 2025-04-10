@@ -9,6 +9,7 @@ bf = snakemake.output["bf"]
 comparison = snakemake.wildcards[0]
 ceg = snakemake.params["ceg"]
 cneg = snakemake.params["cneg"]
+extra = snakemake.params["extra"]
 
 # Set up logging
 log_stdout = snakemake.log["stdout"]
@@ -56,6 +57,6 @@ else: # Multiple samples will be pooled
     sample_column = ",".join(sample_columns)
 
 # Prepare command and log, and run
-command = f"python {b2dir}/BAGEL.py bf -i {fc} -o {bf} -e {eg} -n {neg} -c {sample_column} > {log_stdout} 2> {log_stderr}"
+command = f"python {b2dir}/BAGEL.py bf -i {fc} -o {bf} -e {eg} -n {neg} -c {sample_column} {extra} > {log_stdout} 2> {log_stderr}"
 logging.debug(command)
 shell(command) 

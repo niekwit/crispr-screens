@@ -10,86 +10,177 @@ properties:
     properties:
       library_file:
         type: string
-      left_trim:
-        type: integer
-      vector:
-        type: string
-      sg_length:
-        type: integer
+        description: Path to the library file with sgRNA annotations
+
+      cutadapt:
+        type: object
+        properties:
+          g:
+            type: string
+            description: 5' adapter sequence to trim
+
+          a:
+            type: string
+            description: 3' adapter sequence to trim
+
+          u:
+            type: integer
+            description: Trim u bases (before a/g trimming)
+
+          l:
+            type: integer
+            description: Shorten reads to l bases
+
+          extra:
+            type: string
+            description: Extra arguments for cutadapt
+
+      
       species:
         type: string
+        description: Species of the library (e.g., human, mouse)
+
+    required:
+      - library_file
+      - cutadapt
+      - species
 
   csv:
     type: object
     properties:
+      
       name_column:
         type: integer
-      gene_column:
-        type: integer
+        description: Column number with gene names
+      
       sequence_column:
         type: integer
+        description: Column number with sgRNA sequences
+
+      gene_column:
+        type: integer
+        description: Column number with gene names
+    
+    required:
+      - name_column
+      - sequence_column
 
   mismatch:
     type: integer
-    minimum: 0
-    maximum: 2
+    description: Mismatches allowed during alignment
 
   stats:
     type: object
     properties:
-      crisprcleanr:
-        type: object
-        properties:
-          library_name:
-            type: string
-
       bagel2:
         type: object
         properties:
           run:
             type: boolean
+            description: Perform bagel2 analysis
+          
           custom_gene_lists:
             type: object
             properties:
+              
               essential_genes:
                 type: string
+                description: Path to custom gene list for bagel2 analysis
+              
               non_essential_genes:
                 type: string
+                description: Path to custom gene list for bagel2 analysis
+          
+          extra_args:
+            type: object
+            properties:
+              bf:
+                type: string
+                description: Extra arguments for bagel2 bf subcommand
+              
+              pr:
+                type: string
+                description: Extra arguments for bagel2 pr subcommand
+        
+        required:
+          - run
+          - custom_gene_lists
+          - extra_args
 
       mageck:
         type: object
         properties:
           run:
             type: boolean
-          apply_crisprcleanr:
-            type: boolean
+            description: Perform mageck analysis
+          
           extra_mageck_arguments:
             type: string
+            description: Extra arguments for mageck
+          
           mageck_control_genes:
             type: string
+            description: All or path to file with control genes
+          
           apply_CNV_correction:
             type: boolean
+            description: Apply CNV correction to mageck results
+          
           cell_line:
             type: string
+            description: Cell line for CNV correction
+        
+        required:
+          - run
+          - extra_mageck_arguments
+          - mageck_control_genes
+          - apply_CNV_correction
+          - cell_line
 
       drugz:
         type: object
         properties:
           run:
             type: boolean
-          apply_crisprcleanr:
-            type: boolean
+            description: Perform drugZ analysis
+          
           extra:
             type: string
+            description: Extra arguments for drugZ
+        
+        required:
+          - run
+          - extra
 
       pathway_analysis:
         type: object
         properties:
           run:
             type: boolean
+            description: Perform pathway analysis on mageck results
+          
           data:
             type: string
+            description: enriched, depleted, or both
+
           fdr:
             type: number
+            minimum: 0
+            maximum: 1
+            description: FDR threshold for significant genes
+
           top_genes:
             type: integer
+            description: Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+
+        required:
+          - run
+          - data
+          - fdr
+          - top_genes
+
+required:
+  - lib_info
+  - csv
+  - mismatch
+  - stats

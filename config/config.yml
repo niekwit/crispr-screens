@@ -1,8 +1,13 @@
 lib_info:
   library_file: resources/bassik.csv
-  left_trim : 0 # Trim n bases from 5' end of reads
-  vector: "N" # Vector sequence to be removed from reads (N for none)
-  sg_length: 20
+
+  cutadapt:
+    g: "" # 5' adapter sequence to trim
+    a: "" # 3' adapter sequence to trim
+    u: 0 # trim u bases (before a/g trimming)
+    l: 20 # shorten reads to l bases
+    extra: "" # Extra arguments for cutadapt
+
   species: human
 
 csv: 
@@ -36,8 +41,10 @@ stats:
       # Use "none" to use BAGEL2 default gene lists
       essential_genes: none
       non_essential_genes: none
-    extra: "" # Extra arguments for bagel2
-  
+    extra_args: # Extra arguments for bagel2 subcommands
+      bf: ""
+      pr: ""
+
   mageck:
     run: True # Perform mageck analysis
     # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
@@ -58,4 +65,3 @@ stats:
     data: both # enriched, depleted, or both
     fdr: 0.25 # FDR threshold for significant genes
     top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
-    

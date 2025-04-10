@@ -10,6 +10,6 @@ rule cutadapt:
         "logs/cutadapt/{sample}.log",
     threads: 4  # set desired number of threads here
     resources:
-        runtime=25
+        runtime=25,
     wrapper:
         "v5.2.1/bio/cutadapt/se"

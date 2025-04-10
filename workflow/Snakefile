@@ -1,8 +1,9 @@
 include: "scripts/general_functions.smk"
 
+
 # Workflow version
-VERSION = "v0.8.0" 
-DOCKER_VERSION = "v0.8.0" # Docker image version 
+VERSION = "v0.8.2"
+DOCKER_VERSION = "v0.8.1"  # Docker image version
 
 # Set minimum snakemake version
 min_version("8.25.5")
@@ -13,14 +14,19 @@ wrapper_version = "v5.2.1"
 logger.info(f"Workflow version: {VERSION}")
 logger.info(f"Wrapper version: {wrapper_version}")
 
+
 # Define report file
 report: "report/workflow.rst"
+
 
 # Define Docker container
 containerized: f"docker://niekwit/crispr-screens:{DOCKER_VERSION}"
 
+
 # Load config file
 configfile: "config/config.yml"
+
+
 validate(config, "schemas/config.schema.yaml")
 
 # Load and validate stats.csv
@@ -36,6 +42,7 @@ PATHWAY_DATA = pathway_data()
 # Get fasta/csv paths
 fasta, csv = fasta()
 
+
 # Import rules
 include: "rules/qc.smk"
 include: "rules/trim.smk"
@@ -44,19 +51,24 @@ include: "rules/mageck.smk"
 include: "rules/bagel2.smk"
 include: "rules/drugz.smk"
 
+
 # Set target rule
 rule all:
     input:
-        targets()
+        targets(),
+
 
 # Save snakemake terminal output to log file
 time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 snake_log = f"logs/snakemake/{time}_snakemake.log"
 os.makedirs("logs/snakemake", exist_ok=True)
 
-onsuccess: 
+
+onsuccess:
     shell("cp -v {log} {snake_log}")
     logger.info("Analysis finished successfully!")
+
+
 onerror:
     shell("cp -v {log} {snake_log}")
     logger.info(f"Analysis failed...\nCheck {snake_log} for details")

@@ -9,40 +9,33 @@ sink(log, type = "message")
 library(tidyverse)
 
 # load data
-data <- read.delim(snakemake@input[[1]])
+data <- read.delim(snakemake@input[["sg"]])
 
-# load paramaters
-fdr <- snakemake@params[["fdr"]]
+# load gene rank data
+rank <- read.delim(snakemake@input[["gene"]]) %>%
+  dplyr::select(id, neg.rank, pos.rank) %>%
+  rename(Gene = id)
+
+# Add Gene rank to data
+data <- data %>% left_join(rank, by = "Gene") 
 
 # set parameters
 select <- 5 # number of genes to plot for enriched and depleted
 binwidth <- 0.3 # 
 interval <- 0.1
 
-# create median LFC-based gene ranking
-df <- data %>%
-  group_by(Gene) %>%
-  mutate(med.LFC = median(LFC)) %>%
-  ungroup() %>%
-  group_by(med.LFC) %>%
-  mutate(rank = cur_group_id()) %>%
-  ungroup()
-
-# select top x genes with highest median lfc
-df.top <- df[df$rank > max(df$rank) - select,] %>%
-  arrange(med.LFC) 
+# select top x genes for enrichment
+df.enriched <- data %>% filter(pos.rank <= select) 
 
 # select top x genes with lowest median lfc
-df.bottom <- df %>% 
-  filter(rank <= select) %>%
-  arrange(med.LFC) 
+df.depleted <- data %>% filter(neg.rank <= select) 
 
 # add top and bottom genes data together and get genes to plot
-df.sub <- rbind(df.top, df.bottom)
-genes <- unique(df.sub$Gene)
+df <- rbind(df.enriched, df.depleted)
+genes <- unique(df$Gene)
 
 # add index, y values for plotting and colour param
-df.sub <- df.sub %>%
+df <- df %>%
   mutate(Gene = factor(Gene, levels = genes),
          index = rep(1:length(genes), as.numeric(table(Gene)[genes])),
          y = (binwidth+interval)*(index-1),
@@ -56,31 +49,46 @@ a <- -Inf
 b <- Inf
 
 # set values for rectangle dimensions (x/y values)/colour fill to plot sgRNAs lfc inside
-bgcol <- as.vector(sapply(seq(1, max(df.sub$index), 1), function(x){rep(x, 4)})) %>%
-  as.data.frame() %>%
-  rename("id" = 1) %>%
-  mutate(x = rep(c(a,b,b,a),max(df.sub$index)),
-         y = as.vector(sapply(seq(1,max(df.sub$index),1), function(x){
-           c((interval + binwidth)*(x-1), (interval + binwidth)*(x-1),
-             (interval + binwidth)*x-interval,(interval + binwidth)*x-interval)
-         })))
+bgcol <- tibble(
+  id = rep(seq(1, max(df$index)), each = 4),
+  x = rep(c(a,b,b,a), max(df$index)),
+  y = unlist(lapply(seq(1, max(df$index)), function(x) {
+    c((interval + binwidth)*(x-1), 
+      (interval + binwidth)*(x-1),
+      (interval + binwidth)*x-interval,
+      (interval + binwidth)*x-interval)
+  }))
+)
 
 # create plot
 p <- ggplot() +
-  geom_polygon(aes_string("x", "y", group = "id"), 
-               fill = "#dedede", 
-               color = "gray20", 
-               data = bgcol) +
-  geom_segment(aes_string("LFC", "y", xend = "LFC", yend = "yend", color = "colour"), data = df.sub) +
-  scale_color_manual(values = c("pos" = "#e41a1c","neg" = "#377eb8")) +
-  scale_y_continuous(breaks = bgcol$y[seq(1, nrow(bgcol), 4)] + binwidth / 2,
-                     labels = genes, expand = c(0, 0)) +
-  labs(x = "Log2(Fold change)", 
-       y = NULL) +
+  geom_polygon(
+    # Use aes() with unquoted column names
+    aes(x = x, y = y, group = id),
+    fill = "#dedede",
+    color = "gray20",
+    data = bgcol
+  ) +
+  geom_segment(
+    # Use aes() with unquoted column names
+    aes(x = LFC, y = y, xend = LFC, yend = yend, color = colour),
+    data = df
+  ) +
+  scale_color_manual(values = c("pos" = "#e41a1c", "neg" = "#377eb8")) +
+  scale_y_continuous(
+    breaks = bgcol$y[seq(1, nrow(bgcol), 4)] + binwidth / 2,
+    labels = genes, expand = c(0, 0)
+  ) +
+  labs(
+    x = "Log2(Fold change)",
+    y = NULL
+  ) +
   theme_bw(base_size = 14) +
   theme(legend.position = "none") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.border = element_blank(), panel.background = element_blank())
+  theme(
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.border = element_blank(), panel.background = element_blank()
+  )
 
 # save plot to file
 ggsave(plot = p, 
@@ -89,8 +97,6 @@ ggsave(plot = p,
        width = 10, 
        height = 7)
 
-
 # close redirection of output/messages
 sink(log, type = "output")
 sink(log, type = "message")
-
