@@ -2,11 +2,11 @@ rule create_fasta:
     input:
         csv=csv,
     output:
-        fasta=fasta
+        fasta=fasta,
     conda:
         "../envs/stats.yaml"
     log:
-        "logs/create_fasta.log"
+        "logs/create_fasta.log",
     script:
         "../scripts/csv_to_fasta.py"
 
@@ -28,18 +28,18 @@ rule hisat2_index:
         ),
     params:
         extra="",
-        prefix = lambda wildcard, output: output[0].replace(".1.ht2", ""),
+        prefix=lambda wildcard, output: output[0].replace(".1.ht2", ""),
     log:
-        "logs/hisat2/index.log"
+        "logs/hisat2/index.log",
     threads: 4
     resources:
-        runtime=30
+        runtime=30,
     wrapper:
         "v5.2.1/bio/hisat2/index"
 
 
 rule count:
-    input: 
+    input:
         fq="results/trimmed/{sample}.fastq.gz",
         idx=multiext(
             "resources/index/index",
@@ -53,15 +53,15 @@ rule count:
             ".8.ht2",
         ),
     output:
-        "results/count/{sample}.guidecounts.txt"
+        "results/count/{sample}.guidecounts.txt",
     params:
         mm=config["mismatch"],
         idx=lambda wildcard, input: input.idx[0].replace(".1.ht2", ""),
     threads: 6
     resources:
-        runtime=45
+        runtime=45,
     log:
-        "logs/count/{sample}.log"
+        "logs/count/{sample}.log",
     conda:
         "../envs/stats.yaml"
     script:
@@ -73,18 +73,24 @@ rule aggregate_counts:
         files=expand("results/count/{sample}.guidecounts.txt", sample=SAMPLES),
         csv=csv,
     output:
-        "results/count/counts-aggregated.tsv"
+        "results/count/counts-aggregated.tsv",
     threads: 1
     resources:
-        runtime=10
+        runtime=10,
     conda:
         "../envs/stats.yaml"
     log:
-        "logs/count/aggregate_counts.log"
+        "logs/count/aggregate_counts.log",
     script:
         "../scripts/aggregate_counts.py"
 
-if config["stats"]["bagel2"]["run"] or config["stats"]["mageck"]["apply_crisprcleanr"] or config["stats"]["drugz"]["apply_crisprcleanr"]:
+
+if (
+    config["stats"]["bagel2"]["run"]
+    or config["stats"]["mageck"]["apply_crisprcleanr"]
+    or config["stats"]["drugz"]["apply_crisprcleanr"]
+):
+
     rule crisprcleanr:
         input:
             counts="results/count/counts-aggregated.tsv",
@@ -104,13 +110,13 @@ if config["stats"]["bagel2"]["run"] or config["stats"]["mageck"]["apply_crisprcl
             control=lambda wc, output: wc.comparison.split("_vs_")[1].replace("-", ","),
             test=lambda wc, output: wc.comparison.split("_vs_")[0].replace("-", ","),
             ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
-            cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"]
+            cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"],
         conda:
             "../envs/stats.yaml"
         threads: 2
         resources:
-            runtime=30
+            runtime=30,
         log:
-            "logs/crisprcleanr/{comparison}.log"
+            "logs/crisprcleanr/{comparison}.log",
         script:
             "../scripts/crisprcleaner.R"
