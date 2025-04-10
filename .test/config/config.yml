@@ -37,6 +37,9 @@ stats:
     custom_gene_lists: # Paths to custom gene lists for bagel2 analysis
       essential_genes: none
       non_essential_genes: none
+    extra_args: # Extra arguments for bagel2 subcommands
+      bf: ""
+      pr: ""
   
   mageck:
     run: True # Perform mageck analysis
