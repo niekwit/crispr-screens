@@ -1,8 +1,11 @@
 lib_info:
   library_file: resources/bassik.csv
-  sg_length: 17
-  vector: "N" # Vector sequence to be removed from reads (N for none)
-  left_trim : 1 # Trim n bases from 5' end of reads
+  cutadapt:
+    g: "" # 5' adapter sequence to trim
+    a: "" # 3' adapter sequence to trim
+    u: 0 # trim u bases (before a/g trimming)
+    l: 20 # shorten reads to l bases
+    extra: "" # Extra arguments for cutadapt
   species: human
 
 csv: # If no fasta is available, provide a csv file with sgRNA sequences
