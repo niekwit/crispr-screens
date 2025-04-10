@@ -79,16 +79,17 @@ def cut_adapt_arg(config):
     if left_trim != 0:
         cut_arg += f" -u {str(left_trim)}"
     '''
+    cut_arg = ""
     if config["lib_info"]["cutadapt"]["g"]:
-        cut_arg = f"-g {config['lib_info']['cutadapt']['g']}"
+        cut_arg = f"-g {config['lib_info']['cutadapt']['g']}".strip()
     if config["lib_info"]["cutadapt"]["a"]:
-        cut_arg = f"{cut_arg} -a {config['lib_info']['cutadapt']['a']}"
+        cut_arg = f"{cut_arg} -a {config['lib_info']['cutadapt']['a']}".strip()
     if config["lib_info"]["cutadapt"]["u"]:
-        cut_arg = f"{cut_arg} -u {config['lib_info']['cutadapt']['u']}"
+        cut_arg = f"{cut_arg} -u {config['lib_info']['cutadapt']['u']}".strip()
     if config["lib_info"]["cutadapt"]["l"]:
-        cut_arg = f"{cut_arg} -l {config['lib_info']['cutadapt']['l']}"
+        cut_arg = f"{cut_arg} -l {config['lib_info']['cutadapt']['l']}".strip()
     if config["lib_info"]["cutadapt"]["extra"]:
-        cut_arg = f"{cut_arg} {config['lib_info']['cutadapt']['extra']}"
+        cut_arg = f"{cut_arg} {config['lib_info']['cutadapt']['extra']}".strip()
 
     return cut_arg
 
