@@ -49,14 +49,16 @@ a <- -Inf
 b <- Inf
 
 # set values for rectangle dimensions (x/y values)/colour fill to plot sgRNAs lfc inside
-bgcol <- as.vector(sapply(seq(1, max(df$index), 1), function(x){rep(x, 4)})) %>%
-  as.data.frame() %>%
-  rename("id" = 1) %>%
-  mutate(x = rep(c(a,b,b,a),max(df$index)),
-         y = as.vector(sapply(seq(1,max(df$index),1), function(x){
-           c((interval + binwidth)*(x-1), (interval + binwidth)*(x-1),
-             (interval + binwidth)*x-interval,(interval + binwidth)*x-interval)
-         })))
+bgcol <- tibble(
+  id = rep(seq(1, max(df$index)), each = 4),
+  x = rep(c(a,b,b,a), max(df$index)),
+  y = unlist(lapply(seq(1, max(df$index)), function(x) {
+    c((interval + binwidth)*(x-1), 
+      (interval + binwidth)*(x-1),
+      (interval + binwidth)*x-interval,
+      (interval + binwidth)*x-interval)
+  }))
+)
 
 # create plot
 p <- ggplot() +
