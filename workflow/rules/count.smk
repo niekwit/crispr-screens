@@ -12,7 +12,7 @@ rule create_fasta:
 
 
 if cram():
-    
+
     rule cram2fastq:
         input:
             "reads/{sample}.cram",
