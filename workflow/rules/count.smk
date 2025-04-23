@@ -11,6 +11,23 @@ rule create_fasta:
         "../scripts/csv_to_fasta.py"
 
 
+if cram():
+    rule cram2fastq:
+        input:
+            "reads/{sample}.cram",
+        output:
+            "reads/{sample}.fastq.gz",
+        log:
+            "logs/samtools-fastq/{sample}.interleaved.log",
+        params:
+            " ",
+        threads: 1
+        conda:
+            "../envs/stats.yaml"
+        shell:
+            "samtools fastq {input} 2> {log} | gzip -c > {output}"
+
+
 rule hisat2_index:
     input:
         fasta=fasta,
