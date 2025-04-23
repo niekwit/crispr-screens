@@ -159,11 +159,21 @@ def sample_names():
     Get sample names from fastq files and check for invalid characters
     """
     fastq = glob.glob("reads/*.fastq.gz")
+    cram = glob.glob("reads/*.cram")
+    if len(fastq) == 0 and len(cram) == 0:
+        raise ValueError("No fastq or cram files found in reads directory")
 
-    # Check if fastq files are present
-    assert len(fastq) != 0, "No fastq files (.fastq.gz) found in reads directory"
+    # Check which format is used
+    if len(fastq) > 0 and len(cram) > 0:
+        raise ValueError("Both fastq and cram files found in reads directory")
+    elif len(fastq) > 0:
+        ext = ".fastq.gz"
+        files = fastq
+    else:
+        ext = ".cram"
+        files = cram
 
-    sample_names = [os.path.basename(x).replace(".fastq.gz", "") for x in fastq]
+    sample_names = [os.path.basename(x).replace(ext, "") for x in files]
 
     # Check if this matches the samples in stats.csv
     # Check this now, otherwise it will fail later with MAGeCK
@@ -182,6 +192,19 @@ def sample_names():
         )
 
     return sample_names
+
+
+def cram():
+    """
+    Check if raw data is in CRAM format
+    """
+    # Check if CRAM files are present
+    cram = glob.glob("reads/*.cram")
+
+    if len(cram) > 0:
+        return True
+    else:
+        return False
 
 
 def comparisons():
