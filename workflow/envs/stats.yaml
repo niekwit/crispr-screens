@@ -22,3 +22,4 @@ dependencies:
   - click=8.1.7
   - hisat2=2.2.1
   - conda-forge::git=2.47.1
+  - samtools=1.21
