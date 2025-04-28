@@ -20,7 +20,7 @@ if config["stats"]["mageck"]["apply_CNV_correction"]:
     cell_line = config["stats"]["mageck"]["cell_line"]
     if not cell_line in header:
         raise ValueError(f"Cell line {cell_line} not found in CNV file...")
-    
+
     cnv = f"--cnv-norm {cnv_file} --cell-line {cell_line} "
 else:
     cnv = ""

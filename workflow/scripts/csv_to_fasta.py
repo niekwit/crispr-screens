@@ -22,7 +22,4 @@ if not df.iloc[:, 1].str.match(r"^[ACGTacgt]+$").any():
 df.iloc[:, 0] = ">" + df.iloc[:, 0]
 
 # Write fasta file
-df.to_csv(snakemake.output["fasta"],
-          sep="\n",
-          index=False,
-          header=False)
+df.to_csv(snakemake.output["fasta"], sep="\n", index=False, header=False)

@@ -1,14 +1,14 @@
 import os
 import pandas as pd
 
-''' 
+""" 
 Join count files to create count table
-'''
+"""
 
 # Prepare data frame with gene and sgRNA names
 gene_column = snakemake.config["csv"]["gene_column"]
 name_column = snakemake.config["csv"]["name_column"]
-csv = pd.read_csv(snakemake.input["csv"])
+csv = pd.read_csv(snakemake.input["csv"], low_memory=False)
 df = csv.iloc[:, [name_column, gene_column]]
 df.columns = ["sgRNA", "gene"]
 
@@ -20,11 +20,11 @@ for file in snakemake.input["files"]:
     except pd.errors.EmptyDataError:
         # Create empty data frame if file is empty
         tmp = pd.DataFrame(columns=[0, 1])
-    
-    # Rename headers to wildcard value (for counts) and sgRNA 
+
+    # Rename headers to wildcard value (for counts) and sgRNA
     wildcard_value = os.path.basename(file).replace(".guidecounts.txt", "")
     tmp.columns = [wildcard_value, "sgRNA"]
-    
+
     # Merge to df
     df = pd.merge(df, tmp, on="sgRNA", how="left")
 
@@ -40,8 +40,12 @@ df = df.fillna(0)
 numeric_cols = df.select_dtypes(include="number").columns
 df[numeric_cols] = df[numeric_cols].round(decimals=0).astype(int)
 
+# Some libraries have control sgRNAs with no gene name (i.e. missing value)
+# Convert 0 values in gene column back to NA
+df.loc[df["gene"] == 0, "gene"] = pd.NA
+
 # Remove duplicate rows (observed for some libraries)
 df = df.drop_duplicates()
 
 # Save data frame to file
-df.to_csv(snakemake.output[0], sep='\t', index=False)
+df.to_csv(snakemake.output[0], sep="\t", index=False)
