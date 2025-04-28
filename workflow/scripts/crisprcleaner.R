@@ -158,7 +158,7 @@ normANDfcs <- ccr.NormfoldChanges(
   ncontrols = ncontrols,
   outdir = out.dir
 )
-str(normANDfcs$logFCs)
+
 # Check if normANDfcs is empty
 if (nrow(normANDfcs$logFCs) == 0) {
   stop(
@@ -175,6 +175,27 @@ full.annotations <- full.annotations[
 # Correct fold changes according to position
 print("Sorting sgRNAs based on there chromosomal location...")
 gwSortedFCs <- ccr.logFCs2chromPos(normANDfcs$logFCs, full.annotations)
+
+# Check if there are any rows with NA in startp in gwSortedFCs
+if (any(is.na(gwSortedFCs$startp))) {
+  print("NA values detected in gwSortedFCs.")
+  print(
+    "These might be non-targeting sgRNAs with no chromosomal location assigned."
+  )
+  print("Assigning random locations...")
+
+  # Get rows with NA values and add some values
+  na.rows <- gwSortedFCs[is.na(gwSortedFCs$startp), ]
+  na.rows$startp <- seq(from = 10, to = nrow(na.rows) * 10, by = 10)
+  na.rows$endp <- na.rows$startp + 10
+  na.rows$BP <- na.rows$startp + (na.rows$endp - na.rows$startp) / 2
+
+  # Remove rows with NA values from gwSortedFCs
+  gwSortedFCs <- gwSortedFCs[!is.na(gwSortedFCs$startp), ]
+
+  # Combine the two data frames
+  gwSortedFCs <- rbind(gwSortedFCs, na.rows)
+}
 
 print("Correcting fold changes based on chromosomal position...")
 # Correct biases due to gene independent responses to CRISPR-Cas9 targeting
