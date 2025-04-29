@@ -31,6 +31,7 @@ stats:
     # MiniLibCas9_Library (https://doi.org/10.1186/s13059-021-02268-4)
     # Whitehead_Library (https://doi.org/10.1126/science.aac7041)
     library_name: TKOv3
+    min_reads: 10
 
   bagel2:
     run: False # Perform bagel2 analysis
