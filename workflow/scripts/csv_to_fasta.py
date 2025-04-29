@@ -9,7 +9,7 @@ sgrna_column = snakemake.config["csv"]["name_column"]
 sequence_column = snakemake.config["csv"]["sequence_column"]
 
 # Load csv file
-df = pd.read_csv(snakemake.input["csv"])
+df = pd.read_csv(snakemake.input["csv"], low_memory=False)
 
 # Only keep sgRNA ID and sequence columns
 df = df.iloc[:, [sgrna_column, sequence_column]]
