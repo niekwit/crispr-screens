@@ -136,6 +136,47 @@ if (!all(full.annotations$CODE == counts$sgRNA)) {
   stop("sgRNA names in counts and annotations do not match.")
 }
 
+# Check if there are any rows with NA in STARTpos in full.annotations
+if (any(is.na(full.annotations))) {
+  print("NA values detected in annotation file for STARTpos, ENDpos, or BP.")
+  print(
+    "These might be non-targeting sgRNAs with no chromosomal location assigned."
+  )
+  print("Assigning random locations...")
+
+  # Get rows with NA values and add some values
+  na.rows <- full.annotations[is.na(full.annotations$STARTpos), ]
+  na.rows$STARTpos <- seq(from = 10, to = nrow(na.rows) * 10, by = 10)
+  na.rows$ENDpos <- na.rows$STARTpos + 10
+  #na.rows$BP <- na.rows$STARTpos + (na.rows$ENDpos - na.rows$STARTpos) / 2
+
+  # Add gene name
+  na.rows$GENES <- "CONTROL_GENE"
+
+  # Remove rows with NA values from full.annotations
+  full.annotations <- full.annotations[!is.na(full.annotations$STARTpos), ]
+
+  # Combine the two data frames
+  full.annotations <- rbind(full.annotations, na.rows)
+}
+
+# Check if there are any rows with NA in gene column in counts
+# replace with CONTROL_GENE
+if (any(is.na(counts$gene))) {
+  print("NA values detected in counts file for gene column.")
+  print("Replacing with CONTROL_GENE...")
+
+  # Get rows with NA values and add some values
+  na.rows <- counts[is.na(counts$gene), ]
+  na.rows$gene <- "CONTROL_GENE"
+
+  # Remove rows with NA values from counts
+  counts <- counts[!is.na(counts$gene), ]
+
+  # Combine the two data frames
+  counts <- rbind(counts, na.rows)
+}
+
 # Determine how many control samples are in the count table
 ncontrols <- length(control.columns)
 
@@ -175,27 +216,6 @@ full.annotations <- full.annotations[
 # Correct fold changes according to position
 print("Sorting sgRNAs based on there chromosomal location...")
 gwSortedFCs <- ccr.logFCs2chromPos(normANDfcs$logFCs, full.annotations)
-
-# Check if there are any rows with NA in startp in gwSortedFCs
-if (any(is.na(gwSortedFCs$startp))) {
-  print("NA values detected in gwSortedFCs.")
-  print(
-    "These might be non-targeting sgRNAs with no chromosomal location assigned."
-  )
-  print("Assigning random locations...")
-
-  # Get rows with NA values and add some values
-  na.rows <- gwSortedFCs[is.na(gwSortedFCs$startp), ]
-  na.rows$startp <- seq(from = 10, to = nrow(na.rows) * 10, by = 10)
-  na.rows$endp <- na.rows$startp + 10
-  na.rows$BP <- na.rows$startp + (na.rows$endp - na.rows$startp) / 2
-
-  # Remove rows with NA values from gwSortedFCs
-  gwSortedFCs <- gwSortedFCs[!is.na(gwSortedFCs$startp), ]
-
-  # Combine the two data frames
-  gwSortedFCs <- rbind(gwSortedFCs, na.rows)
-}
 
 print("Correcting fold changes based on chromosomal position...")
 # Correct biases due to gene independent responses to CRISPR-Cas9 targeting
