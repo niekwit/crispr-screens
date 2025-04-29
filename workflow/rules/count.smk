@@ -129,6 +129,7 @@ if (
             test=lambda wc, output: wc.comparison.split("_vs_")[0].replace("-", ","),
             ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
             cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"],
+            min_reads=config["stats"]["crisprcleanr"]["min_reads"],
         conda:
             "../envs/stats.yaml"
         threads: 2

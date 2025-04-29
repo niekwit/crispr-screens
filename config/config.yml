@@ -33,6 +33,7 @@ stats:
     # MiniLibCas9_Library (https://doi.org/10.1186/s13059-021-02268-4)
     # Whitehead_Library (https://doi.org/10.1126/science.aac7041)
     library_name: TKOv3
+    min_reads: 30 # Keep sgRNAs with at least this many reads in control sample
 
   bagel2:
     run: True # Perform bagel2 analysis
