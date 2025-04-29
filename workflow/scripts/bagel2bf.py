@@ -1,5 +1,4 @@
 import logging
-import pandas as pd
 from snakemake.shell import shell
 
 b2dir = snakemake.input["b2dir"]
@@ -33,34 +32,9 @@ else:
     eg = ceg
     neg = cneg
 
-# Create dictionary to store the sample column numbers in foldchange file
-# (samples cannot be refered to by column name)
-fc_table = pd.read_csv(fc, sep="\t")
-column_names = list(fc_table.columns)
-column_dict = {key: i for i, key in enumerate(column_names)}
-column_dict = {
-    key: column_dict[key] - 1 for key in column_dict
-}  # First sample column should have value 1
-
-sample = comparison.split("_vs_")[0]
-
-if not "-" in sample:
-    sample_column = column_dict[sample]
-
-else:  # Multiple samples will be pooled
-    # Get individual sample names
-    samples = sample.split("-")
-
-    # Get column number for each sample name
-    sample_columns = []
-    for i in samples:
-        number = str(column_dict[i])
-        sample_columns.append(number)
-
-    # Convert to comma-seperated string
-    sample_column = ",".join(sample_columns)
-
 # Prepare command and log, and run
-command = f"python {b2dir}/BAGEL.py bf -i {fc} -o {bf} -e {eg} -n {neg} -c {sample_column} {extra} > {log_stdout} 2> {log_stderr}"
+# Column number for -c is always 1, as CRISPRcleanR
+# has averaged the samples, if multiple replicates were provided
+command = f"python {b2dir}/BAGEL.py bf -i {fc} -o {bf} -e {eg} -n {neg} -c 1 {extra} > {log_stdout} 2> {log_stderr}"
 logging.debug(command)
 shell(command)
