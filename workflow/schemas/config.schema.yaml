@@ -72,6 +72,22 @@ properties:
   stats:
     type: object
     properties:
+      
+      crisprcleanr:
+        type: object
+        properties:
+          library_name:
+            type: string
+            description: sgRNA library name (e.g., AVANA_Library, Brunello_Library, etc.)
+
+          min_reads:
+            type: integer
+            description: Keep sgRNAs with at least this many reads in control sample
+
+        required:
+          - library_name
+          - min_reads
+      
       bagel2:
         type: object
         properties:
