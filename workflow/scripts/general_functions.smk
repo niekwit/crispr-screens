@@ -16,6 +16,9 @@ def targets():
         "results/qc/missed-rgrnas.pdf",
     ]
     if config["stats"]["mageck"]["run"]:
+        # Check csv file for empty columns
+        check_csv(csv)
+        
         # Extend targets with MAGeCK files
         TARGETS.extend(
             [
@@ -84,6 +87,9 @@ def targets():
                 ]
             )
     if config["stats"]["drugz"]["run"]:
+        # Check csv file for empty columns
+        check_csv(csv)
+        
         # Extend targets with DrugZ files
         TARGETS.extend(
             [
@@ -332,3 +338,33 @@ def check_cnv_cell_line():
     cell_line = config["stats"]["mageck"]["cell_line"]
     if cell_line not in cell_lines:
         raise ValueError(f"CNV data not found for cell line {cell_line}")
+
+
+def check_csv(csv):
+    """
+    Check if csv file has any empty columns in columns set in config.
+    This might crash MAGeCK or DrugZ.
+    """
+    # Read csv file
+    df = pd.read_csv(csv)
+
+    # Fetch columns from config to check
+    column_indices = [
+        config["csv"]["name_column"],
+        config["csv"]["gene_column"],
+        config["csv"]["sequence_column"]
+        ]
+
+    # Check if the indices are within the DataFrame's column range
+    if any(index >= df.shape[1] for index in column_indices):
+        raise ValueError(
+            f"One or more column indices in the config are out of bounds for the CSV file '{csv}' with {df.shape[1]} columns."
+        )
+
+    # Check if these columns (accessed by index) contain any empty values
+    for index in column_indices:
+        column_name = df.columns[index]  # Get the actual column name for the error message
+        if df.iloc[:, index].isnull().values.any():
+            raise ValueError(
+                f"Column at index {index} ('{column_name}') in {csv} contains empty values. Please check the file."
+            )
