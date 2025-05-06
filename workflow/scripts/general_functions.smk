@@ -335,7 +335,7 @@ def drugz_input(wildcards):
         input_data[
             "counts"
         ] = "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
-                wildcards=wildcards
+            wildcards=wildcards
         )
     else:
         input_data["counts"] = "results/count/counts-aggregated.tsv"
