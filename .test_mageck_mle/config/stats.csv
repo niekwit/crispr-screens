@@ -1,0 +1,4 @@
+"test","control","bagel2"
+"noHT_1","HT_1","n"
+"noHT_2","HT_2","n"
+"noHT_1;noHT_2","HT_1;HT_2","n"
