@@ -130,6 +130,22 @@ properties:
             type: boolean
             description: Perform mageck analysis
           
+          command:
+            type: string
+            enum: [test, mle]
+            description: mageck command to run (test or mle)
+
+          mle:
+            type: object
+            properties:
+              design_matrix:
+                type: string
+                description: Path to design matrix for mageck mle
+          
+          apply_crisprcleanr:
+            type: boolean
+            description: Apply crisprcleanr to mageck results (recommended for genome-wide libraries)
+
           extra_mageck_arguments:
             type: string
             description: Extra arguments for mageck
