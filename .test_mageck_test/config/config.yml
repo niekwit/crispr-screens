@@ -16,7 +16,6 @@ csv: # If no fasta is available, provide a csv file with sgRNA sequences
 mismatch: 0 # Mismatches allowed during alignment
 
 stats: 
-  stats: 
   crisprcleanr:
     # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better
     # It is optional for MAGeCK and DrugZ
