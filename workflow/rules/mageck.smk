@@ -33,7 +33,7 @@ if config["stats"]["mageck"]["apply_CNV_correction"]:
             "xz -dv {input} 2> {log}"
 
 
-rule mageck:
+rule mageck_test:
     input:
         unpack(mageck_input),
     output:
@@ -45,8 +45,9 @@ rule mageck:
         ),
         ss="results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
     params:
+        command=config["stats"]["mageck"]["command"],
         control=mageck_control(),
-        dir_name=lambda wc, output: os.path.dirname(output["rnw"]),
+        dir_name=lambda wc, output: os.path.dirname(output["gs"]),
         extra=extra_mageck_args(),
     threads: 2
     resources:
@@ -54,7 +55,29 @@ rule mageck:
     conda:
         "../envs/stats.yaml"
     log:
-        "logs/mageck/{comparison}_{cnv}.log",
+        "logs/mageck/test/{comparison}_{cnv}.log",
+    script:
+        "../scripts/mageck.py"
+
+
+rule mageck_mle:
+    input:
+        unpack(mageck_input),
+    output:
+        gs="results/mageck/mle/{cnv}/results.gene_summary.txt",
+        ss="results/mageck/mle/{cnv}/results.sgrna_summary.txt",
+    params:
+        command=config["stats"]["mageck"]["command"],
+        control=mageck_control(),
+        dir_name=lambda wc, output: os.path.dirname(output["gs"]),
+        extra=extra_mageck_args(),
+    threads: 24
+    resources:
+        runtime=45,
+    conda:
+        "../envs/stats.yaml"
+    log:
+        "logs/mageck/mle_{cnv}.log",
     script:
         "../scripts/mageck.py"
 
