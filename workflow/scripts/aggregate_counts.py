@@ -51,7 +51,7 @@ df = df.drop_duplicates()
 # in the design matrix for MAGeCK mle (if used)
 if snakemake.config["stats"]["mageck"]["command"] == "mle":
     # Read design matrix
-    file = snakemake.config["stats"]["mageck"]["design_matrix"]
+    file = snakemake.config["stats"]["mageck"]["mle"]["design_matrix"]
     matrix = pd.read_csv(file, sep="\t")
     # Reorder columns in df to match the design matrix
     df = df[["sgRNA", "gene"] + list(matrix["Samples"])]
