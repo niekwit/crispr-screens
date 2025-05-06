@@ -277,7 +277,7 @@ def extra_mageck_args():
     # Base args
     args = config["stats"]["mageck"]["extra_mageck_arguments"]
     if config["stats"]["mageck"]["apply_crisprcleanr"]:
-        args += " --norm-method none "  # Disable MAGeCK normalisation 
+        args += " --norm-method none "  # Disable MAGeCK normalisation
     else:
         if config["stats"]["mageck"]["command"] == "test":
             args += "--normcounts-to-file "
@@ -308,7 +308,7 @@ def mageck_input(wildcards):
     if config["stats"]["mageck"]["command"] == "mle":
         if config["stats"]["mageck"]["apply_crisprcleanr"]:
             logger.info("Skipping CRISPRcleanR normalisation for MAGeCK mle...")
-        
+
         matrix = config["stats"]["mageck"]["mle"]["design_matrix"]
         # Check if matrix file exists
         assert os.path.exists(
@@ -332,8 +332,9 @@ def drugz_input(wildcards):
     input_data = {"drugz": "resources/drugz"}
 
     if config["stats"]["drugz"]["apply_crisprcleanr"]:
-        input_data["counts"] = (
-            "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
+        input_data[
+            "counts"
+        ] = ("results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
                 wildcards=wildcards
             )
         )
