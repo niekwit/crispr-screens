@@ -301,7 +301,7 @@ def mageck_input(wildcards):
             "counts"
         ] = "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
             wildcards=wildcards
-            )
+        )
     else:
         input_data["counts"] = "results/count/counts-aggregated.tsv"
 
@@ -336,7 +336,7 @@ def drugz_input(wildcards):
             "counts"
         ] = "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
                 wildcards=wildcards
-            )
+        )
     else:
         input_data["counts"] = "results/count/counts-aggregated.tsv"
 
