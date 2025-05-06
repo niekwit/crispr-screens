@@ -1,0 +1,5 @@
+Samples	baseline	noHT_vs_HT
+HT_2	1	0
+noHT_1	1	1
+HT_1	1	0
+noHT_2	1	1

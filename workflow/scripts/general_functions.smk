@@ -2,6 +2,7 @@ import os
 import glob
 import datetime
 import pandas as pd
+import numpy as np
 from snakemake.utils import min_version, validate
 from snakemake.logging import logger
 from snakemake.shell import shell
@@ -18,39 +19,57 @@ def targets():
     if config["stats"]["mageck"]["run"]:
         # Check csv file for empty columns
         check_csv(csv)
-        
+
         # Extend targets with MAGeCK files
-        TARGETS.extend(
-            [
-                expand(
-                    "results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf",
-                    comparison=COMPARISONS,
-                    cnv=CNV,
-                ),
-                expand(
-                    "results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf",
-                    comparison=COMPARISONS,
-                    cnv=CNV,
-                ),
-                expand(
-                    "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank.pdf",
-                    comparison=COMPARISONS,
-                    cnv=CNV,
-                ),
-            ]
-        )
-        if config["stats"]["pathway_analysis"]["run"]:
+        if config["stats"]["mageck"]["command"] == "test":
+            logger.info("Running MAGeCK test...")
             TARGETS.extend(
                 [
                     expand(
-                        "results/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",
-                        pathway_data=PATHWAY_DATA,
+                        "results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf",
                         comparison=COMPARISONS,
                         cnv=CNV,
                     ),
                     expand(
-                        "results/plots/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf",
-                        pathway_data=PATHWAY_DATA,
+                        "results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf",
+                        comparison=COMPARISONS,
+                        cnv=CNV,
+                    ),
+                    expand(
+                        "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank.pdf",
+                        comparison=COMPARISONS,
+                        cnv=CNV,
+                    ),
+                ]
+            )
+            if config["stats"]["pathway_analysis"]["run"]:
+                TARGETS.extend(
+                    [
+                        expand(
+                            "results/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",
+                            pathway_data=PATHWAY_DATA,
+                            comparison=COMPARISONS,
+                            cnv=CNV,
+                        ),
+                        expand(
+                            "results/plots/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf",
+                            pathway_data=PATHWAY_DATA,
+                            comparison=COMPARISONS,
+                            cnv=CNV,
+                        ),
+                    ]
+                )
+        else:
+            logger.info("Running MAGeCK mle...")
+            TARGETS.extend(
+                [
+                    expand(
+                        "results/mageck/mle/{cnv}/results.gene_summary.txt",
+                        comparison=COMPARISONS,
+                        cnv=CNV,
+                    ),
+                    expand(
+                        "results/mageck/mle/{cnv}/results.sgrna_summary.txt",
                         comparison=COMPARISONS,
                         cnv=CNV,
                     ),
@@ -89,7 +108,7 @@ def targets():
     if config["stats"]["drugz"]["run"]:
         # Check csv file for empty columns
         check_csv(csv)
-        
+
         # Extend targets with DrugZ files
         TARGETS.extend(
             [
@@ -258,9 +277,10 @@ def extra_mageck_args():
     # Base args
     args = config["stats"]["mageck"]["extra_mageck_arguments"]
     if config["stats"]["mageck"]["apply_crisprcleanr"]:
-        args += " --norm-method none "  # Disable normalisation in MAGeCK
+        args += " --norm-method none "  # Disable MAGeCK normalisation
     else:
-        args += "--normcounts-to-file "
+        if config["stats"]["mageck"]["command"] == "test":
+            args += "--normcounts-to-file "
     return args
 
 
@@ -273,7 +293,10 @@ def mageck_input(wildcards):
     if config["stats"]["mageck"]["apply_CNV_correction"]:
         input_data["cnv"] = "resources/cnv_data.txt"
 
-    if config["stats"]["mageck"]["apply_crisprcleanr"]:
+    if (
+        config["stats"]["mageck"]["apply_crisprcleanr"]
+        and config["stats"]["mageck"]["command"] == "test"
+    ):
         input_data[
             "counts"
         ] = "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
@@ -281,6 +304,21 @@ def mageck_input(wildcards):
         )
     else:
         input_data["counts"] = "results/count/counts-aggregated.tsv"
+
+    if config["stats"]["mageck"]["command"] == "mle":
+        if config["stats"]["mageck"]["apply_crisprcleanr"]:
+            logger.info("Skipping CRISPRcleanR normalisation for MAGeCK mle...")
+
+        matrix = config["stats"]["mageck"]["mle"]["design_matrix"]
+        # Check if matrix file exists
+        assert os.path.exists(
+            matrix
+        ), f"MAGeCK mle design matrix file ({matrix}) does not exist"
+
+        # Check if design matrix is valid
+        if not design_matrix_valid():
+            raise ValueError(f"Design matrix {matrix} is not valid")
+        input_data["matrix"] = matrix
 
     return input_data
 
@@ -352,8 +390,8 @@ def check_csv(csv):
     column_indices = [
         config["csv"]["name_column"],
         config["csv"]["gene_column"],
-        config["csv"]["sequence_column"]
-        ]
+        config["csv"]["sequence_column"],
+    ]
 
     # Check if the indices are within the DataFrame's column range
     if any(index >= df.shape[1] for index in column_indices):
@@ -363,8 +401,52 @@ def check_csv(csv):
 
     # Check if these columns (accessed by index) contain any empty values
     for index in column_indices:
-        column_name = df.columns[index]  # Get the actual column name for the error message
+        column_name = df.columns[
+            index
+        ]  # Get the actual column name for the error message
         if df.iloc[:, index].isnull().values.any():
             raise ValueError(
                 f"Column at index {index} ('{column_name}') in {csv} contains empty values. Please check the file."
             )
+
+
+def design_matrix_valid():
+    """
+    Checks if a design matrix is valid by
+    detecting perfect multicollinearity.
+
+    """
+    df = pd.read_csv(config["stats"]["mageck"]["mle"]["design_matrix"], sep="\t")
+
+    if df.empty:
+        logger.error("The design matrix DataFrame is empty.")
+        return False
+
+    # Sample names are not needed for the analysis, so drop first column
+    df = df.iloc[:, 1:]
+
+    # Ensure all data is numeric
+    try:
+        numeric_matrix = df.astype(float).to_numpy()
+    except ValueError as e:
+        logger.error(f"Ensure that the design matrix only contains numerical values.")
+        return False
+
+    # Get the number of columns (predictors)
+    num_columns = numeric_matrix.shape[1]
+
+    if num_columns == 0:
+        print("Error: The design matrix has no columns.")
+        return False
+
+    # Calculate the rank of the matrix
+    matrix_rank = np.linalg.matrix_rank(numeric_matrix)
+
+    # Check for multicollinearity
+    if matrix_rank < num_columns:
+        logger.error("Design Matrix appears invalid...")
+        logger.error("At least one column is a linear combination of the others.")
+        return False
+    else:
+        logger.info("Design matrix appears valid...")
+        return True

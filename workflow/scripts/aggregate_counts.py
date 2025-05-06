@@ -47,5 +47,14 @@ df.loc[df["gene"] == 0, "gene"] = pd.NA
 # Remove duplicate rows (observed for some libraries)
 df = df.drop_duplicates()
 
+# Make sure that the order of the sample columns is the same as
+# in the design matrix for MAGeCK mle (if used)
+if snakemake.config["stats"]["mageck"]["command"] == "mle":
+    # Read design matrix
+    file = snakemake.config["stats"]["mageck"]["mle"]["design_matrix"]
+    matrix = pd.read_csv(file, sep="\t")
+    # Reorder columns in df to match the design matrix
+    df = df[["sgRNA", "gene"] + list(matrix["Samples"])]
+
 # Save data frame to file
 df.to_csv(snakemake.output[0], sep="\t", index=False)
