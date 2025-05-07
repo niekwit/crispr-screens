@@ -200,21 +200,37 @@ def sample_names():
 
     sample_names = [os.path.basename(x).replace(ext, "") for x in files]
 
-    # Check if this matches the samples in stats.csv
-    # Check this now, otherwise it will fail later with MAGeCK
-    stats_csv = pd.read_csv("config/stats.csv")
-    samples = stats_csv["test"].tolist()
-    samples.extend(stats_csv["control"].tolist())
+    if config["stats"]["mageck"]["command"] == "test":
+        # Check if this matches the samples in stats.csv
+        # Check this now, otherwise it will fail later with MAGeCK
+        stats_csv = pd.read_csv("config/stats.csv")
+        samples = stats_csv["test"].tolist()
+        samples.extend(stats_csv["control"].tolist())
 
-    not_found = []
-    for sample in samples:
-        if sample not in sample_names:
-            if not ";" in sample:
+        not_found = []
+        for sample in samples:
+            if sample not in sample_names:
+                if not ";" in sample:
+                    not_found.append(sample)
+        if not_found:
+            raise ValueError(
+                f"Sample(s) {', '.join(not_found)} not found in reads directory"
+            )
+    else:
+        # Check if sample names are in design matrix
+        matrix = config["stats"]["mageck"]["mle"]["design_matrix"]
+        df = pd.read_csv(matrix, sep="\t")
+        
+        # Check if sample names are in first column
+        sample_names_in_matrix = df.iloc[:, 0].tolist()
+        not_found = []
+        for sample in sample_names:
+            if sample not in sample_names_in_matrix:
                 not_found.append(sample)
-    if not_found:
-        raise ValueError(
-            f"Sample(s) {', '.join(not_found)} not found in reads directory"
-        )
+        if not_found:
+            raise ValueError(
+                f"Sample(s) {', '.join(not_found)} not found in design matrix"
+            )
 
     return sample_names
 
@@ -236,6 +252,12 @@ def comparisons():
     """
     Load comparisons for MAGeCK and BAGEL2
     """
+    if config["stats"]["mageck"]["command"] == "test":
+        # Load comparisons from stats.csv
+        # Check if file exists
+        assert os.path.exists("config/stats.csv"), "config/stats.csv file does not exist"
+    else:
+        return None
     CSV = pd.read_csv("config/stats.csv")
     COMPARISONS = CSV[["test", "control"]].agg("_vs_".join, axis=1).tolist()
 
@@ -384,7 +406,7 @@ def check_csv(csv):
     This might crash MAGeCK or DrugZ.
     """
     # Read csv file
-    df = pd.read_csv(csv)
+    df = pd.read_csv(csv, low_memory=False)
 
     # Fetch columns from config to check
     column_indices = [
