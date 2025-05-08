@@ -54,7 +54,7 @@ stats:
     cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
   
   drugz:
-    run: True # Perform drugZ analysis
+    run: False # Perform drugZ analysis
     # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
     apply_crisprcleanr: False 
     extra: "" # Extra arguments for drugZ
