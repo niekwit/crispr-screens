@@ -200,7 +200,25 @@ def sample_names():
 
     sample_names = [os.path.basename(x).replace(ext, "") for x in files]
 
-    if config["stats"]["mageck"]["command"] == "test":
+    if config["stats"]["mageck"]["command"] == "mle":
+        ## sample names wildcards are not needed for MAGeCK mle
+        ## just check if fastq file base names are in design matrix
+
+        # Check if sample names are in design matrix
+        matrix = config["stats"]["mageck"]["mle"]["design_matrix"]
+        df = pd.read_csv(matrix, sep="\t")
+        
+        # Check if sample names are in first column
+        sample_names_in_matrix = df.iloc[:, 0].tolist()
+        not_found = []
+        for sample in sample_names:
+            if sample not in sample_names_in_matrix:
+                not_found.append(sample)
+        if not_found:
+            raise ValueError(
+                f"Sample(s) {', '.join(not_found)} not found in design matrix"
+            )
+    else:
         # Check if this matches the samples in stats.csv
         # Check this now, otherwise it will fail later with MAGeCK
         stats_csv = pd.read_csv("config/stats.csv")
@@ -215,21 +233,6 @@ def sample_names():
         if not_found:
             raise ValueError(
                 f"Sample(s) {', '.join(not_found)} not found in reads directory"
-            )
-    else:
-        # Check if sample names are in design matrix
-        matrix = config["stats"]["mageck"]["mle"]["design_matrix"]
-        df = pd.read_csv(matrix, sep="\t")
-        
-        # Check if sample names are in first column
-        sample_names_in_matrix = df.iloc[:, 0].tolist()
-        not_found = []
-        for sample in sample_names:
-            if sample not in sample_names_in_matrix:
-                not_found.append(sample)
-        if not_found:
-            raise ValueError(
-                f"Sample(s) {', '.join(not_found)} not found in design matrix"
             )
 
     return sample_names
