@@ -12,7 +12,7 @@ Copy the fastq files to the `reads` directory and the resources to the `resource
 
 .. note::
     
-    All fastq files must have the extension *.fastq.gz*
+    All fastq files must have the extension *.fastq.gz* or *.cram*
 
 
 Copy the the fasta file with sgRNA sequences to the `resources` directory. If no fasta file is available, provide a csv file with sgRNA sequences and gene names in separate columns. Set the column numbers in `config/config.yml` (see below). 
@@ -82,7 +82,7 @@ The final directory structure should look like this:
         │   └── plot_sgrank.R
         └── Snakefile
 
-    10 directories, 53 files
+    9 directories, 50 files
 
 
 Experiment meta data
@@ -93,15 +93,20 @@ Experiment meta data is described in `config/config.yml`:
 .. code-block:: yaml
 
     lib_info:
-        library_file: resources/bassik.csv
-        sg_length: 17
-        vector: "N" # Vector sequence to be removed from reads (N for none)
-        left_trim : 1 # Trim n bases from 5' end of reads
-        species: human
+        library_file: resources/bassik.csv # Path to library file with sgRNA sequences and gene names
+
+        cutadapt:
+            g: "" # 5' adapter sequence to trim
+            a: "" # 3' adapter sequence to trim
+            u: 0 # trim u bases (before a/g trimming)
+            l: 20 # shorten reads to l bases
+            extra: "" # Extra arguments for cutadapt
+
+    species: human
 
     csv: 
         # 0-based column numbers
-        name_column: 0 # Column number with sgRNA names
+        name_column: 0 # Column number with sgRNA names 
         gene_column: 1 # Column number with gene names
         sequence_column: 2 # Column number with sgRNA sequences
 
@@ -122,46 +127,205 @@ Experiment meta data is described in `config/config.yml`:
         # MiniLibCas9_Library (https://doi.org/10.1186/s13059-021-02268-4)
         # Whitehead_Library (https://doi.org/10.1126/science.aac7041)
         library_name: TKOv3
+        min_reads: 30 # Keep sgRNAs with at least this many reads in control sample
 
     bagel2:
-        run: False # Perform bagel2 analysis
-        custom_gene_lists: # Paths to custom gene lists for bagel2 analysis
-        essential_genes: none
-        non_essential_genes: none
-    
+        run: True # Perform bagel2 analysis
+        custom_gene_lists: 
+        # Paths to custom gene lists for bagel2 analysis
+        # Use "none" to use BAGEL2 default gene lists
+            essential_genes: none
+            non_essential_genes: none
+        extra_args: # Extra arguments for bagel2 subcommands
+        bf: ""
+        pr: ""
+
     mageck:
         run: True # Perform mageck analysis
+        command: test # test or mle
+        mle:
+            design_matrix: ["config/matrix.txt"] # Design matrix for mageck mle
         # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
         apply_crisprcleanr: False 
         extra_mageck_arguments: "" 
         mageck_control_genes: all # All or file with control genes
         apply_CNV_correction: False # Apply CNV correction to mageck results
         cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
-    
+  
+  drugz:
+    run: True # Perform drugZ analysis
+    # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
+    apply_crisprcleanr: False
+    extra: "" # Extra arguments for drugZ
+
+  pathway_analysis: 
+    run: False # Perform pathway analysis on mageck results
+    data: both # enriched, depleted, or both
+    fdr: 0.25 # FDR threshold for significant genes
+    top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+
+
+FASTQ trimming
+=================
+
+The workflow uses `cutadapt <https://cutadapt.readthedocs.io/en/stable/>`_ to trim the reads. The trimming parameters can be set in the `config/config.yml` file. The default parameters are:
+
+.. code-block:: yaml
+
+    cutadapt:
+        g: "" # 5' adapter sequence to trim
+        a: "" # 3' adapter sequence to trim
+        u: 0 # trim u bases (before a/g trimming)
+        l: 20 # shorten reads to l bases
+        extra: "" # Extra arguments for cutadapt
+
+The trimming parameters are passed to `cutadapt` as command line arguments. The default parameters are:
+
+- `g`: Sequence of an adapter ligated to the 5' end. The adapter and any preceding bases are trimmed. Partial matches at the 5' end are allowed. If a '^' character is prepended ('anchoring'), the adapter is only found if it is a prefix of the read.
+- `a`: Sequence of an adapter ligated to the 3' end. The adapter and subsequent bases are trimmed. If a '$' character is appended ('anchoring'), the adapter is only found if it is a suffix of the read.
+- `u`: Remove LEN bases from each read (or R1 if paired; use -U option for R2). If LEN is positive, remove bases from the beginning. If LEN is negative, remove bases from the end. Can be used twice if LENs have different signs. Applied *before* adapter trimming.
+- `l`: Shorten reads to LENGTH. Positive values remove bases at the end while negative ones remove bases at the beginning. This and the following modifications are applied after adapter trimming.
+- `extra`: Extra arguments for cutadapt
+
+
+BAGEL2 analysis
+===============
+
+`BAGEL2 <https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-020-00809-3>`_ can be used to perform gene essentiality analysis. It requires a file containing the pair-wise comparisons of the samples. The file should be in the `config` directory and have the following format:
+
+.. csv-table:: Example stats.csv file
+    :header: "test", "control"
+
+    HT_1,noHT_1
+    HT_2,noHT_2
+    HT_1;HT_2,noHT_1;noHT_2
+
+.. note::
+
+    Replicate samples can be used by separating the sample names with a semicolon (see above). The sample names must match the fastq file names in the `reads` directory.
+
+
+`CRISPRcleanR <https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-018-4989-y>`_ is used to create a count table as input for BAGEL2.
+
+BAGEL2 can be customized as follows:
+
+.. code-block:: yaml
+
+    bagel2:
+        run: True # Perform bagel2 analysis
+        custom_gene_lists: 
+        # Paths to custom gene lists for bagel2 analysis
+        # Use "none" to use BAGEL2 default gene lists
+            essential_genes: none
+            non_essential_genes: none
+        extra_args: # Extra arguments for bagel2 subcommands
+            bf: ""
+            pr: ""
+
+Custom essential and non-essential gene lists that BAGEL2 requires for Bayes Factor calculation can be provided in the `resources` directory. The files should be in the following format:
+
+.. csv-table:: Example essential gene list
+
+    A1BG
+    A1CF
+    A2M
+    A3GALT2
+    A4GALT
+    A4GNT
+    A4GNTL1
+    A4GNTL2
+
+If no custom gene lists are provided, the default gene lists from BAGEL2 will be used. This can be done by setting the `essential_genes` and `non_essential_genes` parameters to `none`.
+
+Extra arguments for the BAGEL2 `bf` and `pr` subcommands can be provided in the `extra_args` section.
+
+
+MAGeCK analysis
+===============
+
+`MAGeCK <https://genomebiology.biomedcentral.com/articles/10.1186/s13059-014-0554-4>`_ can be used to perform multiple types of analyses: RRA and MLE.
+
+
+RRA
+---
+
+To perform pair-wise analyses, MAGeCK RRA can be run with the `test` command. When the `test` command is used, a file (config/stats.csv) with these pairwise comparisons of the samples must be provided. The file format is described in the BAGEL2 section.
+
+
+MLE
+---
+
+For more complex designs, the `mle` command can be used. A design matrix must be provided in the `config` directory. An example of a design matrix (tab-delimited) is shown below. :
+
+.. csv-table:: Example design matrix
+    :header: "Samples", "baseline", "noHT_vs_HT"
+
+    HT_1,1,0
+    HT_2,1,0
+    noHT_1,1,1
+    noHT_2,1,1
+
+
+The MAGeCK analysis can be customized as follows:
+
+.. code-block:: yaml
+
+    mageck:
+        run: True # Perform mageck analysis
+        command: test # test or mle
+        mle:
+            design_matrix: ["config/matrix.txt"] # Design matrix for mageck mle
+        # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
+        apply_crisprcleanr: False 
+        extra_mageck_arguments: "" 
+        mageck_control_genes: all # All or file with control genes
+        apply_CNV_correction: False # Apply CNV correction to mageck results
+        cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
+
+CRISPRcleanR can be used to create a normalised count table as input for MAGeCK. This will disable normalisation by MAGeCK.
+
+A list of control genes can be provided in the `resources` directory. The file should be in the following format:
+
+.. csv-table:: Example control gene list
+
+    A1BG
+    A1CF
+    A2M
+    A3GALT2
+    A4GALT
+    A4GNT
+    A4GNTL1
+    A4GNTL2
+
+These genes will then be used for normalisation and for generating the null distribution of RRA.
+
+Extra arguments for the MAGeCK `test` and `mle` commands can be provided in the `extra_mageck_arguments` section. 
+
+
+drugZ analysis
+==============
+
+`drugZ <https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-019-0665-3>`_ can be used to perform chemogenetic analysis of CRISPR screens. It requires a file containing the pair-wise comparisons of the samples. The file format is described in the BAGEL2 section.
+
+The drugZ analysis can be customized as follows:
+
+.. code-block:: yaml
+
     drugz:
         run: True # Perform drugZ analysis
         # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
-        apply_crisprcleanr: False 
+        apply_crisprcleanr: False
         extra: "" # Extra arguments for drugZ
 
-    pathway_analysis: 
-        run: False # Perform pathway analysis on mageck results
-        data: both # enriched, depleted, or both
-        fdr: 0.25 # FDR threshold for significant genes
-        top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+CRISPRcleanR can be used to create a normalised count table as input for MAGeCK.
+
+Extra arguments for the drugZ command can be provided in the `extra` section.
 
 
-When CRISPRcleanR is not applied, the library csv file will have to contain columns for just the gene names and sgRNA sequences and names, e.g.:
+CRISPRcleanR
+============
 
-.. csv-table:: Example library csv file
-    :header: "sgRNA", "Gene", "sequence"
-
-    ENSG00000121410_A1BG_PROT_195964.1,A1BG,GCTGACGGGTGACACCCA
-    ENSG00000121410_A1BG_PROT_195965.2,A1BG,GACTTCCAGCTGTTCAAGAA
-    ENSG00000121410_A1BG_PROT_195966.3,A1BG,GCAGGTGAGTCAAGGTGCAC
-    ENSG00000121410_A1BG_PROT_195967.4,A1BG,GCCGCTCGGGCTTGTCCAC
-
-However, when CRISPRcleanR is applied, the library csv file will have to be constructed as follows (exon column is optional):
+When CRISPRcleanR is applied, the library csv file should be formatted as follows (exon column is optional):
 
 .. csv-table:: Example library csv file for use with CRISPRcleanR
     :header: CODE, GENES, seq, CHRM, STARTpos, ENDpos, EXONE, STRAND
@@ -171,7 +335,24 @@ However, when CRISPRcleanR is applied, the library csv file will have to be cons
     "chr19\:58863885\-58863904\_A1BG\_\+",A1BG,ACTGGCGCCATCGAGAGCCA,chr19,58863885,58863904,ex4,"\+"
     "chr19\:58862759\-58862778\_A1BG\_\-",A1BG,GTCGAGCTGATTCTGAGCGA,chr19,58862759,58862778,ex5,"\-"
 
+
+When CRISPRcleanR is not applied, the library csv file can be less extensive and should only contain columns for the gene names and sgRNA sequences and names, e.g.:
+
+.. csv-table:: Example library csv file
+    :header: "sgRNA", "Gene", "sequence"
+
+    ENSG00000121410_A1BG_PROT_195964.1,A1BG,GCTGACGGGTGACACCCA
+    ENSG00000121410_A1BG_PROT_195965.2,A1BG,GACTTCCAGCTGTTCAAGAA
+    ENSG00000121410_A1BG_PROT_195966.3,A1BG,GCAGGTGAGTCAAGGTGCAC
+    ENSG00000121410_A1BG_PROT_195967.4,A1BG,GCCGCTCGGGCTTGTCCAC
+
+
+
 In both cases, the column numbers (0-based) for the gene names, sgRNA sequences, and sgRNA names must be set in `config/config.yml` (under the csv section).
+
+.. note::
+    
+    If `library_name` matches an internal CRISPRcleanR library, the information will be auto-loaded.
 
 
 Setup global Snakemake profile
@@ -183,18 +364,28 @@ To setup a profile for custom command line arguments, create a new profile (`con
 
     cores: 40
     latency-wait: 10
-    use-conda: True
+    use-conda: True # Recommended
     rerun-incomplete: True
     printshellcmds: True
-    cache: False
     show-failed-logs: True
-    use-apptainer: True
+    use-apptainer: True # Recommended
+    apptainer-args: "--bind '/parent_dir/of/analysis'" # If analysis is not in /home/$USER
+    # For execution on a SLURM cluster add:
+    executor: slurm
+    jobs: 100 # Maximum number of jobs to run in parallel
+    local-cores: 2 # Limit core usage for local rules
+    default-resources:
+        slurm_partition: icelake
+        slurm_account: <ACCOUNT>
+
+
+With the above settings, `Snakemake` will download a `Docker` image from `Docker Hub` and convert it to an `Apptainer` image. In this image all required `Conda` environments are pre-installed. The `--bind` option is required when the analysis directory is not in `/home/$USER`. If the analysis directory is in `/home/$USER`, this option can be omitted.
 
 
 Dry-run on experimental data
 ============================
 
-To test if the workflow is defined properly and to estimate the amount of required computational resources, run a dry-run:
+To test if the workflow is working with your data and settings, run a dry-run:
 
 .. code-block:: console
 

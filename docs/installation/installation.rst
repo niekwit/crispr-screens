@@ -3,7 +3,7 @@ Conda
 
 For reproducibility, `crispr-screens` uses (containerized) Conda environments.
 
-To install the `(Miniforge) <https://github.com/conda-forge/miniforge>`_  run on Unix-like platform:
+To install the `(Miniforge) <https://github.com/conda-forge/miniforge>`_  run on a Unix-like platform:
 
 .. code-block:: console
 
@@ -42,34 +42,17 @@ Apptainer
 
 For (optional) containerization `crispr-screens` uses `Apptainer <https://apptainer.org>`_. If this is applied, Snakemake will pull a `Docker image <https://hub.docker.com/repository/docker/niekwit/crispr-screens/general>`_ and convert it to an Apptainer image. This image contains all pre-made Conda environments.
 
+
 Installation on a local machine
 -------------------------------
 
-On a local machine Apptainer can be `installed <https://github.com/apptainer/apptainer/blob/release-1.3/INSTALL.md>`_ as follows:
-
-First, install all required dependencies:
-
-On Debian-based systems, including Ubuntu:
+The easiest, and recommended, way to install `Apptainer` on a local Machine is via `Conda`:
 
 .. code-block:: console
 
-    $ sudo apt-get update
-    $ sudo apt-get install -y build-essential libseccomp-dev pkg-config uidmap squashfs-tools fakeroot  cryptsetup tzdata dh-apparmor curl wget git
+    $ conda install -c conda-forge apptainer
 
-On CentOS/RHEL:
 
-.. code-block:: console
-
-    $ sudo yum groupinstall -y 'Development Tools'
-    $ sudo yum install -y epel-release
-    $ sudo yum install -y libseccomp-devel squashfs-tools fakeroot cryptsetup wget git
-
-Finally, install Apptainer with conda:
-
-.. code-block:: console
-
-    $ conda activate snakemake
-    $ conda install conda-forge::apptainer
 
 Installation on HPC systems
 ---------------------------
@@ -96,8 +79,8 @@ To obtain the workflow code, run snakefetch from the analysis directory:
 
    $ mkdir my_experiment
    $ cd my_experiment
-   $ snakefetch --outdir . --repo-version v0.8.0 --url https://github.com/niekwit/crispr-screens
-   Downloading archive file for version v0.8.0 from https://github.com/niekwit/crispr-screens...
+   $ snakefetch --outdir . --repo-version v0.9.0 --url https://github.com/niekwit/crispr-screens
+   Downloading archive file for version v0.9.0 from https://github.com/niekwit/crispr-screens...
    Extracting config and workflow directories from tar.gz file to /path/to/analysis...
    Done!
 
