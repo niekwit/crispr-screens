@@ -50,7 +50,7 @@ The easiest, and recommended, way to install `Apptainer` on a local Machine is v
 
 .. code-block:: console
 
-    $ conda install conda-forge::apptainer
+    $ conda install -c conda-forge apptainer
 
 
 
