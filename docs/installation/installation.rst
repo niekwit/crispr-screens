@@ -79,8 +79,8 @@ To obtain the workflow code, run snakefetch from the analysis directory:
 
    $ mkdir my_experiment
    $ cd my_experiment
-   $ snakefetch --outdir . --repo-version v0.8.2 --url https://github.com/niekwit/crispr-screens
-   Downloading archive file for version v0.8.2 from https://github.com/niekwit/crispr-screens...
+   $ snakefetch --outdir . --repo-version v0.9.0 --url https://github.com/niekwit/crispr-screens
+   Downloading archive file for version v0.9.0 from https://github.com/niekwit/crispr-screens...
    Extracting config and workflow directories from tar.gz file to /path/to/analysis...
    Done!
 
