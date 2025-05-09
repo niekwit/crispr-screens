@@ -93,14 +93,14 @@ Experiment meta data is described in `config/config.yml`:
 .. code-block:: yaml
 
     lib_info:
-    library_file: resources/bassik.csv # Path to library file with sgRNA sequences and gene names
+        library_file: resources/bassik.csv # Path to library file with sgRNA sequences and gene names
 
-    cutadapt:
-        g: "" # 5' adapter sequence to trim
-        a: "" # 3' adapter sequence to trim
-        u: 0 # trim u bases (before a/g trimming)
-        l: 20 # shorten reads to l bases
-        extra: "" # Extra arguments for cutadapt
+        cutadapt:
+            g: "" # 5' adapter sequence to trim
+            a: "" # 3' adapter sequence to trim
+            u: 0 # trim u bases (before a/g trimming)
+            l: 20 # shorten reads to l bases
+            extra: "" # Extra arguments for cutadapt
 
     species: human
 
@@ -165,31 +165,27 @@ Experiment meta data is described in `config/config.yml`:
     top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
 
 
-When CRISPRcleanR is not applied, the library csv file will have to contain columns for just the gene names and sgRNA sequences and names, e.g.:
+FASTQ trimming
+=================
 
-.. csv-table:: Example library csv file
-    :header: "sgRNA", "Gene", "sequence"
+The workflow uses `cutadapt <https://cutadapt.readthedocs.io/en/stable/>`_ to trim the reads. The trimming parameters can be set in the `config/config.yml` file. The default parameters are:
 
-    ENSG00000121410_A1BG_PROT_195964.1,A1BG,GCTGACGGGTGACACCCA
-    ENSG00000121410_A1BG_PROT_195965.2,A1BG,GACTTCCAGCTGTTCAAGAA
-    ENSG00000121410_A1BG_PROT_195966.3,A1BG,GCAGGTGAGTCAAGGTGCAC
-    ENSG00000121410_A1BG_PROT_195967.4,A1BG,GCCGCTCGGGCTTGTCCAC
+.. code-block:: yaml
 
-However, when CRISPRcleanR is applied, the library csv file will have to be constructed as follows (exon column is optional):
+    cutadapt:
+        g: "" # 5' adapter sequence to trim
+        a: "" # 3' adapter sequence to trim
+        u: 0 # trim u bases (before a/g trimming)
+        l: 20 # shorten reads to l bases
+        extra: "" # Extra arguments for cutadapt
 
-.. csv-table:: Example library csv file for use with CRISPRcleanR
-    :header: CODE, GENES, seq, CHRM, STARTpos, ENDpos, EXONE, STRAND
+The trimming parameters are passed to `cutadapt` as command line arguments. The default parameters are:
 
-    "chr19\:58864777\-58864796\_A1BG\_\+",A1BG,CAAGAGAAAGACCACGAGCA,chr19,58864777,58864796,ex1,"\+"
-    "chr19\:58864319\-58864338\_A1BG\_\+",A1BG,GCTCAGCTGGGTCCATCCTG,chr19,58864319,58864338,ex3,"\+"
-    "chr19\:58863885\-58863904\_A1BG\_\+",A1BG,ACTGGCGCCATCGAGAGCCA,chr19,58863885,58863904,ex4,"\+"
-    "chr19\:58862759\-58862778\_A1BG\_\-",A1BG,GTCGAGCTGATTCTGAGCGA,chr19,58862759,58862778,ex5,"\-"
-
-In both cases, the column numbers (0-based) for the gene names, sgRNA sequences, and sgRNA names must be set in `config/config.yml` (under the csv section).
-
-.. note::
-    
-    Some libraries are available in the CRISPRcleanR library database. If the library name is mentioned in the `config/config.yml` file, the library info is loaded from the database, if that name is set as the library name.
+- `g`: Sequence of an adapter ligated to the 5' end. The adapter and any preceding bases are trimmed. Partial matches at the 5' end are allowed. If a '^' character is prepended ('anchoring'), the adapter is only found if it is a prefix of the read.
+- `a`: Sequence of an adapter ligated to the 3' end. The adapter and subsequent bases are trimmed. If a '$' character is appended ('anchoring'), the adapter is only found if it is a suffix of the read.
+- `u`: Remove LEN bases from each read (or R1 if paired; use -U option for R2). If LEN is positive, remove bases from the beginning. If LEN is negative, remove bases from the end. Can be used twice if LENs have different signs. Applied *before* adapter trimming.
+- `l`: Shorten reads to LENGTH. Positive values remove bases at the end while negative ones remove bases at the beginning. This and the following modifications are applied after adapter trimming.
+- `extra`: Extra arguments for cutadapt
 
 
 BAGEL2 analysis
@@ -324,6 +320,39 @@ The drugZ analysis can be customized as follows:
 CRISPRcleanR can be used to create a normalised count table as input for MAGeCK.
 
 Extra arguments for the drugZ command can be provided in the `extra` section.
+
+
+CRISPRcleanR
+============
+
+When CRISPRcleanR is applied, the library csv file should be formatted as follows (exon column is optional):
+
+.. csv-table:: Example library csv file for use with CRISPRcleanR
+    :header: CODE, GENES, seq, CHRM, STARTpos, ENDpos, EXONE, STRAND
+
+    "chr19\:58864777\-58864796\_A1BG\_\+",A1BG,CAAGAGAAAGACCACGAGCA,chr19,58864777,58864796,ex1,"\+"
+    "chr19\:58864319\-58864338\_A1BG\_\+",A1BG,GCTCAGCTGGGTCCATCCTG,chr19,58864319,58864338,ex3,"\+"
+    "chr19\:58863885\-58863904\_A1BG\_\+",A1BG,ACTGGCGCCATCGAGAGCCA,chr19,58863885,58863904,ex4,"\+"
+    "chr19\:58862759\-58862778\_A1BG\_\-",A1BG,GTCGAGCTGATTCTGAGCGA,chr19,58862759,58862778,ex5,"\-"
+
+
+When CRISPRcleanR is not applied, the library csv file can be less extensive and should only contain columns for the gene names and sgRNA sequences and names, e.g.:
+
+.. csv-table:: Example library csv file
+    :header: "sgRNA", "Gene", "sequence"
+
+    ENSG00000121410_A1BG_PROT_195964.1,A1BG,GCTGACGGGTGACACCCA
+    ENSG00000121410_A1BG_PROT_195965.2,A1BG,GACTTCCAGCTGTTCAAGAA
+    ENSG00000121410_A1BG_PROT_195966.3,A1BG,GCAGGTGAGTCAAGGTGCAC
+    ENSG00000121410_A1BG_PROT_195967.4,A1BG,GCCGCTCGGGCTTGTCCAC
+
+
+
+In both cases, the column numbers (0-based) for the gene names, sgRNA sequences, and sgRNA names must be set in `config/config.yml` (under the csv section).
+
+.. note::
+    
+    If `library_name` matches an internal CRISPRcleanR library, the information will be auto-loaded.
 
 
 Setup global Snakemake profile
