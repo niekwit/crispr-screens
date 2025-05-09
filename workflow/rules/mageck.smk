@@ -60,12 +60,29 @@ rule mageck_test:
         "../scripts/mageck.py"
 
 
+rule create_mageck_mle_count_table:
+    input:
+        counts="results/count/counts-aggregated.tsv",
+        matrix="config/{matrix}.txt",
+    output:
+        "results/count/counts-aggregated_{matrix}.tsv",
+    threads: 1
+    resources:
+        runtime=5,
+    conda:
+        "../envs/stats.yaml"
+    log:
+        "logs/count/create_count_table_{matrix}.log",
+    script:
+        "../scripts/create_mageck_mle_count_table.py"
+
+
 rule mageck_mle:
     input:
         unpack(mageck_input),
     output:
-        gs="results/mageck/mle/{cnv}/results.gene_summary.txt",
-        ss="results/mageck/mle/{cnv}/results.sgrna_summary.txt",
+        gs="results/mageck/mle/{cnv}/{matrix}.gene_summary.txt",
+        ss="results/mageck/mle/{cnv}/{matrix}.sgrna_summary.txt",
     params:
         command=config["stats"]["mageck"]["command"],
         control=mageck_control(),
@@ -77,7 +94,7 @@ rule mageck_mle:
     conda:
         "../envs/stats.yaml"
     log:
-        "logs/mageck/mle_{cnv}.log",
+        "logs/mageck/mle_{matrix}_{cnv}.log",
     script:
         "../scripts/mageck.py"
 

@@ -45,13 +45,14 @@ else:
     # Run MAGeCK mle command
     matrix = snakemake.input["matrix"]
     threads = snakemake.threads
+    matrix_name = snakemake.wildcards["matrix"]
 
     shell(
         "export OMP_NUM_THREADS=1; "  # https://sourceforge.net/p/mageck/wiki/Home/#q-and-a
         "mageck mle "
         "-k {count_table} "
         "-d {matrix} "
-        "-n {dir_name}/results "
+        "-n {dir_name}/{matrix_name} "
         "{cnv} "
         "{control} "
         "{extra} "

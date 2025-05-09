@@ -2,8 +2,8 @@ include: "scripts/general_functions.smk"
 
 
 # Workflow version
-VERSION = "v0.8.2"
-DOCKER_VERSION = "v0.8.2"  # Docker image version
+VERSION = "v0.9.0"
+DOCKER_VERSION = "v0.9.0"  # Docker image version
 
 # Set minimum snakemake version
 min_version("8.25.5")
@@ -38,6 +38,7 @@ SAMPLES = sample_names()
 COMPARISONS = comparisons()
 CNV = cnv()
 PATHWAY_DATA = pathway_data()
+MATRIX_NAMES = matrix_names()
 
 # Get fasta/csv paths
 fasta, csv = fasta()

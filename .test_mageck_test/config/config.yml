@@ -45,7 +45,7 @@ stats:
     run: True # Perform mageck analysis
     command: test # test or mle
     mle:
-      design_matrix: resources/matrix.txt # Design matrix for mageck mle
+      design_matrix: [resources/matrix.txt] # Design matrix for mageck mle
     # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
     apply_crisprcleanr: False 
     extra_mageck_arguments: "" 

@@ -64,14 +64,14 @@ def targets():
             TARGETS.extend(
                 [
                     expand(
-                        "results/mageck/mle/{cnv}/results.gene_summary.txt",
-                        comparison=COMPARISONS,
+                        "results/mageck/mle/{cnv}/{matrix}.gene_summary.txt",
                         cnv=CNV,
+                        matrix=MATRIX_NAMES,
                     ),
                     expand(
-                        "results/mageck/mle/{cnv}/results.sgrna_summary.txt",
-                        comparison=COMPARISONS,
+                        "results/mageck/mle/{cnv}/{matrix}.sgrna_summary.txt",
                         cnv=CNV,
+                        matrix=MATRIX_NAMES,
                     ),
                 ]
             )
@@ -201,25 +201,7 @@ def sample_names():
 
     sample_names = [os.path.basename(x).replace(ext, "") for x in files]
 
-    if config["stats"]["mageck"]["command"] == "mle":
-        ## sample names wildcards are not needed for MAGeCK mle
-        ## just check if fastq file base names are in design matrix
-
-        # Check if sample names are in design matrix
-        matrix = config["stats"]["mageck"]["mle"]["design_matrix"]
-        df = pd.read_csv(matrix, sep="\t")
-        
-        # Check if sample names are in first column
-        sample_names_in_matrix = df.iloc[:, 0].tolist()
-        not_found = []
-        for sample in sample_names:
-            if sample not in sample_names_in_matrix:
-                not_found.append(sample)
-        if not_found:
-            raise ValueError(
-                f"Sample(s) {', '.join(not_found)} not found in design matrix"
-            )
-    else:
+    if not config["stats"]["mageck"]["command"] == "mle":
         # Check if this matches the samples in stats.csv
         # Check this now, otherwise it will fail later with MAGeCK
         stats_csv = pd.read_csv("config/stats.csv")
@@ -329,22 +311,22 @@ def mageck_input(wildcards):
             wildcards=wildcards
         )
     else:
-        input_data["counts"] = "results/count/counts-aggregated.tsv"
+        if config["stats"]["mageck"]["command"] == "test":
+            input_data["counts"] = "results/count/counts-aggregated.tsv"
+        else:
+            input_data[
+                "counts"
+                ] = "results/count/counts-aggregated_{wildcards.matrix}.tsv".format(
+                    wildcards=wildcards
+            )
 
     if config["stats"]["mageck"]["command"] == "mle":
         if config["stats"]["mageck"]["apply_crisprcleanr"]:
             logger.info("Skipping CRISPRcleanR normalisation for MAGeCK mle...")
-
-        matrix = config["stats"]["mageck"]["mle"]["design_matrix"]
-        # Check if matrix file exists
-        assert os.path.exists(
-            matrix
-        ), f"MAGeCK mle design matrix file ({matrix}) does not exist"
-
-        # Check if design matrix is valid
-        if not design_matrix_valid():
-            raise ValueError(f"Design matrix {matrix} is not valid")
-        input_data["matrix"] = matrix
+        
+        input_data["matrix"] = "config/{wildcards.matrix}.txt".format(
+            wildcards=wildcards
+        )
 
     return input_data
 
@@ -436,16 +418,23 @@ def check_csv(csv):
             )
 
 
-def design_matrix_valid():
+def design_matrix_valid(m):
     """
     Checks if a design matrix is valid by
     detecting perfect multicollinearity.
 
     """
-    df = pd.read_csv(config["stats"]["mageck"]["mle"]["design_matrix"], sep="\t")
+    df = pd.read_csv(m, sep="\t")
 
     if df.empty:
         logger.error("The design matrix DataFrame is empty.")
+        return False
+
+    # Check if the right separator is used
+    if df.shape[1] < 3:
+        logger.error(
+            "The design matrix must have at least two columns and be tab-delimited."
+            )
         return False
 
     # Sample names are not needed for the analysis, so drop first column
@@ -474,5 +463,23 @@ def design_matrix_valid():
         logger.error("At least one column is a linear combination of the others.")
         return False
     else:
-        logger.info("Design matrix appears valid...")
+        logger.info(f"Design matrix {m} appears valid...")
         return True
+
+
+def matrix_names():
+    """
+    Get sample names from design matrix file(s).
+    For Wildcard values.
+    """
+    if config["stats"]["mageck"]["command"] == "mle":
+        matrices = config["stats"]["mageck"]["mle"]["design_matrix"]
+        
+        # Check if design matrix is valid
+        for m in matrices:
+            if not design_matrix_valid(m):
+                raise ValueError(f"Design matrix {m} is not valid")
+
+        return [os.path.basename(x).rsplit(".", 1)[0] for x in matrices]
+    else:
+        return None
