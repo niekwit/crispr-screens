@@ -18,7 +18,7 @@ To install Snakemake create the following environment with `conda`:
 
 .. code-block:: console
 
-    $ conda create -n snakemake snakemake=8.25.5
+    $ conda create -n snakemake bioconda::snakemake=8.25.5
 
 Activate the environment as follows:
 
