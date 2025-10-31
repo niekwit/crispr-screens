@@ -23,3 +23,5 @@ dependencies:
   - hisat2=2.2.1
   - conda-forge::git=2.47.1
   - samtools=1.21
+  - conda-forge::bash=5.2.37
+  - conda-forge::gzip=1.14
