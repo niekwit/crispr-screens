@@ -12,6 +12,7 @@ def targets():
     TARGETS = [
         "results/qc/multiqc.html",
         "results/qc/alignment-rates.pdf",
+        "results/qc/alignment-rates.csv",
         "results/qc/sequence-coverage.pdf",
         "results/qc/gini-index.pdf",
         "results/qc/missed-rgrnas.pdf",
@@ -151,19 +152,6 @@ def fasta():
 def cut_adapt_arg(config):
     """
     Generates Cutadapt argument for removing vector sequence
-    """
-    """
-    This is the original code, but it kept just as a comment
-    left_trim = config["lib_info"]["left_trim"]
-    vector = config["lib_info"]["vector"]
-    if vector.lower() == "n":
-        sg_length = config["lib_info"]["sg_length"]
-        cut_arg = f"-l {str(sg_length)}"
-    else:
-        cut_arg = f"-a {vector}"
-    
-    if left_trim != 0:
-        cut_arg += f" -u {str(left_trim)}"
     """
     cut_arg = ""
     if config["lib_info"]["cutadapt"]["g"]:
