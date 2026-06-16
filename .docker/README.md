@@ -7,8 +7,8 @@ The Docker image derived from this file contains all Conda environments for each
 These images are shared via [Docker Hub](https://hub.docker.com/repository/docker/niekwit/crispr-screens/general) and are generated as follows (from directory with workflow code):
 
 ```shell
-$ snakemake --containerize > Dockerfile
-$ sudo docker build -t niekwit/crispr-screens:{VERSION} .
-$ sudo docker login
-$ sudo docker push niekwit/crispr-screens:{VERSION}
+snakemake --containerize > Dockerfile
+docker build -t niekwit/crispr-screens:0.10.0 .
+docker login
+docker push niekwit/crispr-screens:0.10.0
 ```
