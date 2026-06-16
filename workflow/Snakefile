@@ -2,8 +2,8 @@ include: "scripts/general_functions.smk"
 
 
 # Workflow version
-VERSION = "v0.9.0"
-DOCKER_VERSION = "v0.9.0"  # Docker image version
+VERSION = "v0.10.0"
+DOCKER_VERSION = "v0.10.0"  # Docker image version
 
 # Set minimum snakemake version
 min_version("8.25.5")
@@ -68,8 +68,20 @@ os.makedirs("logs/snakemake", exist_ok=True)
 onsuccess:
     shell("cp -v {log} {snake_log}")
     logger.info("Analysis finished successfully!")
+    
+    try:
+        from ngs_tracker import register_run
+        register_run(config)
+    except ImportError:
+        pass
 
 
 onerror:
     shell("cp -v {log} {snake_log}")
     logger.info(f"Analysis failed...\nCheck {snake_log} for details")
+
+    try:
+        from ngs_tracker import register_run
+        register_run(config, status="failed", log_file=log)
+    except ImportError:
+        pass

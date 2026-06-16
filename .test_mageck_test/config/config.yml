@@ -64,3 +64,37 @@ stats:
     data: both # enriched, depleted, or both
     fdr: 0.25 # FDR threshold for significant genes
     top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+
+# Integration with NGS Tracker for workflow registration and file attachment
+# https://github.com/niekwit/ngs-tracker
+ngs_tracker:
+  enabled: false # set to false to skip registration
+
+  # Connection
+  base_url: "http://127.0.0.1:5000/api" # change host/port if needed
+
+  # Run identity  (find project_id on the project detail page)
+  project_id: 3
+  workflow_name: "crispr-screens"
+  workflow_tag: "v0.9.1"
+  workflow_system: "snakemake" # snakemake | nextflow | cwl | other
+  description: "Testing REST API integration with NGS Tracker"
+  tags:
+    - Test
+
+  # Files to attach — paths relative to the working directory or absolute
+  # type: config | sample_info | qc | results | mapping_rates | other
+  files:
+    - path: "config/config.yml"
+      type: config
+      description: "Workflow config"
+    - path: "results/qc/multiqc.html"
+      type: qc
+      description: "MultiQC report"
+    - path: "results/qc/alignment-rates.csv"
+      type: mapping_rates
+      description: "HISAT2 alignment mapping rates"
+    - path: "results/qc/*.pdf"
+      type: qc
+    - path: logs/snakemake/*.log
+      type: snakemake_log
