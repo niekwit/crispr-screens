@@ -11,7 +11,7 @@ files <- snakemake@input
 
 # create df for storing alignment rates
 df <- as.data.frame(matrix(ncol = 2, nrow = 0))
-names(df) <- c("sample","alignment.rate")
+names(df) <- c("sample","mapping_rate")
 
 # get sample name and mapping rates from log files
 for (i in seq(files)){
@@ -23,14 +23,14 @@ for (i in seq(files)){
 
   # add to df
   df[i,"sample"] <- sample
-  df[i,"mapping.rate"] <- rate
+  df[i,"mapping_rate"] <- rate
 }
 
 # remove prepended X from samples names (only happens when they start with a number)
 df$sample <- str_remove(df$sample, "^X")
 
 # create plot
-p <- ggplot(df, aes(x = sample, y = mapping.rate)) +
+p <- ggplot(df, aes(x = sample, y = mapping_rate)) +
   geom_bar(stat = "identity", 
            fill = "#419179",
            colour = "black") +
@@ -43,6 +43,9 @@ p <- ggplot(df, aes(x = sample, y = mapping.rate)) +
 
 # Save plot
 ggsave(snakemake@output[[1]], p)
+
+# Save mapping rates to CSV
+write.csv(df, snakemake@output[["csv"]], row.names = FALSE)
 
 # close log file
 sink(log, type = "output")

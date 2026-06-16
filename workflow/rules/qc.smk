@@ -46,6 +46,7 @@ rule plot_alignment_rate:
             caption="../report/alignment-rates.rst",
             category="Alignment rates",
         ),
+        csv="results/qc/alignment-rates.csv",
     log:
         "logs/plot-alignment-rate.log",
     threads: 1
