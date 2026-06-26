@@ -1,5 +1,5 @@
 name: stats
-channels: 
+channels:
   - conda-forge
   - bioconda
   - defaults
@@ -25,3 +25,4 @@ dependencies:
   - samtools=1.21
   - conda-forge::bash=5.2.37
   - conda-forge::gzip=1.14
+  - conda-forge::requests
