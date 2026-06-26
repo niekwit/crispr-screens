@@ -67,6 +67,7 @@ stats:
 
   string_db:
     run: False # Perform STRING-db analysis on mageck results
+    data: both # enriched, depleted, or both
     fdr: 0.25 # FDR threshold for significant genes
     top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
 
