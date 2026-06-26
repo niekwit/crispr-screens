@@ -1,14 +1,8 @@
 lib_info:
   library_file: resources/bassik.csv
-
-  cutadapt:
-    g: "" # 5' adapter sequence to trim
-    a: "" # 3' adapter sequence to trim
-    u: 0 # trim u bases (before a/g trimming)
-    l: 20 # shorten reads to l bases
-    extra: "" # Extra arguments for cutadapt
-
   species: human
+
+cutadapt_args: "-q 20 -l 20 --discard-untrimmed"
 
 csv:
   # 0-based column numbers
