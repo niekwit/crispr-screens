@@ -176,3 +176,20 @@ rule gprofiler_mageck:
         "logs/gprofiler/mageck/{comparison}_{cnv}_{pathway_data}.log",
     script:
         "../scripts/gprofiler.R"
+
+
+rule string_db:
+    input:
+        txt="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
+    output:
+        svg="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.svg",
+        csv="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.csv",
+    threads: 1
+    resources:
+        runtime=10,
+    conda:
+        "../envs/stats.yaml"
+    log:
+        "logs/stringdb/mageck/{cnv}/{comparison}_{pathway_data}.log",
+    script:
+        "../scripts/string_db.py"
