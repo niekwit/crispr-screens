@@ -149,25 +149,6 @@ def fasta():
     return csv.replace(".csv", ".fasta"), csv
 
 
-def cut_adapt_arg(config):
-    """
-    Generates Cutadapt argument for removing vector sequence
-    """
-    cut_arg = ""
-    if config["lib_info"]["cutadapt"]["g"]:
-        cut_arg = f"-g {config['lib_info']['cutadapt']['g']}".strip()
-    if config["lib_info"]["cutadapt"]["a"]:
-        cut_arg = f"{cut_arg} -a {config['lib_info']['cutadapt']['a']}".strip()
-    if config["lib_info"]["cutadapt"]["u"]:
-        cut_arg = f"{cut_arg} -u {config['lib_info']['cutadapt']['u']}".strip()
-    if config["lib_info"]["cutadapt"]["l"]:
-        cut_arg = f"{cut_arg} -l {config['lib_info']['cutadapt']['l']}".strip()
-    if config["lib_info"]["cutadapt"]["extra"]:
-        cut_arg = f"{cut_arg} {config['lib_info']['cutadapt']['extra']}".strip()
-
-    return cut_arg
-
-
 def sample_names():
     """
     Get sample names from fastq files and check for invalid characters

@@ -1,12 +1,8 @@
 lib_info:
   library_file: resources/bassik.csv
-  cutadapt:
-    g: "" # 5' adapter sequence to trim
-    a: "" # 3' adapter sequence to trim
-    u: 0 # trim u bases (before a/g trimming)
-    l: 20 # shorten reads to l bases
-    extra: "" # Extra arguments for cutadapt
   species: human
+
+cutadapt_args: "-q 20 -l 20 --discard-untrimmed"
 
 csv: # If no fasta is available, provide a csv file with sgRNA sequences
   name_column: 0 # Column number with sgRNA names
@@ -15,7 +11,7 @@ csv: # If no fasta is available, provide a csv file with sgRNA sequences
 
 mismatch: 0 # Mismatches allowed during alignment
 
-stats: 
+stats:
   crisprcleanr:
     # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better
     # It is optional for MAGeCK and DrugZ
@@ -40,26 +36,26 @@ stats:
     extra_args: # Extra arguments for bagel2 subcommands
       bf: ""
       pr: ""
-  
+
   mageck:
     run: True # Perform mageck analysis
     command: test # test or mle
     mle:
       design_matrix: [resources/matrix.txt] # Design matrix for mageck mle
     # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
-    apply_crisprcleanr: False 
-    extra_mageck_arguments: "" 
+    apply_crisprcleanr: False
+    extra_mageck_arguments: ""
     mageck_control_genes: all # All or file with control genes
     apply_CNV_correction: False # Apply CNV correction to mageck results
     cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
-  
+
   drugz:
     run: True # Perform drugZ analysis
     # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
-    apply_crisprcleanr: False 
+    apply_crisprcleanr: False
     extra: "" # Extra arguments for drugZ
 
-  pathway_analysis: 
+  pathway_analysis:
     run: False # Perform pathway analysis on mageck results
     data: both # enriched, depleted, or both
     fdr: 0.25 # FDR threshold for significant genes
