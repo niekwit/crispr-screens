@@ -2,6 +2,7 @@ lib_info:
   library_file: resources/bassik.csv
   species: human
 
+# Arguments for cutadapt
 cutadapt_args: "-q 20 -l 20 --discard-untrimmed"
 
 csv:
@@ -103,3 +104,6 @@ ngs_tracker:
       type: qc
     - path: logs/snakemake/*.log
       type: snakemake_log
+    - path: "resources/*.csv"
+      type: other
+      description: "sgRNA library csv"
