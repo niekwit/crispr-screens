@@ -1,14 +1,9 @@
 lib_info:
   library_file: resources/bassik.csv
-
-  cutadapt:
-    g: "" # 5' adapter sequence to trim
-    a: "" # 3' adapter sequence to trim
-    u: 0 # trim u bases (before a/g trimming)
-    l: 20 # shorten reads to l bases
-    extra: "" # Extra arguments for cutadapt
-
   species: human
+
+# Arguments for cutadapt
+cutadapt_args: "-q 20 -l 20 --discard-untrimmed"
 
 csv:
   # 0-based column numbers
@@ -81,7 +76,7 @@ ngs_tracker:
   # Run identity  (find project_id on the project detail page)
   project_id: 3
   workflow_name: "crispr-screens"
-  workflow_tag: "v0.9.1"
+  workflow_tag: "v0.10.0"
   workflow_system: "snakemake" # snakemake | nextflow | cwl | other
   description: "Testing REST API integration with NGS Tracker"
   tags:
@@ -103,3 +98,6 @@ ngs_tracker:
       type: qc
     - path: logs/snakemake/*.log
       type: snakemake_log
+    - path: "resources/*.csv"
+      type: other
+      description: "sgRNA library csv"
