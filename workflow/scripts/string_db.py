@@ -57,6 +57,15 @@ else:
 # Get genes for STRING-db analysis
 genes = data["id"].tolist()
 
+# Raise error if no genes are found after filtering
+if not genes:
+    message = (
+        f"No genes found for {pathway_data} analysis after filtering. "
+        f"Please check your MAGeCK results and filtering criteria."
+    )
+    logging.error(message)
+    raise ValueError(message)
+
 # Format input genes as a carriage-return (\r) separated payload
 genes_payload = "%0d".join(genes)
 
