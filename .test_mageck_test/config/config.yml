@@ -2,7 +2,7 @@ lib_info:
   library_file: resources/bassik.csv
   species: human
 
-cutadapt_args: "-q 20 -l 20 --discard-untrimmed"
+cutadapt_args: "-q 20 -l 20"
 
 csv: # If no fasta is available, provide a csv file with sgRNA sequences
   name_column: 0 # Column number with sgRNA names
