@@ -11,32 +11,37 @@ files <- snakemake@input
 
 # create df for storing alignment rates
 df <- as.data.frame(matrix(ncol = 2, nrow = 0))
-names(df) <- c("sample","mapping_rate")
+names(df) <- c("sample", "mapping_rate")
 
 # get sample name and mapping rates from log files
-for (i in seq(files)){
-  sample <- system(paste0("echo ", files[i], "| sed 's/.log//'"), intern=TRUE)
+for (i in seq(files)) {
+  sample <- system(paste0("echo ", files[i], "| sed 's/.log//'"), intern = TRUE)
   sample <- basename(sample)
-  
-  rate <- system(paste0('grep "aligned exactly 1 time" ', files[i], " | awk '{print $2}' | sed 's/(*[%)]*//g'"), intern=TRUE)
+
+  rate <- system(
+    paste0(
+      'grep "aligned exactly 1 time" ',
+      files[i],
+      " | awk '{print $2}' | sed 's/(*[%)]*//g'"
+    ),
+    intern = TRUE
+  )
   rate <- as.numeric(rate)
 
   # add to df
-  df[i,"sample"] <- sample
-  df[i,"mapping_rate"] <- rate
+  df[i, "sample"] <- sample
+  df[i, "mapping_rate"] <- rate
 }
 
-# remove prepended X from samples names (only happens when they start with a number)
+# remove prepended X from samples names
+# (only happens when they start with a number)
 df$sample <- str_remove(df$sample, "^X")
 
 # create plot
 p <- ggplot(df, aes(x = sample, y = mapping_rate)) +
-  geom_bar(stat = "identity", 
-           fill = "#419179",
-           colour = "black") +
+  geom_bar(stat = "identity", fill = "#419179", colour = "black") +
   theme_cowplot(16) +
-  scale_y_continuous(limits = c(0,100),
-                     expand = expansion(mult = c(0, 0.1))) +
+  scale_y_continuous(limits = c(0, 100), expand = expansion(mult = c(0, 0.1))) +
   scale_x_discrete(guide = guide_axis(angle = 45)) +
   ylab("Mapping rate (%)") +
   xlab(NULL)
