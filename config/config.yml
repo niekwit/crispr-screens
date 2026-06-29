@@ -3,7 +3,7 @@ lib_info:
   species: human
 
 # Arguments for cutadapt
-cutadapt_args: "-q 20 -l 20 --discard-untrimmed"
+cutadapt_args: "-q 20 -l 20"
 
 csv:
   # 0-based column numbers
