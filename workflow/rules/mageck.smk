@@ -5,15 +5,15 @@ if config["stats"]["mageck"]["apply_CNV_correction"]:
     rule get_CNV_data:
         output:
             ensure("resources/cnv_data.txt.xz", sha256=check_sum),
-        params:
-            url="https://github.com/niekwit/crispr-screens/raw/main/.resources/CCLE_copynumber_byGene_2013-12-03.txt.xz",
-        threads: 1
-        resources:
-            runtime=10,
         log:
             "logs/get_cnv_data.log",
         conda:
             "../envs/stats.yaml"
+        threads: 1
+        resources:
+            runtime=10,
+        params:
+            url="https://github.com/niekwit/crispr-screens/raw/main/.resources/CCLE_copynumber_byGene_2013-12-03.txt.xz",
         shell:
             "wget -O {output} {params.url}  2> {log}"
 
@@ -22,13 +22,13 @@ if config["stats"]["mageck"]["apply_CNV_correction"]:
             "resources/cnv_data.txt.xz",
         output:
             "resources/cnv_data.txt",
-        threads: 1
-        resources:
-            runtime=10,
         log:
             "logs/unpack_cnv_data.log",
         conda:
             "../envs/stats.yaml"
+        threads: 1
+        resources:
+            runtime=10,
         shell:
             "xz -dv {input} 2> {log}"
 
@@ -44,18 +44,18 @@ rule mageck_test:
             category="MAGeCK",
         ),
         ss="results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
+    log:
+        "logs/mageck/test/{comparison}_{cnv}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 2
+    resources:
+        runtime=20,
     params:
         command=config["stats"]["mageck"]["command"],
         control=mageck_control(),
         dir_name=lambda wc, output: os.path.dirname(output["gs"]),
         extra=extra_mageck_args(),
-    threads: 2
-    resources:
-        runtime=20,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/mageck/test/{comparison}_{cnv}.log",
     script:
         "../scripts/mageck.py"
 
@@ -66,13 +66,13 @@ rule create_mageck_mle_count_table:
         matrix="config/{matrix}.txt",
     output:
         "results/count/counts-aggregated_{matrix}.tsv",
+    log:
+        "logs/count/create_count_table_{matrix}.log",
+    conda:
+        "../envs/stats.yaml"
     threads: 1
     resources:
         runtime=5,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/count/create_count_table_{matrix}.log",
     script:
         "../scripts/create_mageck_mle_count_table.py"
 
@@ -83,18 +83,18 @@ rule mageck_mle:
     output:
         gs="results/mageck/mle/{cnv}/{matrix}.gene_summary.txt",
         ss="results/mageck/mle/{cnv}/{matrix}.sgrna_summary.txt",
+    log:
+        "logs/mageck/mle_{matrix}_{cnv}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 24
+    resources:
+        runtime=45,
     params:
         command=config["stats"]["mageck"]["command"],
         control=mageck_control(),
         dir_name=lambda wc, output: os.path.dirname(output["gs"]),
         extra=extra_mageck_args(),
-    threads: 24
-    resources:
-        runtime=45,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/mageck/mle_{matrix}_{cnv}.log",
     script:
         "../scripts/mageck.py"
 
@@ -117,13 +117,13 @@ rule lfc_plots:
             subcategory="{comparison}",
             labels={"Comparison": "{comparison}", "Figure": "lfc plot depleted genes"},
         ),
+    log:
+        "logs/mageck_plots/lfc_{comparison}_{cnv}.log",
+    conda:
+        "../envs/stats.yaml"
     threads: 1
     resources:
         runtime=5,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/mageck_plots/lfc_{comparison}_{cnv}.log",
     script:
         "../scripts/plot_lfc.R"
 
@@ -140,13 +140,13 @@ rule sg_rank_plot:
             subcategory="{comparison}",
             labels={"Comparison": "{comparison}", "Figure": "sgrank plot"},
         ),
+    log:
+        "logs/mageck_plots/sgrank_{comparison}_{cnv}.log",
+    conda:
+        "../envs/stats.yaml"
     threads: 1
     resources:
         runtime=5,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/mageck_plots/sgrank_{comparison}_{cnv}.log",
     script:
         "../scripts/plot_sgrank.R"
 
@@ -163,17 +163,17 @@ rule gprofiler_mageck:
             subcategory="{comparison}",
             labels={"Comparison": "{comparison}", "Figure": "pathway analysis"},
         ),
+    log:
+        "logs/gprofiler/mageck/{comparison}_{cnv}_{pathway_data}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=10,
     params:
         fdr=config["stats"]["pathway_analysis"]["fdr"],
         top_genes=config["stats"]["pathway_analysis"]["top_genes"],
         data="mageck",
-    threads: 1
-    resources:
-        runtime=10,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/gprofiler/mageck/{comparison}_{cnv}_{pathway_data}.log",
     script:
         "../scripts/gprofiler.R"
 
@@ -184,12 +184,12 @@ rule string_db:
     output:
         svg="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.svg",
         csv="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.csv",
+    log:
+        "logs/stringdb/mageck/{cnv}/{comparison}_{pathway_data}.log",
+    conda:
+        "../envs/stats.yaml"
     threads: 1
     resources:
         runtime=10,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/stringdb/mageck/{cnv}/{comparison}_{pathway_data}.log",
     script:
         "../scripts/string_db.py"

@@ -262,9 +262,7 @@ def mageck_control():
         file = config["stats"]["mageck"]["mageck_control_genes"]
 
         # Check if file exists
-        assert os.path.exists(
-            file
-        ), f"Control gene file ({file}) does not exist"
+        assert os.path.exists(file), f"Control gene file ({file}) does not exist"
         control = f"--control-gene {file}"
 
     return control
@@ -315,9 +313,7 @@ def mageck_input(wildcards):
 
     if config["stats"]["mageck"]["command"] == "mle":
         if config["stats"]["mageck"]["apply_crisprcleanr"]:
-            logger.info(
-                "Skipping CRISPRcleanR normalisation for MAGeCK mle..."
-            )
+            logger.info("Skipping CRISPRcleanR normalisation for MAGeCK mle...")
 
         input_data["matrix"] = "config/{wildcards.matrix}.txt".format(
             wildcards=wildcards
@@ -439,9 +435,7 @@ def design_matrix_valid(m):
     try:
         numeric_matrix = df.astype(float).to_numpy()
     except ValueError as e:
-        logger.error(
-            f"Ensure that the design matrix only contains numerical values."
-        )
+        logger.error(f"Ensure that the design matrix only contains numerical values.")
         return False
 
     # Get the number of columns (predictors)
@@ -457,9 +451,7 @@ def design_matrix_valid(m):
     # Check for multicollinearity
     if matrix_rank < num_columns:
         logger.error("Design Matrix appears invalid...")
-        logger.error(
-            "At least one column is a linear combination of the others."
-        )
+        logger.error("At least one column is a linear combination of the others.")
         return False
     else:
         logger.info(f"Design matrix {m} appears valid...")

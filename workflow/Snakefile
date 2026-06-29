@@ -68,7 +68,6 @@ os.makedirs("logs/snakemake", exist_ok=True)
 onsuccess:
     shell("cp -v {log} {snake_log}")
     logger.info("Analysis finished successfully!")
-
     try:
         from ngs_tracker import register_run
 
@@ -80,7 +79,6 @@ onsuccess:
 onerror:
     shell("cp -v {log} {snake_log}")
     logger.info(f"Analysis failed...\nCheck {snake_log} for details")
-
     try:
         from ngs_tracker import register_run
 
