@@ -3,7 +3,7 @@ lib_info:
   species: human
 
 # Arguments for cutadapt
-cutadapt_args: "-q 20 -l 20 --discard-untrimmed"
+cutadapt_args: "-q 20 -l 20"
 
 csv:
   # 0-based column numbers
@@ -65,20 +65,27 @@ stats:
     fdr: 0.25 # FDR threshold for significant genes
     top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
 
+  string_db:
+    run: False # Perform STRING-db analysis on mageck results
+    data: both # enriched, depleted, or both
+    fdr: 0.25 # FDR threshold for significant genes
+    top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
+
 # Integration with NGS Tracker for workflow registration and file attachment
 # https://github.com/niekwit/ngs-tracker
 ngs_tracker:
-  enabled: true # set to false to skip registration
+  enabled: false # set to false to skip registration
 
   # Connection
   base_url: "http://127.0.0.1:5000/api" # change host/port if needed
 
   # Run identity  (find project_id on the project detail page)
   project_id: 3
+  #run_id: 1 # optional, if not provided a new run will be created
   workflow_name: "crispr-screens"
-  workflow_tag: "v0.10.0"
+  workflow_tag: "v0.11.0"
   workflow_system: "snakemake" # snakemake | nextflow | cwl | other
-  description: "Testing REST API integration with NGS Tracker"
+  description: "Test"
   tags:
     - Test
 

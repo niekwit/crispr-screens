@@ -4,14 +4,14 @@ rule fastqc:
     output:
         html="results/qc/fastqc/{sample}.html",
         zip="results/qc/fastqc/{sample}_fastqc.zip",
-    params:
-        extra="--quiet",
     log:
         "logs/fastqc/{sample}.log",
     threads: 4
     resources:
         runtime=15,
         mem_mb=2048,
+    params:
+        extra="--quiet",
     wrapper:
         "v5.2.1/bio/fastqc"
 
@@ -25,14 +25,14 @@ rule multiqc:
             caption="../report/multiqc.rst",
             category="MultiQC",
         ),
-    params:
-        extra="",  # Optional: extra parameters for multiqc
+    log:
+        "logs/multiqc/multiqc.log",
     threads: 2
     resources:
         runtime=30,
         mem_mb=2048,
-    log:
-        "logs/multiqc/multiqc.log",
+    params:
+        extra="",  # Optional: extra parameters for multiqc
     wrapper:
         "v5.2.1/bio/multiqc"
 
@@ -49,11 +49,11 @@ rule plot_alignment_rate:
         csv="results/qc/alignment-rates.csv",
     log:
         "logs/plot-alignment-rate.log",
+    conda:
+        "../envs/stats.yaml"
     threads: 1
     resources:
         runtime=5,
-    conda:
-        "../envs/stats.yaml"
     script:
         "../scripts/plot_alignment_rate.R"
 
@@ -67,15 +67,15 @@ rule plot_coverage:
             caption="../report/plot-coverage.rst",
             category="Sequence coverage",
         ),
-    params:
-        fasta=fasta,
-    threads: 1
-    resources:
-        runtime=5,
     log:
         "logs/plot-coverage.log",
     conda:
         "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=5,
+    params:
+        fasta=fasta,
     script:
         "../scripts/plot_coverage.R"
 
@@ -89,15 +89,15 @@ rule plot_gini_index:
             caption="../report/gini-index.rst",
             category="Gini index",
         ),
-    params:
-        yaml="workflow/envs/plot_settings.yaml",
-    threads: 1
-    resources:
-        runtime=5,
     log:
         "logs/gini-index.log",
     conda:
         "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=5,
+    params:
+        yaml="workflow/envs/plot_settings.yaml",
     script:
         "../scripts/plot_gini_index.R"
 
@@ -111,14 +111,14 @@ rule plot_missed_sgrnas:
             caption="../report/missed-rgrnas.rst",
             category="Missed sgRNAs",
         ),
-    params:
-        yaml="workflow/envs/plot_settings.yaml",
-    threads: 1
-    resources:
-        runtime=5,
     log:
         "logs/missed-rgrnas.log",
     conda:
         "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=5,
+    params:
+        yaml="workflow/envs/plot_settings.yaml",
     script:
         "../scripts/plot_missed_sgrnas.R"

@@ -3,11 +3,11 @@ rule install_drugz:
         directory("resources/drugz"),
     log:
         "logs/drugz/install.log",
+    conda:
+        "../envs/stats.yaml"
     threads: 1
     resources:
         runtime=5,
-    conda:
-        "../envs/stats.yaml"
     shell:
         "git clone https://github.com/hart-lab/drugz.git {output} 2> {log}"
 
@@ -24,17 +24,17 @@ rule drugz:
             labels={"Comparison": "{comparison}", "Figure": "DrugZ output"},
         ),
         fc="results/drugz/{comparison}.foldchange.txt",
+    log:
+        "logs/drugz/{comparison}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 2
+    resources:
+        runtime=15,
     params:
         test=lambda wc, output: wc.comparison.split("_vs_")[0].replace("-", ","),
         control=lambda wc, output: wc.comparison.split("_vs_")[1].replace("-", ","),
         extra=config["stats"]["drugz"]["extra"],
-    threads: 2
-    resources:
-        runtime=15,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/drugz/{comparison}.log",
     shell:
         "python {input.drugz}/drugz.py "
         "-i {input.counts} "
@@ -56,15 +56,15 @@ rule plot_drugz_results:
             subcategory="{comparison}",
             labels={"Comparison": "{comparison}", "Figure": "DrugZ output"},
         ),
-    params:
-        fdr=config["stats"]["pathway_analysis"]["fdr"],
+    log:
+        "logs/drugz_plots/{comparison}.log",
+    conda:
+        "../envs/stats.yaml"
     threads: 1
     resources:
         runtime=5,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/drugz_plots/{comparison}.log",
+    params:
+        fdr=config["stats"]["pathway_analysis"]["fdr"],
     script:
         "../scripts/plot_drugz_results.R"
 
@@ -81,16 +81,16 @@ rule gprofiler_drugz:
             subcategory="{comparison}",
             labels={"Comparison": "{comparison}", "Figure": "pathway analysis"},
         ),
+    log:
+        "logs/gprofiler/drugz/{comparison}_{pathway_data}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=10,
     params:
         fdr=config["stats"]["pathway_analysis"]["fdr"],
         top_genes=config["stats"]["pathway_analysis"]["top_genes"],
         data="drugz",
-    threads: 1
-    resources:
-        runtime=10,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/gprofiler/drugz/{comparison}_{pathway_data}.log",
     script:
         "../scripts/gprofiler.R"

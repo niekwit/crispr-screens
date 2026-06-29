@@ -60,6 +60,23 @@ def targets():
                         ),
                     ]
                 )
+            if config["stats"]["string_db"]["run"]:
+                TARGETS.extend(
+                    [
+                        expand(
+                            "results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.svg",
+                            comparison=COMPARISONS,
+                            cnv=CNV,
+                            pathway_data=PATHWAY_DATA,
+                        ),
+                        expand(
+                            "results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.csv",
+                            comparison=COMPARISONS,
+                            cnv=CNV,
+                            pathway_data=PATHWAY_DATA,
+                        ),
+                    ]
+                )
         else:
             logger.info("Running MAGeCK mle...")
             TARGETS.extend(
@@ -114,7 +131,10 @@ def targets():
             # Extend targets with DrugZ files
             TARGETS.extend(
                 [
-                    expand("results/drugz/{comparison}.txt", comparison=COMPARISONS),
+                    expand(
+                        "results/drugz/{comparison}.txt",
+                        comparison=COMPARISONS,
+                    ),
                     expand(
                         "results/plots/drugz/dot_plot_{comparison}.pdf",
                         comparison=COMPARISONS,
@@ -210,7 +230,9 @@ def comparisons():
     if config["stats"]["mageck"]["command"] == "test":
         # Load comparisons from stats.csv
         # Check if file exists
-        assert os.path.exists("config/stats.csv"), "config/stats.csv file does not exist"
+        assert os.path.exists(
+            "config/stats.csv"
+        ), "config/stats.csv file does not exist"
     else:
         return None
     CSV = pd.read_csv("config/stats.csv")
@@ -274,25 +296,25 @@ def mageck_input(wildcards):
         config["stats"]["mageck"]["apply_crisprcleanr"]
         and config["stats"]["mageck"]["command"] == "test"
     ):
-        input_data[
-            "counts"
-        ] = "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
-            wildcards=wildcards
+        input_data["counts"] = (
+            "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
+                wildcards=wildcards
+            )
         )
     else:
         if config["stats"]["mageck"]["command"] == "test":
             input_data["counts"] = "results/count/counts-aggregated.tsv"
         else:
-            input_data[
-                "counts"
-                ] = "results/count/counts-aggregated_{wildcards.matrix}.tsv".format(
+            input_data["counts"] = (
+                "results/count/counts-aggregated_{wildcards.matrix}.tsv".format(
                     wildcards=wildcards
+                )
             )
 
     if config["stats"]["mageck"]["command"] == "mle":
         if config["stats"]["mageck"]["apply_crisprcleanr"]:
             logger.info("Skipping CRISPRcleanR normalisation for MAGeCK mle...")
-        
+
         input_data["matrix"] = "config/{wildcards.matrix}.txt".format(
             wildcards=wildcards
         )
@@ -309,10 +331,10 @@ def drugz_input(wildcards):
     input_data = {"drugz": "resources/drugz"}
 
     if config["stats"]["drugz"]["apply_crisprcleanr"]:
-        input_data[
-            "counts"
-        ] = "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
-            wildcards=wildcards
+        input_data["counts"] = (
+            "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
+                wildcards=wildcards
+            )
         )
     else:
         input_data["counts"] = "results/count/counts-aggregated.tsv"
@@ -403,7 +425,7 @@ def design_matrix_valid(m):
     if df.shape[1] < 3:
         logger.error(
             "The design matrix must have at least two columns and be tab-delimited."
-            )
+        )
         return False
 
     # Sample names are not needed for the analysis, so drop first column
@@ -443,7 +465,7 @@ def matrix_names():
     """
     if config["stats"]["mageck"]["command"] == "mle":
         matrices = config["stats"]["mageck"]["mle"]["design_matrix"]
-        
+
         # Check if design matrix is valid
         for m in matrices:
             if not design_matrix_valid(m):

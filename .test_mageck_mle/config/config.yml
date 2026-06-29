@@ -2,7 +2,7 @@ lib_info:
   library_file: resources/bassik.csv
   species: human
 
-cutadapt_args: "-q 20 -l 20 --discard-untrimmed"
+cutadapt_args: "-q 20 -l 20"
 
 csv: # If no fasta is available, provide a csv file with sgRNA sequences
   name_column: 0 # Column number with sgRNA names
@@ -60,6 +60,12 @@ stats:
     data: both # enriched, depleted, or both
     fdr: 0.25 # FDR threshold for significant genes
     top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+
+  string_db:
+    run: True # Perform STRING-db analysis on mageck results
+    data: both # enriched, depleted, or both
+    fdr: 0.25 # FDR threshold for significant genes
+    top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
 
 # Integration with NGS Tracker for workflow registration and file attachment
 # https://github.com/niekwit/ngs-tracker

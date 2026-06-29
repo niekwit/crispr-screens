@@ -3,10 +3,10 @@ rule create_fasta:
         csv=csv,
     output:
         fasta=fasta,
-    conda:
-        "../envs/stats.yaml"
     log:
         "logs/create_fasta.log",
+    conda:
+        "../envs/stats.yaml"
     script:
         "../scripts/csv_to_fasta.py"
 
@@ -20,11 +20,11 @@ if cram():
             "reads/{sample}.fastq.gz",
         log:
             "logs/samtools-fastq/{sample}.interleaved.log",
-        params:
-            " ",
-        threads: 1
         conda:
             "../envs/stats.yaml"
+        threads: 1
+        params:
+            " ",
         shell:
             "samtools fastq {input} 2> {log} | gzip -c > {output}"
 
@@ -44,14 +44,14 @@ rule hisat2_index:
             ".7.ht2",
             ".8.ht2",
         ),
-    params:
-        extra="",
-        prefix=lambda wildcard, output: output[0].replace(".1.ht2", ""),
     log:
         "logs/hisat2/index.log",
     threads: 4
     resources:
         runtime=30,
+    params:
+        extra="",
+        prefix=lambda wildcard, output: output[0].replace(".1.ht2", ""),
     wrapper:
         "v5.2.1/bio/hisat2/index"
 
@@ -72,16 +72,16 @@ rule count:
         ),
     output:
         "results/count/{sample}.guidecounts.txt",
-    params:
-        mm=config["mismatch"],
-        idx=lambda wildcard, input: input.idx[0].replace(".1.ht2", ""),
-    threads: 6
-    resources:
-        runtime=45,
     log:
         "logs/count/{sample}.log",
     conda:
         "../envs/stats.yaml"
+    threads: 6
+    resources:
+        runtime=45,
+    params:
+        mm=config["mismatch"],
+        idx=lambda wildcard, input: input.idx[0].replace(".1.ht2", ""),
     script:
         "../scripts/count.sh"
 
@@ -92,13 +92,13 @@ rule aggregate_counts:
         csv=csv,
     output:
         "results/count/counts-aggregated.tsv",
+    log:
+        "logs/count/aggregate_counts.log",
+    conda:
+        "../envs/stats.yaml"
     threads: 1
     resources:
         runtime=10,
-    conda:
-        "../envs/stats.yaml"
-    log:
-        "logs/count/aggregate_counts.log",
     script:
         "../scripts/aggregate_counts.py"
 
@@ -122,6 +122,13 @@ if (
             roc="results/plots/crisprcleanr/roc_{comparison}.pdf",
             pr="results/plots/crisprcleanr/pr_{comparison}.pdf",
             drnk="results/plots/crisprcleanr/depletion_rank_{comparison}.pdf",
+        log:
+            "logs/crisprcleanr/{comparison}.log",
+        conda:
+            "../envs/stats.yaml"
+        threads: 2
+        resources:
+            runtime=30,
         params:
             lib_name=config["stats"]["crisprcleanr"]["library_name"],
             lib=csv,
@@ -130,12 +137,5 @@ if (
             ceg=config["stats"]["bagel2"]["custom_gene_lists"]["essential_genes"],
             cneg=config["stats"]["bagel2"]["custom_gene_lists"]["non_essential_genes"],
             min_reads=config["stats"]["crisprcleanr"]["min_reads"],
-        conda:
-            "../envs/stats.yaml"
-        threads: 2
-        resources:
-            runtime=30,
-        log:
-            "logs/crisprcleanr/{comparison}.log",
         script:
             "../scripts/crisprcleaner.R"
