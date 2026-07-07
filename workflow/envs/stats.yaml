@@ -26,3 +26,5 @@ dependencies:
   - conda-forge::bash=5.2.37
   - conda-forge::gzip=1.14
   - conda-forge::requests
+  - conda-forge::plotly
+  - conda-forge::jq
