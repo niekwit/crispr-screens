@@ -178,6 +178,34 @@ rule gprofiler_mageck:
         "../scripts/gprofiler.R"
 
 
+rule interactive_lfc_report:
+    input:
+        txt="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
+        string_enriched=lambda wc: (
+            f"results/mageck/stringdb/{wc.cnv}/{wc.comparison}/enriched/pathway_analysis.csv"
+            if config["stats"]["string_db"]["run"]
+            and config["stats"]["string_db"]["data"] in ("enriched", "both")
+            else []
+        ),
+        string_depleted=lambda wc: (
+            f"results/mageck/stringdb/{wc.cnv}/{wc.comparison}/depleted/pathway_analysis.csv"
+            if config["stats"]["string_db"]["run"]
+            and config["stats"]["string_db"]["data"] in ("depleted", "both")
+            else []
+        ),
+    output:
+        html="results/mageck/interactive/{cnv}/{comparison}.html",
+    log:
+        "logs/mageck/interactive_{comparison}_{cnv}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=5,
+    script:
+        "../scripts/interactive_lfc_report.py"
+
+
 rule string_db:
     input:
         txt="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
