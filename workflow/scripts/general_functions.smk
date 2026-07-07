@@ -77,6 +77,15 @@ def targets():
                         ),
                     ]
                 )
+            TARGETS.extend(
+                [
+                    expand(
+                        "results/mageck/interactive/{cnv}/{comparison}.html",
+                        comparison=COMPARISONS,
+                        cnv=CNV,
+                    ),
+                ]
+            )
         else:
             logger.info("Running MAGeCK mle...")
             TARGETS.extend(
