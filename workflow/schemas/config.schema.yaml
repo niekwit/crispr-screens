@@ -1,4 +1,4 @@
-$schema: "http://json-schema.org/draft-06/schema#"
+$schema: "http://json-schema.org/draft-07/schema#"
 
 description: Snakemake configuration file
 
@@ -46,6 +46,31 @@ properties:
   mismatch:
     type: integer
     description: Mismatches allowed during alignment
+
+  count_method:
+    type: string
+    enum: [hisat2, dotmatch]
+    description: Counting backend; HISAT2 is the default
+
+  dotmatch:
+    type: object
+    properties:
+      target_start:
+        type: integer
+        minimum: 0
+        description: Zero-based start of the guide window after trimming
+      target_length:
+        type: integer
+        minimum: 1
+        description: Guide window length after trimming
+      ambiguity_policy:
+        type: string
+        enum: [radius, best]
+        description: How to handle reads matching multiple guides
+    required:
+      - target_start
+      - target_length
+      - ambiguity_policy
 
   stats:
     type: object
@@ -255,3 +280,26 @@ required:
   - csv
   - mismatch
   - stats
+
+# Draft-07 if/then is accepted by Snakemake's jsonschema validator and
+# rejects count_method: dotmatch before workflow parsing hits a KeyError.
+if:
+  properties:
+    count_method:
+      const: dotmatch
+  required:
+    - count_method
+then:
+  required:
+    - dotmatch
+  properties:
+    csv:
+      required:
+        - name_column
+        - sequence_column
+        - gene_column
+    dotmatch:
+      required:
+        - target_start
+        - target_length
+        - ambiguity_policy

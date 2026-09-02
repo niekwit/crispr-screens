@@ -6,7 +6,7 @@ sink(log, type = "message")
 library(tidyverse)
 library(cowplot)
 
-# get HISAT2 alignment rates (in log files)
+# get alignment rates (in count logs)
 files <- snakemake@input
 
 # create df for storing alignment rates
@@ -20,12 +20,22 @@ for (i in seq(files)) {
 
   rate <- system(
     paste0(
-      'grep "aligned exactly 1 time" ',
+      'grep "DotMatch unique assignment rate" ',
       files[i],
-      " | awk '{print $2}' | sed 's/(*[%)]*//g'"
+      " | awk '{print $5}' | sed 's/%//'"
     ),
     intern = TRUE
   )
+  if (length(rate) == 0) {
+    rate <- system(
+      paste0(
+        'grep "aligned exactly 1 time" ',
+        files[i],
+        " | awk '{print $2}' | sed 's/(*[%)]*//g'"
+      ),
+      intern = TRUE
+    )
+  }
   rate <- as.numeric(rate)
 
   # add to df

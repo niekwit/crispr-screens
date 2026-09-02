@@ -22,6 +22,32 @@ This Snakemake workflow can be run without a fasta file, as long as a CSV file (
 
 The number of mismatches allowed during sequence alignment can be set here. A maximum of 2 mismatches can be set.
 
+### count_method
+
+The default `count_method: hisat2` preserves the original alignment-based
+counter. Set `count_method: dotmatch` to use deterministic fixed-window
+assignment against the known guide library instead:
+
+```yaml
+count_method: dotmatch
+dotmatch:
+  target_start: 0
+  target_length: 20
+  ambiguity_policy: radius
+```
+
+The DotMatch window is applied after `cutadapt`. `radius` discards reads that
+match more than one guide within the configured `mismatch` radius; `best` keeps
+the closest match. The DotMatch backend writes the same guide-count shape
+consumed by the downstream MAGeCK rules and also records a JSON assignment
+summary under `results/qc/dotmatch/`. DotMatch requires all guide sequences in
+the selected library to have the same length, so mixed-length libraries such as
+Bassik must be filtered to one window (usually the `cutadapt -l` length) before
+this backend can be selected.
+
+The stats environment pins `dotmatch=0.2.2`. The wrapper accepts both the
+documented `total_count` column and the 0.2.2 `{sample}_count_total` column.
+
 ### stats
 
 With `skip` one can skip statistical analyses with MAGeCK, and/or BAGEL2.
@@ -33,4 +59,3 @@ Normally MAGeCK builds the statistical model using all sgRNAs in the library. Ho
 ### resources
 
 Under resources the computational requirements can be set. The CPU count will be used locally and on any HPC/cloud platform, while the time will only be relevant for the latter.
-

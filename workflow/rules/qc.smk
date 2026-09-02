@@ -60,7 +60,8 @@ rule plot_alignment_rate:
 
 rule plot_coverage:
     input:
-        "results/count/counts-aggregated.tsv",
+        counts="results/count/counts-aggregated.tsv",
+        fasta=fasta,
     output:
         report(
             "results/qc/sequence-coverage.pdf",
@@ -74,8 +75,6 @@ rule plot_coverage:
     threads: 1
     resources:
         runtime=5,
-    params:
-        fasta=fasta,
     script:
         "../scripts/plot_coverage.R"
 

@@ -13,6 +13,14 @@ csv:
 
 mismatch: 0 # Mismatches allowed during alignment
 
+# Select "dotmatch" to use deterministic known-target assignment instead of
+# HISAT2 for guide counting. HISAT2 remains the default for compatibility.
+count_method: hisat2
+dotmatch:
+  target_start: 0 # Start of the guide window after cutadapt trimming
+  target_length: 20 # Length of the guide window after cutadapt trimming
+  ambiguity_policy: radius # Discard reads matching multiple guides at k
+
 stats:
   crisprcleanr:
     # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better

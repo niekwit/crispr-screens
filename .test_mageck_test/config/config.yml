@@ -11,6 +11,12 @@ csv: # If no fasta is available, provide a csv file with sgRNA sequences
 
 mismatch: 0 # Mismatches allowed during alignment
 
+count_method: hisat2
+dotmatch:
+  target_start: 0
+  target_length: 20
+  ambiguity_policy: radius
+
 stats:
   crisprcleanr:
     # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better

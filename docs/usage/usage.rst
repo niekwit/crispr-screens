@@ -112,6 +112,13 @@ Experiment meta data is described in `config/config.yml`:
 
     mismatch: 0 # Mismatches allowed during alignment
 
+    # Optional deterministic known-target counter. HISAT2 remains the default.
+    count_method: hisat2
+    dotmatch:
+        target_start: 0
+        target_length: 20
+        ambiguity_policy: radius
+
     stats: 
     crisprcleanr:
         # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better
@@ -186,6 +193,29 @@ The trimming parameters are passed to `cutadapt` as command line arguments. The 
 - `u`: Remove LEN bases from each read (or R1 if paired; use -U option for R2). If LEN is positive, remove bases from the beginning. If LEN is negative, remove bases from the end. Can be used twice if LENs have different signs. Applied *before* adapter trimming.
 - `l`: Shorten reads to LENGTH. Positive values remove bases at the end while negative ones remove bases at the beginning. This and the following modifications are applied after adapter trimming.
 - `extra`: Extra arguments for cutadapt
+
+
+DotMatch guide counting
+=======================
+
+The workflow can use DotMatch as an optional counting backend when the guide
+library and read window are known. Set `count_method: dotmatch` and configure
+the window after trimming. The existing HISAT2 backend remains the default.
+DotMatch emits the guide-count files expected by the downstream MAGeCK rules,
+plus per-sample assignment summaries in `results/qc/dotmatch/`.
+
+Reads that are compatible with more than one guide within `mismatch` are
+discarded with `ambiguity_policy: radius`; `best` can be selected when the
+closest guide should be retained. Review the DotMatch summary before treating
+rescued counts as final results.
+
+DotMatch requires a fixed guide length. A configuration with
+`count_method: dotmatch` and no `dotmatch` block is rejected by the schema
+instead of failing later with a `KeyError`. The stats environment pins
+`dotmatch=0.2.2`; the count wrapper reads either the documented `total_count`
+column or the 0.2.2 `{sample}_count_total` column. Concordance against HISAT2
+on the public test FASTQs is recorded in
+`docs/dotmatch-hisat2-concordance.md`.
 
 
 BAGEL2 analysis
@@ -410,4 +440,3 @@ When the workflow has finished, a report of the results can be generated (HTML f
 .. code-block:: console
 
     $ snakemake --report report.html
-

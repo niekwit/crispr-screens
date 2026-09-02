@@ -15,9 +15,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install snakefmt
-        run: pip install snakefmt==2.0.3
+        run: pip install snakefmt==2.0.3 pyyaml jsonschema
       - name: Formatting
         run: snakefmt --check .
+      - name: DotMatch adapter unit tests
+        run: python3 workflow/scripts/test_dotmatch_count.py
 
   Linting:
     runs-on: ubuntu-latest
@@ -27,6 +29,15 @@ jobs:
         uses: snakemake/snakemake-github-action@v2
         with:
           directory: .test_mageck_test
+          snakefile: workflow/Snakefile
+          snakemake-version: 8.25.5
+          args: "--lint"
+      - name: Build DotMatch test reads
+        run: python3 workflow/scripts/make_dotmatch_test_reads.py
+      - name: Lint DotMatch counting path
+        uses: snakemake/snakemake-github-action@v2
+        with:
+          directory: .test_dotmatch
           snakefile: workflow/Snakefile
           snakemake-version: 8.25.5
           args: "--lint"
@@ -43,6 +54,16 @@ jobs:
         uses: snakemake/snakemake-github-action@v2
         with:
           directory: .test_mageck_test
+          snakefile: workflow/Snakefile
+          snakemake-version: 8.25.5
+          args: "--use-conda --show-failed-logs --cores 3 --conda-cleanup-pkgs cache"
+
+      - name: Build DotMatch test reads
+        run: python3 workflow/scripts/make_dotmatch_test_reads.py
+      - name: Test DotMatch counting path
+        uses: snakemake/snakemake-github-action@v2
+        with:
+          directory: .test_dotmatch
           snakefile: workflow/Snakefile
           snakemake-version: 8.25.5
           args: "--use-conda --show-failed-logs --cores 3 --conda-cleanup-pkgs cache"

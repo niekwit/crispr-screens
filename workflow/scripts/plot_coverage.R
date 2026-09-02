@@ -7,7 +7,7 @@ library(tidyverse)
 library(cowplot)
 
 # get data
-fasta <- snakemake@params[["fasta"]]
+fasta <- snakemake@input[["fasta"]]
 data <- read.delim(snakemake@input[[1]]) %>% # count table
   dplyr::select(-c(1,2))
 
@@ -52,4 +52,3 @@ ggsave(snakemake@output[[1]], p)
 # close log file
 sink(log, type = "output")
 sink(log, type = "message")
-

@@ -1,5 +1,5 @@
 lib_info:
-  library_file: resources/bassik.csv
+  library_file: resources/guides.csv
   species: human
 
 cutadapt_args: "-q 20 -l 20"
@@ -11,7 +11,7 @@ csv: # If no fasta is available, provide a csv file with sgRNA sequences
 
 mismatch: 0 # Mismatches allowed during alignment
 
-count_method: hisat2
+count_method: dotmatch
 dotmatch:
   target_start: 0
   target_length: 20
@@ -45,12 +45,12 @@ stats:
 
   mageck:
     run: True # Perform mageck analysis
-    command: mle # test or mle
+    command: test # test or mle
     mle:
-      design_matrix: [config/matrix.txt] # Design matrix for mageck mle
+      design_matrix: [resources/matrix.txt] # Design matrix for mageck mle
     # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
     apply_crisprcleanr: False
-    extra_mageck_arguments: "--no-permutation-by-group --permutation-round 1"
+    extra_mageck_arguments: ""
     mageck_control_genes: all # All or file with control genes
     apply_CNV_correction: False # Apply CNV correction to mageck results
     cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
@@ -68,7 +68,7 @@ stats:
     top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
 
   string_db:
-    run: True # Perform STRING-db analysis on mageck results
+    run: False # Perform STRING-db analysis on mageck results
     data: both # enriched, depleted, or both
     fdr: 0.25 # FDR threshold for significant genes
     top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
