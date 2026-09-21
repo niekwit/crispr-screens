@@ -29,31 +29,30 @@ if cram():
             "samtools fastq {input} 2> {log} | gzip -c > {output}"
 
 
-rule hisat2_index:
+rule bowtie_index:
     input:
         fasta=fasta,
     output:
         multiext(
             "resources/index/index",
-            ".1.ht2",
-            ".2.ht2",
-            ".3.ht2",
-            ".4.ht2",
-            ".5.ht2",
-            ".6.ht2",
-            ".7.ht2",
-            ".8.ht2",
+            ".1.ebwt",
+            ".2.ebwt",
+            ".3.ebwt",
+            ".4.ebwt",
+            ".rev.1.ebwt",
+            ".rev.2.ebwt",
         ),
     log:
-        "logs/hisat2/index.log",
+        "logs/bowtie/index.log",
+    conda:
+        "../envs/stats.yaml"
     threads: 4
     resources:
         runtime=30,
     params:
-        extra="",
-        prefix=lambda wildcard, output: output[0].replace(".1.ht2", ""),
-    wrapper:
-        "v5.2.1/bio/hisat2/index"
+        prefix=lambda wildcard, output: output[0].replace(".1.ebwt", ""),
+    shell:
+        "bowtie-build --threads {threads} {input.fasta} {params.prefix} > {log} 2>&1"
 
 
 rule count:
@@ -61,14 +60,12 @@ rule count:
         fq="results/trimmed/{sample}.fastq.gz",
         idx=multiext(
             "resources/index/index",
-            ".1.ht2",
-            ".2.ht2",
-            ".3.ht2",
-            ".4.ht2",
-            ".5.ht2",
-            ".6.ht2",
-            ".7.ht2",
-            ".8.ht2",
+            ".1.ebwt",
+            ".2.ebwt",
+            ".3.ebwt",
+            ".4.ebwt",
+            ".rev.1.ebwt",
+            ".rev.2.ebwt",
         ),
     output:
         "results/count/{sample}.guidecounts.txt",
@@ -80,10 +77,12 @@ rule count:
     resources:
         runtime=45,
     params:
-        mm=config["mismatch"],
-        idx=lambda wildcard, input: input.idx[0].replace(".1.ht2", ""),
-    script:
-        "../scripts/count.sh"
+        extra=config["bowtie_args"],
+        idx=lambda wildcard, input: input.idx[0].replace(".1.ebwt", ""),
+    shell:
+        "zcat {input.fq} | "
+        "bowtie -q {params.extra} -p {threads} -x {params.idx} - 2> {log} | "
+        "cut -f3 | sort | uniq -c | sed 's/^ *//' > {output}"
 
 
 rule aggregate_counts:
