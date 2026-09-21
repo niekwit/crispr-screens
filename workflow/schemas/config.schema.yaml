@@ -43,9 +43,9 @@ properties:
       - name_column
       - sequence_column
 
-  mismatch:
-    type: integer
-    description: Mismatches allowed during alignment
+  bowtie_args:
+    type: string
+    description: Extra arguments for Bowtie
 
   stats:
     type: object
@@ -253,5 +253,5 @@ properties:
 required:
   - lib_info
   - csv
-  - mismatch
+  - bowtie_args
   - stats

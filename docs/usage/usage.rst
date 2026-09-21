@@ -65,7 +65,6 @@ The final directory structure should look like this:
         │   ├── bagel2bf.py
         │   ├── bagel2pr.py
         │   ├── cnv_cell_lines.txt
-        │   ├── count.sh
         │   ├── crisprcleaner.R
         │   ├── csv_to_fasta.py
         │   ├── general_functions.smk
@@ -110,7 +109,7 @@ Experiment meta data is described in `config/config.yml`:
         gene_column: 1 # Column number with gene names
         sequence_column: 2 # Column number with sgRNA sequences
 
-    mismatch: 0 # Mismatches allowed during alignment
+    bowtie_args: "-v 1 -m 1" # Extra arguments for Bowtie (default: allow 1 mismatch and discard reads that align to multiple sgRNAs)
 
     stats: 
     crisprcleanr:
