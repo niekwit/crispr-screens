@@ -143,7 +143,7 @@ def load_guides(args):
         gene_col = resolve_column(df, args.gene_column, "gene name")
         guides["GENES"] = df[gene_col]
     else:
-        guides["GENES"] = np.nan
+        guides["GENES"] = pd.Series(np.nan, index=guides.index, dtype=object)
 
     if guides["CODE"].isna().any() or guides["CODE"].duplicated().any():
         # CRISPRcleanR uses the sgRNA names as row names
@@ -599,6 +599,11 @@ def main():
             fail(f"File {path} does not exist")
 
     guides = load_guides(args)
+    if not guides["valid"].any():
+        fail(
+            "No sgRNA has a valid sequence: check --sequence-column "
+            f"('{args.sequence_column}')"
+        )
     max_length = int(guides.loc[guides["valid"], "length"].max())
     if args.scope == "locus" and args.flank < max_length:
         logging.warning(
@@ -652,8 +657,9 @@ def main():
     unmapped = result["tier"].isna()
     reason = pd.Series("sequence_not_found", index=guides.index)
     if annotated_keys is not None:
+        # Gene names are only used in the locus search
         reason[~guides["gene_key"].isin(annotated_keys)] = "gene_not_in_annotation"
-    reason[guides["gene_key"].isna()] = "no_gene"
+        reason[guides["gene_key"].isna()] = "no_gene"
     reason[~guides["valid"]] = "invalid_sequence"
     status[unmapped] = reason[unmapped]
 

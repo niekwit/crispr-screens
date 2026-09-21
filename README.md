@@ -22,11 +22,11 @@ https://crispr-screens.readthedocs.io/en/latest/
 
 CRISPRcleanR, which is always run before BAGEL2 (and optionally before MAGeCK and DrugZ), needs the genomic coordinates of every sgRNA. Some libraries do not provide them. The standalone script `annotate_sgrna_coordinates.py` (not part of the Snakemake workflow) finds them by searching the sgRNA sequences in a genome FASTA file and writes a CRISPRcleanR library file.
 
-It needs Python with `pandas` and `numpy` (both are in the `stats` conda environment of this workflow) and three input files:
+It needs Python with `pandas` and `numpy` (both are in the `stats` conda environment of this workflow) and these input files:
 
 - a CSV file with the sgRNAs (any layout, you tell the script which columns to use)
 - a genome FASTA file (use the primary assembly, `.gz` is fine)
-- a GTF file with the gene annotation of the same assembly (`.gz` is fine)
+- a GTF file with the gene annotation of the same assembly (`.gz` is fine). It is required for the default `--scope locus` (with or without `--genome-fallback`) and not needed for `--scope genome`
 
 ### Usage
 
@@ -45,7 +45,7 @@ Columns can be given by header name or by 0-based column number. sgRNA names mus
 | Option | Default | Description |
 | --- | --- | --- |
 | `--scope` | `locus` | `locus`: only search around annotated genes (fast, recommended); `genome`: search the whole genome (slow, no GTF needed) |
-| `--genome-fallback` | off | Also search the whole genome for sgRNAs that were not found in any annotated locus. Needed to place sgRNAs that do not target genes, e.g. safe-targeting/intergenic controls |
+| `--genome-fallback` | off | With `--scope locus`: also search the whole genome for sgRNAs that were not found in any annotated locus (no effect with `--scope genome`). Needed to place sgRNAs that do not target genes, e.g. safe-targeting/intergenic controls |
 | `--no-annotation-fallback` | off | Only accept a position in a locus of the sgRNA's own gene |
 | `--feature` | `exon` | GTF feature to search around; use `gene` to search complete gene bodies |
 | `--flank` | 30 | Bases added on both sides of each feature (should be at least the sgRNA length) |
