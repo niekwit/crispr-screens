@@ -10,6 +10,7 @@ rule cutadapt:
     resources:
         runtime=25,
     params:
-        extra=config["cutadapt_args"],
+        # Empty reads (after trimming) crash Bowtie; user arguments come last so they take precedence
+        extra=f"--minimum-length 1 {config['cutadapt_args']}",
     wrapper:
         "v5.2.1/bio/cutadapt/se"

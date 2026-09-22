@@ -102,6 +102,27 @@ rule plot_gini_index:
         "../scripts/plot_gini_index.R"
 
 
+rule plot_count_distribution:
+    input:
+        "results/count/counts-aggregated.tsv",
+    output:
+        report(
+            "results/qc/count-distribution.pdf",
+            caption="../report/count-distribution.rst",
+            category="Count distribution",
+        ),
+        csv="results/qc/count-distribution.csv",
+    log:
+        "logs/count-distribution.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=5,
+    script:
+        "../scripts/plot_count_distribution.R"
+
+
 rule plot_missed_sgrnas:
     input:
         "results/count/counts-aggregated.tsv",

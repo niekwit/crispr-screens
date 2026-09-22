@@ -16,6 +16,7 @@ def targets():
         "results/qc/sequence-coverage.pdf",
         "results/qc/gini-index.pdf",
         "results/qc/missed-rgrnas.pdf",
+        "results/qc/count-distribution.pdf",
     ]
     if config["stats"]["mageck"]["run"]:
         # Check csv file for empty columns

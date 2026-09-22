@@ -11,7 +11,7 @@ csv:
   gene_column: 1 # Column number with gene names
   sequence_column: 2 # Column number with sgRNA sequences
 
-mismatch: 0 # Mismatches allowed during alignment
+bowtie_args: "-v 1 -m 1" # Extra arguments for Bowtie (default: allow 1 mismatch and discard reads that align to multiple sgRNAs)
 
 stats:
   crisprcleanr:
@@ -100,7 +100,7 @@ ngs_tracker:
       description: "MultiQC report"
     - path: "results/qc/alignment-rates.csv"
       type: mapping_rates
-      description: "HISAT2 alignment mapping rates"
+      description: "Bowtie alignment mapping rates"
     - path: "results/qc/*.pdf"
       type: qc
     - path: logs/snakemake/*.log

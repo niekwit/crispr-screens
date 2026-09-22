@@ -14,13 +14,15 @@ Finally, with some sequencing strategies, the first base sequenced can be the sa
 
 ### csv
 
-Inside the resources folder, a *fasta* file should be placed that contains unique sgRNA names and sequences, which will be used to build an index for alignment using HISAT2.
+Inside the resources folder, a *fasta* file should be placed that contains unique sgRNA names and sequences, which will be used to build an index for alignment using Bowtie.
 
 This Snakemake workflow can be run without a fasta file, as long as a CSV file (also in the resources folder) is provided that contains the unique sgRNA sequences and corresponding gene names in separate columns. Under `name_column` the column number of the gene names, and under `sequence_column` the column number of the sequence column have to be set.
 
-### mismatch
+### bowtie_args
 
-The number of mismatches allowed during sequence alignment can be set here. A maximum of 2 mismatches can be set.
+Extra arguments passed to `bowtie` (v1) when aligning the trimmed reads to the sgRNA index. The read file (`-q`), index (`-x`) and number of threads (`-p`) are set by the workflow and should not be included here.
+
+The default (`-v 1 -m 1`) allows one mismatch (`-v`) and discards reads that align to more than one sgRNA (`-m 1`). Note that Bowtie aligns end-to-end, so reads are expected to be trimmed to the length of the sgRNAs (see `cutadapt_args`). Reads that are longer than the sgRNA they originate from (e.g. in libraries with variable sgRNA lengths) will not align unless they are trimmed accordingly. Use `-v 0` to only allow perfect matches. See the [Bowtie manual](https://bowtie-bio.sourceforge.net/manual.shtml) for all options.
 
 ### stats
 
