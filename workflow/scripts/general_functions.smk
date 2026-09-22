@@ -38,7 +38,12 @@ def targets():
                         cnv=CNV,
                     ),
                     expand(
-                        "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank.pdf",
+                        "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank_pos.pdf",
+                        comparison=COMPARISONS,
+                        cnv=CNV,
+                    ),
+                    expand(
+                        "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank_neg.pdf",
                         comparison=COMPARISONS,
                         cnv=CNV,
                     ),

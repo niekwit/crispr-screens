@@ -48,7 +48,8 @@ The final directory structure should look like this:
         │   ├── pathway_analysis.rst
         │   ├── plot-coverage.rst
         │   ├── sample-correlation.rst
-        │   ├── sgrank.rst
+        │   ├── sgrank_neg.rst
+        │   ├── sgrank_pos.rst
         │   └── workflow.rst
         ├── rules
         │   ├── bagel2.smk
@@ -81,7 +82,7 @@ The final directory structure should look like this:
         │   └── plot_sgrank.R
         └── Snakefile
 
-    9 directories, 50 files
+    9 directories, 51 files
 
 
 Experiment meta data

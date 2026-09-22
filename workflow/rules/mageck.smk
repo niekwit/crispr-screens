@@ -133,12 +133,19 @@ rule sg_rank_plot:
         sg="results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
         gene="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
     output:
-        report(
-            "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank.pdf",
-            caption="../report/sgrank.rst",
+        pos=report(
+            "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank_pos.pdf",
+            caption="../report/sgrank_pos.rst",
             category="MAGeCK plots",
             subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "sgrank plot"},
+            labels={"Comparison": "{comparison}", "Figure": "sgrank plot enriched genes"},
+        ),
+        neg=report(
+            "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank_neg.pdf",
+            caption="../report/sgrank_neg.rst",
+            category="MAGeCK plots",
+            subcategory="{comparison}",
+            labels={"Comparison": "{comparison}", "Figure": "sgrank plot depleted genes"},
         ),
     log:
         "logs/mageck_plots/sgrank_{comparison}_{cnv}.log",
