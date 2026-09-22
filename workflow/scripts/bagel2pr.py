@@ -21,9 +21,6 @@ logging.basicConfig(
     handlers=[logging.FileHandler(snakemake.log["command"])],
 )
 
-# Get comparison
-comparison = os.path.basename(bf.replace(".bf", ""))
-
 # Load gene sets
 if ceg == "none" and cneg == "none":
     if species == "human":
