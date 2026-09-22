@@ -138,14 +138,20 @@ rule sg_rank_plot:
             caption="../report/sgrank_pos.rst",
             category="MAGeCK plots",
             subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "sgrank plot enriched genes"},
+            labels={
+                "Comparison": "{comparison}",
+                "Figure": "sgrank plot enriched genes",
+            },
         ),
         neg=report(
             "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank_neg.pdf",
             caption="../report/sgrank_neg.rst",
             category="MAGeCK plots",
             subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "sgrank plot depleted genes"},
+            labels={
+                "Comparison": "{comparison}",
+                "Figure": "sgrank plot depleted genes",
+            },
         ),
     log:
         "logs/mageck_plots/sgrank_{comparison}_{cnv}.log",
