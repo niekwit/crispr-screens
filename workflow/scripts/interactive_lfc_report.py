@@ -51,7 +51,10 @@ logging.info(f"Enriched: {len(enriched)} genes, Depleted: {len(depleted)} genes"
 
 # ── Load STRING-db enrichment terms ──────────────────────────────────────────
 string_terms = {"enriched": [], "depleted": []}
-for direction, path in [("enriched", string_enriched_path), ("depleted", string_depleted_path)]:
+for direction, path in [
+    ("enriched", string_enriched_path),
+    ("depleted", string_depleted_path),
+]:
     if not path or not os.path.exists(path):
         continue
     try:
@@ -59,12 +62,16 @@ for direction, path in [("enriched", string_enriched_path), ("depleted", string_
         if df_str.empty or "preferredNames" not in df_str.columns:
             continue
         for _, row in df_str.iterrows():
-            genes = [g.strip() for g in str(row["preferredNames"]).split(",") if g.strip()]
+            genes = [
+                g.strip() for g in str(row["preferredNames"]).split(",") if g.strip()
+            ]
             if genes:
-                string_terms[direction].append({
-                    "label": f"{row['description']} (FDR={float(row['fdr']):.3f})",
-                    "genes": genes,
-                })
+                string_terms[direction].append(
+                    {
+                        "label": f"{row['description']} (FDR={float(row['fdr']):.3f})",
+                        "genes": genes,
+                    }
+                )
         logging.info(f"Loaded {len(df_str)} STRING-db {direction} terms")
     except Exception as e:
         logging.warning(f"Could not load STRING-db terms from {path}: {e}")
@@ -72,35 +79,39 @@ for direction, path in [("enriched", string_enriched_path), ("depleted", string_
 # ── Build Plotly figures ──────────────────────────────────────────────────────
 def make_figure(df, title):
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=df["x"],
-        y=df["lfc"],
-        mode="markers+text",
-        text=[""] * len(df),
-        textposition="top center",
-        marker=dict(
-            color=df["log_pval"],
-            colorscale="Viridis",
-            showscale=True,
-            colorbar=dict(title="-log10(p-value)"),
-            size=8,
-            line=dict(width=0.5, color="black"),
-        ),
-        customdata=list(zip(
-            df["id"].astype(str),
-            df["lfc"].round(4).astype(str),
-            df["log_pval"].round(3).astype(str),
-            df["fdr"].round(6).astype(str),
-        )),
-        hovertemplate=(
-            "<b>%{customdata[0]}</b><br>"
-            "LFC: %{customdata[1]}<br>"
-            "-log10(p): %{customdata[2]}<br>"
-            "FDR: %{customdata[3]}"
-            "<extra></extra>"
-        ),
-        showlegend=False,
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=df["x"],
+            y=df["lfc"],
+            mode="markers+text",
+            text=[""] * len(df),
+            textposition="top center",
+            marker=dict(
+                color=df["log_pval"],
+                colorscale="Viridis",
+                showscale=True,
+                colorbar=dict(title="-log10(p-value)"),
+                size=8,
+                line=dict(width=0.5, color="black"),
+            ),
+            customdata=list(
+                zip(
+                    df["id"].astype(str),
+                    df["lfc"].round(4).astype(str),
+                    df["log_pval"].round(3).astype(str),
+                    df["fdr"].round(6).astype(str),
+                )
+            ),
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>"
+                "LFC: %{customdata[1]}<br>"
+                "-log10(p): %{customdata[2]}<br>"
+                "FDR: %{customdata[3]}"
+                "<extra></extra>"
+            ),
+            showlegend=False,
+        )
+    )
     fig.update_layout(
         title=dict(text=title, x=0.5, font=dict(size=15)),
         height=500,
@@ -108,7 +119,7 @@ def make_figure(df, title):
         margin=dict(t=70, b=60, l=70, r=20),
         xaxis_title="Random Index",
         yaxis_title="Log₂ Fold Change",
-        showlegend=True,   # needed so term legend traces show when added
+        showlegend=True,  # needed so term legend traces show when added
     )
     return fig
 
@@ -121,16 +132,22 @@ enriched_json = enriched_fig.to_json()
 depleted_json = depleted_fig.to_json()
 
 # ── JS data payload ───────────────────────────────────────────────────────────
-js_payload = json.dumps({
-    "enrichedGenes":    enriched["id"].tolist(),
-    "depletedGenes":    depleted["id"].tolist(),
-    "enrichedLogPvals": [round(v, 4) for v in enriched["log_pval"].tolist()],
-    "depletedLogPvals": [round(v, 4) for v in depleted["log_pval"].tolist()],
-    "enrichedData": [{"id": r["id"], "x": r["x"], "y": r["lfc"]} for _, r in enriched.iterrows()],
-    "depletedData": [{"id": r["id"], "x": r["x"], "y": r["lfc"]} for _, r in depleted.iterrows()],
-    "enrichedTerms": string_terms["enriched"],
-    "depletedTerms": string_terms["depleted"],
-})
+js_payload = json.dumps(
+    {
+        "enrichedGenes": enriched["id"].tolist(),
+        "depletedGenes": depleted["id"].tolist(),
+        "enrichedLogPvals": [round(v, 4) for v in enriched["log_pval"].tolist()],
+        "depletedLogPvals": [round(v, 4) for v in depleted["log_pval"].tolist()],
+        "enrichedData": [
+            {"id": r["id"], "x": r["x"], "y": r["lfc"]} for _, r in enriched.iterrows()
+        ],
+        "depletedData": [
+            {"id": r["id"], "x": r["x"], "y": r["lfc"]} for _, r in depleted.iterrows()
+        ],
+        "enrichedTerms": string_terms["enriched"],
+        "depletedTerms": string_terms["depleted"],
+    }
+)
 
 # ── Build HTML ────────────────────────────────────────────────────────────────
 # plotly.js is written separately (contains { } which would break f-strings)
@@ -453,6 +470,6 @@ document.getElementById("search-input").addEventListener("keydown", e => {{
 os.makedirs(os.path.dirname(output_html), exist_ok=True)
 with open(output_html, "w") as fh:
     fh.write(html_top)
-    fh.write(plotly_js)   # written raw — contains { } that would break f-strings
+    fh.write(plotly_js)  # written raw — contains { } that would break f-strings
     fh.write(html_bottom)
 logging.info(f"Written to {output_html}")

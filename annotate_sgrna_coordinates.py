@@ -152,10 +152,9 @@ def load_guides(args):
     guides["seq_norm"] = guides["seq"].str.strip().str.upper()
     guides["length"] = guides["seq_norm"].str.len()
     guides["gene_key"] = guides["GENES"].str.strip().str.upper()
-    guides["valid"] = (
-        guides["seq_norm"].str.fullmatch(r"[ACGT]+").fillna(False)
-        & guides["length"].between(MIN_LENGTH, MAX_LENGTH)
-    )
+    guides["valid"] = guides["seq_norm"].str.fullmatch(r"[ACGT]+").fillna(
+        False
+    ) & guides["length"].between(MIN_LENGTH, MAX_LENGTH)
     n_invalid = int((~guides["valid"]).sum())
     if n_invalid:
         logging.warning(
@@ -613,8 +612,10 @@ def main():
 
     annotated_keys, gene_loci = None, None
     if args.scope == "locus":
-        gene_keys = None if not args.no_annotation_fallback else set(
-            guides["gene_key"].dropna()
+        gene_keys = (
+            None
+            if not args.no_annotation_fallback
+            else set(guides["gene_key"].dropna())
         )
         loci, gene_loci, annotated_keys = build_regions(args, gene_keys)
         n_genes = guides["gene_key"].dropna().nunique()
