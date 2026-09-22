@@ -60,6 +60,7 @@ p.density <- ggplot(dens.df, aes(x = x, y = dens)) +
   theme(
     panel.grid = element_blank(),
     panel.border = element_blank(),
+    axis.line.y = element_line(colour = "black"),
     axis.title.x = element_blank(),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank()
