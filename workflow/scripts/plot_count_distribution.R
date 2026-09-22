@@ -63,15 +63,24 @@ lines.df <- summary.df %>%
   )
 
 ncol.facet <- min(4, nlevels(df$sample))
+flagged.df <- dplyr::filter(summary.df, flagged)
 
-p <- ggplot(df, aes(x = log.count)) +
-  geom_rect(
-    data = dplyr::filter(summary.df, flagged),
-    aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),
-    fill = "#D55E00",
-    alpha = 0.12,
-    inherit.aes = FALSE
-  ) +
+p <- ggplot(df, aes(x = log.count))
+
+# A zero-row layer under facet_wrap crashes gtable rendering in ggplot2
+# 3.5.2, so only add the flagged-sample highlight when something is flagged
+if (nrow(flagged.df) > 0) {
+  p <- p +
+    geom_rect(
+      data = flagged.df,
+      aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),
+      fill = "#D55E00",
+      alpha = 0.12,
+      inherit.aes = FALSE
+    )
+}
+
+p <- p +
   geom_histogram(
     bins = 60,
     fill = "#419179",

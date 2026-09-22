@@ -10,7 +10,7 @@ rule cutadapt:
     resources:
         runtime=25,
     params:
-        # Empty reads (after trimming) crash Bowtie; user arguments come last so they take precedence
-        extra=f"--minimum-length 1 {config['cutadapt_args']}",
+        # Bowtie requires reads of at least 2 characters in mismatch mode, and very short reads crash it; user arguments come last so they take precedence
+        extra=f"--minimum-length 10 {config['cutadapt_args']}",
     wrapper:
         "v5.2.1/bio/cutadapt/se"
