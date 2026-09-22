@@ -38,22 +38,20 @@ dens <- density(
   from = x.limits[1],
   to = x.limits[2]
 )
-dens.df <- tibble(x = dens$x, y = dens$y)
-max.y <- max(dens.df$y)
+dens.df <- tibble(x = dens$x, dens = dens$y)
+max.dens <- max(dens.df$dens)
+# slightly overlapping tile width avoids hairline rendering seams between
+# adjacent density tiles in the gene-row shading
+dens.tile.width <- diff(range(dens.df$x)) / (nrow(dens.df) - 1) * 1.02
 
-# gradient strip sits just below the density curve's baseline
-strip.height <- max.y * 0.18
-strip.y <- -strip.height / 2
-
-# density panel: curve on top, density-shaded gradient strip below the baseline
-p.density <- ggplot(dens.df, aes(x = x)) +
-  geom_area(aes(y = y), fill = "grey88", colour = "grey20", linewidth = 0.3) +
-  geom_tile(aes(y = strip.y, height = strip.height, fill = y)) +
-  scale_fill_gradient(low = "white", high = "black", guide = "none") +
+# density panel: just the curve, no separate gradient strip (the density
+# shading now lives inside the gene rows themselves, see build_sgrank_plot)
+p.density <- ggplot(dens.df, aes(x = x, y = dens)) +
+  geom_area(fill = "grey88", colour = "grey20", linewidth = 0.3) +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(
-    limits = c(-strip.height, max.y * 1.05),
-    breaks = scales::breaks_pretty(n = 3)(c(0, max.y)),
+    limits = c(0, max.dens * 1.05),
+    breaks = scales::breaks_pretty(n = 3)(c(0, max.dens)),
     expand = c(0, 0)
   ) +
   coord_cartesian(xlim = x.limits) +
@@ -70,6 +68,9 @@ p.density <- ggplot(dens.df, aes(x = x)) +
 # builds the gene-rank row panel for a set of top genes and stacks it under
 # the shared density panel (colour: red for enriched genes, blue for depleted)
 build_sgrank_plot <- function(df, genes, colour) {
+  n.genes <- length(genes)
+  row.centre <- function(i) (interval + binwidth) * (i - 1) + binwidth / 2
+
   df <- df %>%
     mutate(
       Gene = factor(Gene, levels = genes),
@@ -82,29 +83,34 @@ build_sgrank_plot <- function(df, genes, colour) {
     dplyr::select(c("sgrna", "Gene", "LFC", "y", "yend", "index")) %>%
     as.data.frame()
 
-  # rectangle background per gene row
-  bgcol <- tibble(
-    id = rep(seq(1, max(df$index)), each = 4),
-    x = rep(
-      c(x.limits[1], x.limits[2], x.limits[2], x.limits[1]),
-      max(df$index)
-    ),
-    y = unlist(lapply(seq(1, max(df$index)), function(i) {
-      c(
-        (interval + binwidth) * (i - 1),
-        (interval + binwidth) * (i - 1),
-        (interval + binwidth) * i - interval,
-        (interval + binwidth) * i - interval
-      )
-    }))
+  # density-shaded background per gene row (white = low density, black =
+  # high density), echoing the overall LFC distribution behind each gene
+  shade.df <- do.call(
+    rbind,
+    lapply(seq_len(n.genes), function(i) {
+      dens.df %>% mutate(y = row.centre(i))
+    })
+  )
+
+  # row outline, drawn on top of the shading with no fill of its own
+  box.df <- tibble(
+    index = seq_len(n.genes),
+    ymin = (interval + binwidth) * (index - 1),
+    ymax = (interval + binwidth) * index - interval
   )
 
   p.ranks <- ggplot() +
-    geom_polygon(
-      aes(x = x, y = y, group = id),
-      fill = "#dedede",
-      colour = "gray20",
-      data = bgcol
+    geom_tile(
+      aes(x = x, y = y, height = binwidth, fill = dens),
+      data = shade.df,
+      width = dens.tile.width
+    ) +
+    scale_fill_gradient(low = "white", high = "black", guide = "none") +
+    geom_rect(
+      aes(xmin = x.limits[1], xmax = x.limits[2], ymin = ymin, ymax = ymax),
+      data = box.df,
+      fill = NA,
+      colour = "gray20"
     ) +
     geom_segment(
       aes(x = LFC, y = y, xend = LFC, yend = yend),
@@ -113,7 +119,7 @@ build_sgrank_plot <- function(df, genes, colour) {
     ) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(
-      breaks = bgcol$y[seq(1, nrow(bgcol), 4)] + binwidth / 2,
+      breaks = row.centre(seq_len(n.genes)),
       labels = genes,
       expand = c(0, 0)
     ) +
