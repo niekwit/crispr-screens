@@ -2,7 +2,7 @@ include: "scripts/general_functions.smk"
 
 
 # Workflow version
-VERSION = "v0.11.0"
+VERSION = "v1.0.0"
 
 # Set minimum snakemake version
 min_version("8.25.5")

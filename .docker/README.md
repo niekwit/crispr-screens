@@ -8,8 +8,8 @@ These images are shared via [Docker Hub](https://hub.docker.com/repository/docke
 
 ```shell
 snakemake --containerize > Dockerfile
-docker build -t niekwit/crispr-screens:v0.11.0 .
+docker build -t niekwit/crispr-screens:v1.0.0 .
 docker login
-docker push niekwit/crispr-screens:v0.11.0
+docker push niekwit/crispr-screens:v1.0.0
 
 ```
