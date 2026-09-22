@@ -31,7 +31,13 @@ x.pad <- diff(x.range) * 0.02
 x.limits <- c(x.range[1] - x.pad, x.range[2] + x.pad)
 
 # density of the full sgRNA LFC distribution (background reference)
-dens <- density(data$LFC, na.rm = TRUE, n = 512, from = x.limits[1], to = x.limits[2])
+dens <- density(
+  data$LFC,
+  na.rm = TRUE,
+  n = 512,
+  from = x.limits[1],
+  to = x.limits[2]
+)
 dens.df <- tibble(x = dens$x, y = dens$y)
 max.y <- max(dens.df$y)
 
@@ -79,7 +85,10 @@ build_sgrank_plot <- function(df, genes, colour) {
   # rectangle background per gene row
   bgcol <- tibble(
     id = rep(seq(1, max(df$index)), each = 4),
-    x = rep(c(x.limits[1], x.limits[2], x.limits[2], x.limits[1]), max(df$index)),
+    x = rep(
+      c(x.limits[1], x.limits[2], x.limits[2], x.limits[1]),
+      max(df$index)
+    ),
     y = unlist(lapply(seq(1, max(df$index)), function(i) {
       c(
         (interval + binwidth) * (i - 1),
@@ -93,29 +102,38 @@ build_sgrank_plot <- function(df, genes, colour) {
   p.ranks <- ggplot() +
     geom_polygon(
       aes(x = x, y = y, group = id),
-      fill = "#dedede", colour = "gray20", data = bgcol
+      fill = "#dedede",
+      colour = "gray20",
+      data = bgcol
     ) +
     geom_segment(
       aes(x = LFC, y = y, xend = LFC, yend = yend),
-      colour = colour, data = df
+      colour = colour,
+      data = df
     ) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(
       breaks = bgcol$y[seq(1, nrow(bgcol), 4)] + binwidth / 2,
-      labels = genes, expand = c(0, 0)
+      labels = genes,
+      expand = c(0, 0)
     ) +
     coord_cartesian(xlim = x.limits) +
     labs(x = "Log2(Fold change)", y = NULL) +
     theme_bw(base_size = 14) +
     theme(
       legend.position = "none",
-      panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-      panel.border = element_blank(), panel.background = element_blank()
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.border = element_blank(),
+      panel.background = element_blank()
     )
 
   plot_grid(
-    p.density, p.ranks,
-    ncol = 1, align = "v", axis = "lr",
+    p.density,
+    p.ranks,
+    ncol = 1,
+    align = "v",
+    axis = "lr",
     rel_heights = c(3, length(genes))
   )
 }

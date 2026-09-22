@@ -1,5 +1,5 @@
 # Redirect R output to log
-log <- file(snakemake@log[[1]], open="wt")
+log <- file(snakemake@log[[1]], open = "wt")
 sink(log, type = "output")
 sink(log, type = "message")
 
@@ -24,12 +24,10 @@ highest <- df %>% top_n(10, normZ) %>% arrange(normZ)
 
 # Plot normZ against fdr
 p <- ggplot(df, aes(x = normZ, y = -log10(fdr))) +
-  geom_point(size = 8,
-             alpha = 0.4) +
+  geom_point(size = 8, alpha = 0.4) +
   theme_cowplot(18) +
   geom_hline(yintercept = -log10(fdr), linetype = "dashed") +
-  geom_label_repel(data = rbind(lowest, highest), 
-                  aes(label = GENE))
+  geom_label_repel(data = rbind(lowest, highest), aes(label = GENE))
 
 ggsave(pdf, p)
 

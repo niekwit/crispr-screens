@@ -1,5 +1,5 @@
 # redirect R output to log
-log <- file(snakemake@log[[1]], open="wt")
+log <- file(snakemake@log[[1]], open = "wt")
 sink(log, type = "output")
 sink(log, type = "message")
 
@@ -14,13 +14,11 @@ counts <- read.delim(snakemake@input[[1]]) %>%
 # get number of sgRNAs with zero counts
 df <- colSums(counts == 0) %>%
   melt() %>%
-  rownames_to_column(var = "sample") 
+  rownames_to_column(var = "sample")
 
 # create bar graph
-p <- ggplot(data = df, aes(x = sample, y = value)) + 
-  geom_bar(stat = "identity",
-           fill = "#419179",
-           colour = "black") +
+p <- ggplot(data = df, aes(x = sample, y = value)) +
+  geom_bar(stat = "identity", fill = "#419179", colour = "black") +
   theme_cowplot(16) +
   xlab(NULL) +
   ylab("Missed sgRNAs") +
@@ -33,7 +31,3 @@ ggsave(snakemake@output[[1]], p)
 # close redirection of output/messages
 sink(log, type = "output")
 sink(log, type = "message")
-
-
-
-

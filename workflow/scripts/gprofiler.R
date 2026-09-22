@@ -1,5 +1,5 @@
 # Redirect R output to log
-log <- file(snakemake@log[[1]], open="wt")
+log <- file(snakemake@log[[1]], open = "wt")
 sink(log, type = "output")
 sink(log, type = "message")
 
@@ -28,7 +28,7 @@ if (data == "mageck") {
   } else {
     rank <- "neg.rank"
     dt_fdr <- "neg.fdr"
-  } 
+  }
   id_column <- "id"
 } else if (data == "bagel2") {
   # BAGEL2 will only have data for depleted genes
@@ -42,7 +42,7 @@ if (data == "mageck") {
   } else {
     rank <- "rank_synth"
     dt_fdr <- "fdr_synth"
-  } 
+  }
   id_column <- "GENE"
 }
 
@@ -61,29 +61,31 @@ if (top_genes > 0) {
 cat("Genes for", dt, "analysis:\n", paste(genes, collapse = "\n"), "\n")
 
 ### Run gprofiler2
-res <- gost(genes,
-            sources = c("GO:BP", "GO:MF", "KEGG", "REAC"),
-            correction_method = "fdr",
-            significant = TRUE,
-            evcodes = TRUE)
+res <- gost(
+  genes,
+  sources = c("GO:BP", "GO:MF", "KEGG", "REAC"),
+  correction_method = "fdr",
+  significant = TRUE,
+  evcodes = TRUE
+)
 
 # Flatten and clean up results before saving to CSV
 if (!is.null(res)) {
   result_df <- as.data.frame(res$result)
-  
+
   # Ensure all list columns are converted to strings
   clean_result_df <- result_df %>%
     mutate(across(where(is.list), ~ map_chr(.x, ~ paste(.x, collapse = ";"))))
-  
+
   # Remove evidence_codes column
   clean_result_df <- clean_result_df %>%
     dplyr::select(-evidence_codes)
-  
+
   # Save results
   write.csv(clean_result_df, csv, row.names = FALSE)
 } else {
   warning("No significant results returned by gprofiler2.")
-  write.csv(data.frame(), csv, row.names = FALSE)  # Write an empty CSV if no results
+  write.csv(data.frame(), csv, row.names = FALSE) # Write an empty CSV if no results
 }
 
 ### Plot results
@@ -95,27 +97,27 @@ if (!is.null(res)) {
     ungroup() %>%
     arrange(-log10(p_value)) %>%
     pull(term_id)
-  
+
   # Create plot and save
-  p <- gostplot(res, 
-                capped = FALSE, 
-                interactive = FALSE) +
+  p <- gostplot(res, capped = FALSE, interactive = FALSE) +
     theme_cowplot(18) +
     theme(legend.position = "none") +
     ggtitle(paste(dt, "in", comparison))
-  
-  publish_gostplot(p,
-                   highlight_terms = top_terms,
-                   width = 12,
-                   height = 16,
-                   filename = pdf)
+
+  publish_gostplot(
+    p,
+    highlight_terms = top_terms,
+    width = 12,
+    height = 16,
+    filename = pdf
+  )
 } else {
   warning("No significant results returned by gprofiler2.")
   # Write empty PDF
   pdf(file = pdf, width = 12, height = 16)
   dev.off()
 }
-file.remove("Rplots.pdf", showWarnings = FALSE)  # Remove the default Rplots.pdf
+file.remove("Rplots.pdf", showWarnings = FALSE) # Remove the default Rplots.pdf
 
 # close redirection of output/messages
 sink(log, type = "output")
