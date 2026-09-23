@@ -204,6 +204,10 @@ BAGEL2 analysis
 
     Replicate samples can be used by separating the sample names with a semicolon (see above). The sample names must match the fastq file names in the `reads` directory.
 
+.. note::
+
+    An optional `bagel2_only` column can be added, with `y`/`n` values per row. Comparisons marked `y` are only run through BAGEL2 (and CRISPRcleanR) and are excluded from MAGeCK and DrugZ. This is useful for a comparison that needs a plasmid/reference sample that shouldn't otherwise be analysed with MAGeCK/DrugZ. Rows without this column, or with `n`, are run through MAGeCK, DrugZ, and BAGEL2 as normal.
+
 
 `CRISPRcleanR <https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-018-4989-y>`_ is used to create a count table as input for BAGEL2.
 

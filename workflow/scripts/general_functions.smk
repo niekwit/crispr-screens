@@ -109,17 +109,17 @@ def targets():
                 ]
             )
     if config["stats"]["bagel2"]["run"]:
-        if COMPARISONS:
+        if COMPARISONS_BAGEL2:
             # Extend targets with BAGEL2 files
             TARGETS.extend(
                 [
                     expand(
                         "results/plots/bagel2/{comparison}/{comparison}.bf.pdf",
-                        comparison=COMPARISONS,
+                        comparison=COMPARISONS_BAGEL2,
                     ),
                     expand(
                         "results/plots/bagel2/{comparison}/{comparison}.pr.pdf",
-                        comparison=COMPARISONS,
+                        comparison=COMPARISONS_BAGEL2,
                     ),
                 ]
             )
@@ -129,12 +129,12 @@ def targets():
                     expand(
                         "results/bagel2/gprofiler/{comparison}/{pathway_data}.csv",
                         pathway_data=["depleted"],
-                        comparison=COMPARISONS,
+                        comparison=COMPARISONS_BAGEL2,
                     ),
                     expand(
                         "results/plots/bagel2/gprofiler/{comparison}/{pathway_data}.pdf",
                         pathway_data=["depleted"],
-                        comparison=COMPARISONS,
+                        comparison=COMPARISONS_BAGEL2,
                     ),
                 ]
             )
@@ -240,7 +240,14 @@ def cram():
 
 def comparisons():
     """
-    Load comparisons for MAGeCK and BAGEL2
+    Load comparisons for MAGeCK/DrugZ and BAGEL2
+
+    Returns (COMPARISONS, COMPARISONS_BAGEL2):
+      - COMPARISONS: used for MAGeCK and DrugZ; excludes rows marked
+        bagel2_only=y in stats.csv (e.g. a plasmid-vs-sample comparison
+        that BAGEL2 needs but MAGeCK/DrugZ should not run)
+      - COMPARISONS_BAGEL2: all comparisons in stats.csv, used for BAGEL2
+        (and the CRISPRcleanR step it depends on)
     """
     if config["stats"]["mageck"]["command"] == "test":
         # Load comparisons from stats.csv
@@ -249,20 +256,27 @@ def comparisons():
             "config/stats.csv"
         ), "config/stats.csv file does not exist"
     else:
-        return None
+        return None, None
     CSV = pd.read_csv("config/stats.csv")
-    COMPARISONS = CSV[["test", "control"]].agg("_vs_".join, axis=1).tolist()
 
-    COMPARISONS = [
-        x.replace(";", "-") for x in COMPARISONS
-    ]  # snakemake report does not support ; in filenames
+    def build(df):
+        comps = df[["test", "control"]].agg("_vs_".join, axis=1).tolist()
+        comps = [
+            x.replace(";", "-") for x in comps
+        ]  # snakemake report does not support ; in filenames
+        if "--paired" in config["stats"]["mageck"]["extra_mageck_arguments"]:
+            # Remove comparisons with unequal number of test and control samples
+            # i.e. the number of - is not zero or an even number
+            comps = [x for x in comps if x.count("-") % 2 == 0]
+        return comps
 
-    if "--paired" in config["stats"]["mageck"]["extra_mageck_arguments"]:
-        # Remove comparisons with unequal number of test and control samples
-        # i.e. the number of - is not zero or an even number
-        COMPARISONS = [x for x in COMPARISONS if x.count("-") % 2 == 0]
+    COMPARISONS_BAGEL2 = build(CSV)
 
-    return COMPARISONS
+    if "bagel2_only" in CSV.columns:
+        CSV = CSV[CSV["bagel2_only"].astype(str).str.lower() != "y"]
+    COMPARISONS = build(CSV)
+
+    return COMPARISONS, COMPARISONS_BAGEL2
 
 
 def mageck_control():

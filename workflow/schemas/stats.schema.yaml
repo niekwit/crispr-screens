@@ -10,6 +10,14 @@ properties:
     type: string
     pattern: "^[a-zA-Z0-9_;].+$"
     description: Control sample
+  bagel2_only:
+    type: string
+    pattern: "^[yYnN]$"
+    description: >
+      Optional. Set to "y" to run this comparison only through BAGEL2
+      (and CRISPRcleanR), excluding it from MAGeCK and DrugZ. Useful for
+      comparisons that need a plasmid/reference sample that shouldn't be
+      analysed with MAGeCK/DrugZ. Defaults to "n" if omitted.
 
 required:
   - test
