@@ -104,27 +104,26 @@ if (!library.name %in% available.libs) {
 full.annotations$CHRM <- gsub("chr", "", full.annotations$CHRM)
 
 # Check if any non-existing chromosome exist in annotations
-# This would happen with sgRNAs targeting non-genomic sequences, eg. EGFP
+# This would happen with sgRNAs targeting non-genomic sequences (eg. EGFP),
+# unplaced/alt genome assembly contigs (eg. KI270*, GL000*), or sgRNAs with
+# no chromosomal location at all (CHRM is NA)
 non.real.chr <- setdiff(unique(full.annotations$CHRM), c(1:24, "X", "Y"))
-non.real.chr.count <- length(non.real.chr)
-if (non.real.chr.count > 0) {
-  # Convert any non-real chromosome to an integer
-  # Assign these chromosomes a number higher than 24
-  # This is to avoid confusing CRISPRcleanR
+if (length(non.real.chr) > 0) {
+  # Pool ALL non-real chromosomes/contigs into a single fake chromosome,
+  # rather than giving each one its own number. Several of these contigs
+  # (particularly unplaced/alt scaffolds) often have only a handful of
+  # sgRNAs mapped to them, sometimes just one, and CRISPRcleanR's CBS-based
+  # smoothing (ccr.GWclean -> smooth.CNA) crashes with "NA/NaN/Inf in
+  # foreign function call" on a chromosome with a single data point, so
+  # they need to be pooled together to have enough sgRNAs to smooth over.
+  new.chr.name <- 25
   print(paste(
-    "Non-existing chromosomes found in annotations:",
+    "Non-existing chromosomes/contigs found in annotations:",
     paste(non.real.chr, collapse = ", ")
   ))
-  print("Assigning them a chromosome number higher than 24")
-  new.chr.names <- 25:(24 + non.real.chr.count)
-  for (i in 1:non.real.chr.count) {
-    print(paste("Converting", non.real.chr[i], "to", new.chr.names[i]))
-    full.annotations$CHRM <- gsub(
-      paste0("^", non.real.chr[i], "$"),
-      new.chr.names[i],
-      full.annotations$CHRM
-    )
-  }
+  print(paste("Assigning them all to chromosome", new.chr.name))
+  full.annotations$CHRM[full.annotations$CHRM %in% non.real.chr] <-
+    new.chr.name
 }
 
 # Check if gene and sgRNA names fully match between counts and annotations
