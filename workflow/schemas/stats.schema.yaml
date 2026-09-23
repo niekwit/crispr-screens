@@ -14,10 +14,13 @@ properties:
     type: string
     pattern: "^[yYnN]$"
     description: >
-      Optional. Set to "y" to run this comparison only through BAGEL2
-      (and CRISPRcleanR), excluding it from MAGeCK and DrugZ. Useful for
-      comparisons that need a plasmid/reference sample that shouldn't be
-      analysed with MAGeCK/DrugZ. Defaults to "n" if omitted.
+      Optional. If this column is present anywhere in the file, it is a
+      strict split: rows marked "y" are analysed only with BAGEL2 (and
+      CRISPRcleanR), and all other rows ("n" or blank) only with MAGeCK
+      and DrugZ. Useful when BAGEL2 needs a different comparison than
+      MAGeCK/DrugZ (eg. against a plasmid/reference sample). If the
+      column is absent entirely, every row is analysed with all three
+      tools (the default).
 
 required:
   - test

@@ -243,11 +243,16 @@ def comparisons():
     Load comparisons for MAGeCK/DrugZ and BAGEL2
 
     Returns (COMPARISONS, COMPARISONS_BAGEL2):
-      - COMPARISONS: used for MAGeCK and DrugZ; excludes rows marked
-        bagel2_only=y in stats.csv (e.g. a plasmid-vs-sample comparison
-        that BAGEL2 needs but MAGeCK/DrugZ should not run)
-      - COMPARISONS_BAGEL2: all comparisons in stats.csv, used for BAGEL2
-        (and the CRISPRcleanR step it depends on)
+      - COMPARISONS: used for MAGeCK and DrugZ
+      - COMPARISONS_BAGEL2: used for BAGEL2 (and the CRISPRcleanR step it
+        depends on)
+
+    If stats.csv has no bagel2_only column, every row is used for both (the
+    default: MAGeCK/DrugZ and BAGEL2 share the same comparisons). If the
+    column is present, it is a strict split: rows marked "y" are used only
+    for BAGEL2, everything else (n/blank/other) only for MAGeCK/DrugZ. This
+    supports setups where BAGEL2 needs an entirely different comparison (eg.
+    against a plasmid/reference sample) than MAGeCK/DrugZ.
     """
     if config["stats"]["mageck"]["command"] == "test":
         # Load comparisons from stats.csv
@@ -270,11 +275,13 @@ def comparisons():
             comps = [x for x in comps if x.count("-") % 2 == 0]
         return comps
 
-    COMPARISONS_BAGEL2 = build(CSV)
-
     if "bagel2_only" in CSV.columns:
-        CSV = CSV[CSV["bagel2_only"].astype(str).str.lower() != "y"]
-    COMPARISONS = build(CSV)
+        is_bagel2_only = CSV["bagel2_only"].astype(str).str.lower() == "y"
+        COMPARISONS_BAGEL2 = build(CSV[is_bagel2_only])
+        COMPARISONS = build(CSV[~is_bagel2_only])
+    else:
+        COMPARISONS = build(CSV)
+        COMPARISONS_BAGEL2 = build(CSV)
 
     return COMPARISONS, COMPARISONS_BAGEL2
 

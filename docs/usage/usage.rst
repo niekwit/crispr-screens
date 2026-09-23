@@ -206,7 +206,7 @@ BAGEL2 analysis
 
 .. note::
 
-    An optional `bagel2_only` column can be added, with `y`/`n` values per row. Comparisons marked `y` are only run through BAGEL2 (and CRISPRcleanR) and are excluded from MAGeCK and DrugZ. This is useful for a comparison that needs a plasmid/reference sample that shouldn't otherwise be analysed with MAGeCK/DrugZ. Rows without this column, or with `n`, are run through MAGeCK, DrugZ, and BAGEL2 as normal.
+    An optional `bagel2_only` column can be added, with `y`/`n` values per row. If this column is present, it is a strict split: comparisons marked `y` are only run through BAGEL2 (and CRISPRcleanR), and all other comparisons (`n` or blank) are only run through MAGeCK and DrugZ. This is useful when BAGEL2 needs a different comparison than MAGeCK/DrugZ, eg. against a plasmid/reference sample. If the `bagel2_only` column is absent entirely, every comparison is run through MAGeCK, DrugZ, and BAGEL2 (the default).
 
 
 `CRISPRcleanR <https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-018-4989-y>`_ is used to create a count table as input for BAGEL2.
