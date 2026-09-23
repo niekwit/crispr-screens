@@ -37,9 +37,11 @@ i.e. 5.7% of the genome. An sgRNA is assigned, in order of preference, to:
 
 --scope genome searches the whole genome instead (no GTF file needed).
 
-If an sgRNA matches perfectly at several positions of its best tier, the first
-one (in FASTA order) is used and the number of matches is given as n_hits in
-the mapping report, so these can be inspected or removed.
+If an sgRNA matches perfectly at several positions of its best tier, a
+canonical chromosome (1-22, X, Y) is preferred over an unplaced/alt scaffold
+or MT; if still tied, the first one (in FASTA order) is used. The number of
+matches is given as n_hits in the mapping report, so these can be inspected
+or removed.
 
 All k-mers of the searched sequence are encoded as integers (2 bits per base)
 and looked up in the sorted sgRNA codes with numpy, so no Python loop runs over
@@ -129,6 +131,17 @@ def chrom_key(name):
     """Scalar version of normalise_chrom"""
     name = re.sub(r"^chr", "", name, flags=re.IGNORECASE).upper()
     return "M" if name == "MT" else name
+
+
+# Canonical chromosomes: 1-22, X, Y (not MT and not unplaced/alt scaffolds,
+# consistent with the "real" chromosomes crisprcleaner.R expects)
+CANONICAL_CHROMS = {str(i) for i in range(1, 23)} | {"X", "Y"}
+
+
+def is_canonical(name):
+    """True if name (a contig/chromosome name as it appears in the FASTA) is
+    one of the canonical chromosomes 1-22, X, Y"""
+    return chrom_key(name) in CANONICAL_CHROMS
 
 
 def load_guides(args):
@@ -466,8 +479,10 @@ def in_own_gene_locus(hits, guides, gene_loci):
 def resolve_hits(hits, guides, gene_loci):
     """
     Pick one location per sgRNA: the best tier (own gene, other gene, genome),
-    then the first position in the genome. Without gene_loci (whole genome
-    search) all hits are in the genome tier. Returns a table indexed like guides.
+    then, if still tied, a canonical chromosome (1-22, X, Y) over an
+    unplaced/alt scaffold or MT, then the first position in FASTA order.
+    Without gene_loci (whole genome search) all hits are in the genome tier.
+    Returns a table indexed like guides.
     """
     result = pd.DataFrame(
         {"CHRM": pd.NA, "STARTpos": pd.NA, "ENDpos": pd.NA, "STRAND": pd.NA},
@@ -490,9 +505,13 @@ def resolve_hits(hits, guides, gene_loci):
     best_tier = hits.groupby("guide_idx")["tier"].transform("min")
     hits = hits[hits["tier"] == best_tier]
     n_hits = hits.groupby("guide_idx").size()
-    first = hits.sort_values(["guide_idx", "contig_order", "start"]).drop_duplicates(
-        "guide_idx"
-    )
+    # Among hits tied on tier, prefer a canonical chromosome (1-22, X, Y) over
+    # an unplaced/alt scaffold or MT before falling back to FASTA order
+    contigs = hits["contig"].unique()
+    hits["is_alt"] = ~hits["contig"].map({c: is_canonical(c) for c in contigs})
+    first = hits.sort_values(
+        ["guide_idx", "is_alt", "contig_order", "start"]
+    ).drop_duplicates("guide_idx")
     first = first.set_index("guide_idx")
     result.loc[first.index, "CHRM"] = first["contig"]
     result.loc[first.index, "STARTpos"] = first["start"]
