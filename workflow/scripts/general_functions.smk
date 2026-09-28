@@ -212,6 +212,19 @@ def sample_names():
         samples = stats_csv["test"].tolist()
         samples.extend(stats_csv["control"].tolist())
 
+        # In comparison names (and wildcards) - separates multiple samples
+        # (; in stats.csv), so it cannot be part of a sample name
+        with_hyphen = sorted(
+            {part for x in samples for part in x.split(";") if "-" in part}
+        )
+        if with_hyphen:
+            raise ValueError(
+                f"Sample name(s) in stats.csv contain a hyphen: "
+                f"{', '.join(with_hyphen)}. Hyphens are used to separate "
+                "multiple samples in comparison names: rename the reads "
+                "file(s) and update stats.csv (e.g. use _ instead of -)"
+            )
+
         not_found = []
         for sample in samples:
             if sample not in sample_names:
