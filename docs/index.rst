@@ -38,6 +38,7 @@ Contents
    :maxdepth: 2
 
    usage/usage.rst
+   annotate_sgrna_coordinates/annotate_sgrna_coordinates.rst
 
 .. toctree::
    :caption: Protocols
