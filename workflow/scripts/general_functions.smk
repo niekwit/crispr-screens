@@ -243,6 +243,17 @@ def sample_names():
     return sample_names
 
 
+def fastqc_input(wildcards):
+    """
+    Returns the raw or trimmed fastq file for a given {sample}/{stage}
+    wildcard combination, for FastQC pre- and post-trimming QC.
+    """
+    if wildcards.stage == "raw":
+        return f"reads/{wildcards.sample}.fastq.gz"
+    else:
+        return f"results/trimmed/{wildcards.sample}.fastq.gz"
+
+
 def cram():
     """
     Check if raw data is in CRAM format

@@ -1,11 +1,35 @@
+rule link_fastq_for_fastqc:
+    # FastQC embeds the name of the file it was given inside its report, and
+    # MultiQC reads that embedded name (not the output file name) to tell
+    # samples apart. Raw and trimmed reads share the same file name
+    # ({sample}.fastq.gz in different directories), so without this rename
+    # step MultiQC would treat pre- and post-trimming FastQC reports for the
+    # same sample as one sample and silently drop one of them.
+    input:
+        fastqc_input,
+    output:
+        temp("results/qc/fastqc_input/{sample}_{stage}.fastq.gz"),
+    log:
+        "logs/fastqc/link_{sample}_{stage}.log",
+    wildcard_constraints:
+        stage="raw|trimmed",
+    threads: 1
+    resources:
+        runtime=2,
+    shell:
+        "ln -sr {input} {output} 2> {log}"
+
+
 rule fastqc:
     input:
-        "results/trimmed/{sample}.fastq.gz",
+        "results/qc/fastqc_input/{sample}_{stage}.fastq.gz",
     output:
-        html="results/qc/fastqc/{sample}.html",
-        zip="results/qc/fastqc/{sample}_fastqc.zip",
+        html="results/qc/fastqc/{sample}_{stage}.html",
+        zip="results/qc/fastqc/{sample}_{stage}_fastqc.zip",
     log:
-        "logs/fastqc/{sample}.log",
+        "logs/fastqc/{sample}_{stage}.log",
+    wildcard_constraints:
+        stage="raw|trimmed",
     threads: 4
     resources:
         runtime=15,
@@ -18,7 +42,11 @@ rule fastqc:
 
 rule multiqc:
     input:
-        expand("results/qc/fastqc/{sample}_fastqc.zip", sample=SAMPLES),
+        expand(
+            "results/qc/fastqc/{sample}_{stage}_fastqc.zip",
+            sample=SAMPLES,
+            stage=["raw", "trimmed"],
+        ),
     output:
         report(
             "results/qc/multiqc.html",
