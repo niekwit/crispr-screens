@@ -34,7 +34,7 @@ Each statistical tool (`bagel2`, `mageck`, `drugz`) has its own `run: True`/`Fal
 
 ### stats.csv
 
-Pairwise comparisons for MAGeCK (`command: test`), DrugZ, and BAGEL2 are defined in `config/stats.csv`, with `test` and `control` columns naming samples exactly as they appear in the `reads` directory (without the `.fastq.gz`/`.cram` extension). Multiple replicate samples can be combined in one comparison by separating their names with a semicolon. An optional `bagel2_only` column (`y`/`n` per row) can be added to run some comparisons only through BAGEL2 (and CRISPRcleanR) and the rest only through MAGeCK/DrugZ; if the column is absent, every row is run through all three tools. See the main documentation for details and examples.
+Pairwise comparisons for MAGeCK (`command: test`), DrugZ, and BAGEL2 are defined in `config/stats.csv`, with `test` and `control` columns naming samples exactly as they appear in the `reads` directory (without the `.fastq.gz`/`.cram` extension). Multiple replicate samples can be combined in one comparison by separating their names with a semicolon. An optional `bagel2_only` column (`y`/`n` per row) can be added to run some comparisons only through BAGEL2 (and CRISPRcleanR) and the rest only through MAGeCK/DrugZ; if the column is absent, every row is available to the enabled tools. See the main documentation for details and examples.
 
 ### ngs_tracker
 

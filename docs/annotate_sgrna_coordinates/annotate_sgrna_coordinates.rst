@@ -36,7 +36,7 @@ Columns can be given by header name or by 0-based column number. sgRNA names mus
       - ``locus``: only search around annotated genes (fast, recommended); ``genome``: search the whole genome (slow, no GTF needed)
     * - ``--genome-fallback``
       - off
-      - With ``--scope locus``: also search the whole genome for sgRNAs that were not found in any annotated locus (no effect with ``--scope genome``). Needed to place sgRNAs that do not target genes, e.g. safe-targeting/intergenic controls
+      - With ``--scope locus``: also search the whole genome for sgRNAs that were not found in any annotated locus, including sgRNAs whose cross-gene matches were removed by ``--no-annotation-fallback`` (no effect with ``--scope genome``). Needed to place sgRNAs that do not target genes, e.g. safe-targeting/intergenic controls
     * - ``--no-annotation-fallback``
       - off
       - Only accept a position in a locus of the sgRNA's own gene
@@ -61,7 +61,7 @@ The output file has the columns ``CODE,GENES,seq,CHRM,STARTpos,ENDpos,STRAND``, 
 - Coordinates are 1-based and inclusive and are those of the sgRNA sequence (without PAM).
 - ``STRAND`` is the genomic strand: ``+`` if the sgRNA sequence is identical to the forward strand of the FASTA file, ``-`` if its reverse complement is. It is not relative to the gene. CRISPRcleanR does not use the strand.
 - sgRNAs that cannot be placed are kept, with empty coordinates. ``crisprcleaner.R`` treats these as control sgRNAs (gene ``CONTROL_GENE``, positioned on a made-up chromosome, so they are never corrected).
-- ``<output>_mapping_report.csv`` lists for each sgRNA how it was placed (``mapped_gene_locus``, ``mapped_other_locus``, ``mapped_genome``) or why not (``gene_not_in_annotation``, ``no_gene``, ``sequence_not_found``, ``invalid_sequence``) and the number of perfect matches (``n_hits``). If an sgRNA matches at several places, the first position is used, so consider ``n_hits > 1`` sgRNAs with care.
+- ``<output-stem>_mapping_report.csv`` (``--report`` overrides this path) lists for each sgRNA how it was placed (``mapped_gene_locus``, ``mapped_other_locus``, ``mapped_genome``) or why not (``gene_not_in_annotation``, ``no_gene``, ``sequence_not_found``, ``invalid_sequence``) and the number of deduplicated perfect matches in the best tier (``n_hits``). If an sgRNA matches at several places in its best tier, the reported match is chosen by preferring a canonical chromosome, then FASTA order, then start position, so consider ``n_hits > 1`` sgRNAs with care.
 - Check the report for sgRNAs of real genes that could not be placed, as ``crisprcleaner.R`` will also treat these as controls.
 
 To use the output in the workflow, set ``lib_info: library_file`` to the output file (``name_column: 0``, ``gene_column: 1``, ``sequence_column: 2``) and ``stats: crisprcleanr: library_name`` to any name that is not one of the CRISPRcleanR libraries.
