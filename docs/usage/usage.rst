@@ -8,14 +8,14 @@ To run `crispr-screens` on your own data, first prepare a data directory (where 
     $ cd my_experiment
     $ mkdir reads resources
 
-Copy the fastq files to the `reads` directory and the resources to the `resources` directory. 
+Copy the fastq files to the `reads` directory and the resources to the `resources` directory.
 
 .. note::
-    
+
     All fastq files must have the extension *.fastq.gz* or *.cram*
 
 
-Copy the the fasta file with sgRNA sequences to the `resources` directory. If no fasta file is available, provide a csv file with sgRNA sequences and gene names in separate columns. Set the column numbers in `config/config.yml` (see below). 
+Copy the the fasta file with sgRNA sequences to the `resources` directory. If no fasta file is available, provide a csv file with sgRNA sequences and gene names in separate columns. Set the column numbers in `config/config.yml` (see below).
 
 The final directory structure should look like this:
 
@@ -23,66 +23,71 @@ The final directory structure should look like this:
 
     .
     ├── config
-    │   ├── config.yml
-    │   └── stats.csv
+    │   ├── config.yml
+    │   └── stats.csv
     ├── reads
-    │   ├── HT_1.fastq.gz
-    │   ├── HT_2.fastq.gz
-    │   ├── noHT_1.fastq.gz
-    │   └── noHT_2.fastq.gz
+    │   ├── HT_1.fastq.gz
+    │   ├── HT_2.fastq.gz
+    │   ├── noHT_1.fastq.gz
+    │   └── noHT_2.fastq.gz
     ├── resources
-    │   └── bassik.csv
+    │   └── bassik.csv
     └── workflow
         ├── envs
-        │   └── stats.yaml
+        │   └── stats.yaml
         ├── report
-        │   ├── alignment-rates.rst
-        │   ├── bagel2_plots.rst
-        │   ├── drugz.rst
-        │   ├── gini-index.rst
-        │   ├── lfc_neg.rst
-        │   ├── lfc_pos.rst
-        │   ├── mageck.rst
-        │   ├── missed-rgrnas.rst
-        │   ├── multiqc.rst
-        │   ├── pathway_analysis.rst
-        │   ├── plot-coverage.rst
-        │   ├── sample-correlation.rst
-        │   ├── sgrank_neg.rst
-        │   ├── sgrank_pos.rst
-        │   └── workflow.rst
+        │   ├── alignment-rates.rst
+        │   ├── bagel2_plots.rst
+        │   ├── count-distribution.rst
+        │   ├── drugz.rst
+        │   ├── gini-index.rst
+        │   ├── lfc_neg.rst
+        │   ├── lfc_pos.rst
+        │   ├── mageck.rst
+        │   ├── missed-rgrnas.rst
+        │   ├── multiqc.rst
+        │   ├── pathway_analysis.rst
+        │   ├── plot-coverage.rst
+        │   ├── sample-correlation.rst
+        │   ├── sgrank_neg.rst
+        │   ├── sgrank_pos.rst
+        │   └── workflow.rst
         ├── rules
-        │   ├── bagel2.smk
-        │   ├── count.smk
-        │   ├── drugz.smk
-        │   ├── mageck.smk
-        │   ├── qc.smk
-        │   └── trim.smk
+        │   ├── bagel2.smk
+        │   ├── count.smk
+        │   ├── drugz.smk
+        │   ├── mageck.smk
+        │   ├── qc.smk
+        │   └── trim.smk
         ├── schemas
-        │   ├── config.schema.yaml
-        │   └── stats.schema.yaml
+        │   ├── config.schema.yaml
+        │   └── stats.schema.yaml
         ├── scripts
-        │   ├── aggregate_counts.py
-        │   ├── bagel2bf.py
-        │   ├── bagel2pr.py
-        │   ├── cnv_cell_lines.txt
-        │   ├── crisprcleaner.R
-        │   ├── csv_to_fasta.py
-        │   ├── general_functions.smk
-        │   ├── gprofiler.R
-        │   ├── mageck.py
-        │   ├── plot_alignment_rate.R
-        │   ├── plot_bf.R
-        │   ├── plot_coverage.R
-        │   ├── plot_drugz_results.R
-        │   ├── plot_gini_index.R
-        │   ├── plot_lfc.R
-        │   ├── plot_missed_sgrnas.R
-        │   ├── plot_pr.R
-        │   └── plot_sgrank.R
+        │   ├── aggregate_counts.py
+        │   ├── bagel2bf.py
+        │   ├── bagel2pr.py
+        │   ├── cnv_cell_lines.txt
+        │   ├── create_mageck_mle_count_table.py
+        │   ├── crisprcleaner.R
+        │   ├── csv_to_fasta.py
+        │   ├── general_functions.smk
+        │   ├── gprofiler.R
+        │   ├── interactive_lfc_report.py
+        │   ├── mageck.py
+        │   ├── plot_alignment_rate.R
+        │   ├── plot_bf.R
+        │   ├── plot_count_distribution.R
+        │   ├── plot_coverage.R
+        │   ├── plot_drugz_results.R
+        │   ├── plot_gini_index.R
+        │   ├── plot_lfc.R
+        │   ├── plot_missed_sgrnas.R
+        │   ├── plot_pr.R
+        │   ├── plot_sgrank.R
+        │   └── string_db.py
         └── Snakefile
 
-    9 directories, 51 files
+    9 directories, 55 files
 
 
 Experiment meta data
@@ -94,98 +99,114 @@ Experiment meta data is described in `config/config.yml`:
 
     lib_info:
         library_file: resources/bassik.csv # Path to library file with sgRNA sequences and gene names
+        species: human # Species the library targets (e.g. human, mouse)
 
-        cutadapt:
-            g: "" # 5' adapter sequence to trim
-            a: "" # 3' adapter sequence to trim
-            u: 0 # trim u bases (before a/g trimming)
-            l: 20 # shorten reads to l bases
-            extra: "" # Extra arguments for cutadapt
+    # Extra arguments for cutadapt (--minimum-length 10 is always added by the workflow)
+    cutadapt_args: "-q 20 -l 20"
 
-    species: human
-
-    csv: 
+    csv:
         # 0-based column numbers
-        name_column: 0 # Column number with sgRNA names 
+        name_column: 0 # Column number with sgRNA names
         gene_column: 1 # Column number with gene names
         sequence_column: 2 # Column number with sgRNA sequences
 
     bowtie_args: "-v 1 -m 1" # Extra arguments for Bowtie (default: allow 1 mismatch and discard reads that align to multiple sgRNAs)
 
-    stats: 
-    crisprcleanr:
-        # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better
-        # It is optional for MAGeCK and DrugZ
-        # Path to library file for crisprcleanr with sgRNA annotations
-        # With column names: GENE,seq,CODE,CHRM,STARTpos,ENDpos,EXONE(optional),STRAND
-        # If library name is one of the following, the library info is loaded from the crisprcleanr library database:
-        # AVANA_Library (https://doi.org/10.1038/ng.3984)
-        # Brunello_Library (https://doi.org/10.1038/nbt.3437)
-        # GeCKO_Library_v2 (https://doi.org/10.1038/nmeth.3047)
-        # KY_Library_v1.0 (https://doi.org/10.1016/j.celrep.2016.09.079)
-        # KY_Library_v1.1 (https://doi.org/10.1016/j.celrep.2016.09.079)
-        # MiniLibCas9_Library (https://doi.org/10.1186/s13059-021-02268-4)
-        # Whitehead_Library (https://doi.org/10.1126/science.aac7041)
-        library_name: TKOv3
-        min_reads: 30 # Keep sgRNAs with at least this many reads in control sample
+    stats:
+        crisprcleanr:
+            # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better
+            # It is optional for MAGeCK and DrugZ
+            # Path to library file for crisprcleanr with sgRNA annotations
+            # With column names: GENE,seq,CODE,CHRM,STARTpos,ENDpos,EXONE(optional),STRAND
+            # If library name is one of the following, the library info is loaded from the crisprcleanr library database:
+            # AVANA_Library (https://doi.org/10.1038/ng.3984)
+            # Brunello_Library (https://doi.org/10.1038/nbt.3437)
+            # GeCKO_Library_v2 (https://doi.org/10.1038/nmeth.3047)
+            # KY_Library_v1.0 (https://doi.org/10.1016/j.celrep.2016.09.079)
+            # KY_Library_v1.1 (https://doi.org/10.1016/j.celrep.2016.09.079)
+            # MiniLibCas9_Library (https://doi.org/10.1186/s13059-021-02268-4)
+            # Whitehead_Library (https://doi.org/10.1126/science.aac7041)
+            library_name: TKOv3
+            min_reads: 30 # Keep sgRNAs with at least this many reads in control sample
 
-    bagel2:
-        run: True # Perform bagel2 analysis
-        custom_gene_lists: 
-        # Paths to custom gene lists for bagel2 analysis
-        # Use "none" to use BAGEL2 default gene lists
-            essential_genes: none
-            non_essential_genes: none
-        extra_args: # Extra arguments for bagel2 subcommands
-        bf: ""
-        pr: ""
+        bagel2:
+            run: True # Perform bagel2 analysis
+            custom_gene_lists:
+                # Paths to custom gene lists for bagel2 analysis
+                # Use "none" to use BAGEL2 default gene lists
+                essential_genes: none
+                non_essential_genes: none
+            extra_args: # Extra arguments for bagel2 subcommands
+                bf: ""
+                pr: ""
 
-    mageck:
-        run: True # Perform mageck analysis
-        command: test # test or mle
-        mle:
-            design_matrix: ["config/matrix.txt"] # Design matrix for mageck mle
-        # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
-        apply_crisprcleanr: False 
-        extra_mageck_arguments: "" 
-        mageck_control_genes: all # All or file with control genes
-        apply_CNV_correction: False # Apply CNV correction to mageck results
-        cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
-  
-  drugz:
-    run: True # Perform drugZ analysis
-    # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
-    apply_crisprcleanr: False
-    extra: "" # Extra arguments for drugZ
+        mageck:
+            run: True # Perform mageck analysis
+            command: test # test or mle
+            mle:
+                design_matrix: ["config/matrix.txt"] # Design matrix/matrices for mageck mle (must be in the config directory)
+            # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
+            apply_crisprcleanr: False
+            extra_mageck_arguments: ""
+            mageck_control_genes: all # All or file with control genes
+            apply_CNV_correction: False # Apply CNV correction to mageck results
+            cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
 
-  pathway_analysis: 
-    run: False # Perform pathway analysis on mageck results
-    data: both # enriched, depleted, or both
-    fdr: 0.25 # FDR threshold for significant genes
-    top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+        drugz:
+            run: True # Perform drugZ analysis
+            # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
+            apply_crisprcleanr: False
+            extra: "" # Extra arguments for drugZ
+
+        pathway_analysis:
+            run: False # Perform pathway analysis (g:Profiler) on mageck results
+            data: both # enriched, depleted, or both
+            fdr: 0.25 # FDR threshold for significant genes
+            top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+
+        string_db:
+            run: False # Perform STRING-db analysis on mageck results
+            data: both # enriched, depleted, or both
+            fdr: 0.25 # FDR threshold for significant genes
+            top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
+
+    # Optional integration with NGS Tracker (https://github.com/niekwit/ngs-tracker)
+    # for workflow registration and file attachment
+    ngs_tracker:
+        enabled: false # set to false to skip registration
+        base_url: "http://127.0.0.1:5000/api"
+        project_id: 3
+        workflow_name: "crispr-screens"
+        workflow_tag: "v1.1.0"
+        workflow_system: "snakemake"
+        description: "Test"
+        tags:
+            - Test
+        files:
+            - path: "config/config.yml"
+              type: config
+              description: "Workflow config"
+
+See `workflow/schemas/config.schema.yaml` for the full, authoritative list of keys.
 
 
 FASTQ trimming
 =================
 
-The workflow uses `cutadapt <https://cutadapt.readthedocs.io/en/stable/>`_ to trim the reads. The trimming parameters can be set in the `config/config.yml` file. The default parameters are:
+The workflow uses `cutadapt <https://cutadapt.readthedocs.io/en/stable/>`_ to trim the reads. Extra arguments are passed as a single string via `cutadapt_args` in `config/config.yml`:
 
 .. code-block:: yaml
 
-    cutadapt:
-        g: "" # 5' adapter sequence to trim
-        a: "" # 3' adapter sequence to trim
-        u: 0 # trim u bases (before a/g trimming)
-        l: 20 # shorten reads to l bases
-        extra: "" # Extra arguments for cutadapt
+    cutadapt_args: "-q 20 -l 20"
 
-The trimming parameters are passed to `cutadapt` as command line arguments. The default parameters are:
+`cutadapt_args` is passed through to cutadapt as-is, so any `option from the cutadapt reference <https://cutadapt.readthedocs.io/en/stable/reference.html>`_ can be used, for example:
 
-- `g`: Sequence of an adapter ligated to the 5' end. The adapter and any preceding bases are trimmed. Partial matches at the 5' end are allowed. If a '^' character is prepended ('anchoring'), the adapter is only found if it is a prefix of the read.
-- `a`: Sequence of an adapter ligated to the 3' end. The adapter and subsequent bases are trimmed. If a '$' character is appended ('anchoring'), the adapter is only found if it is a suffix of the read.
-- `u`: Remove LEN bases from each read (or R1 if paired; use -U option for R2). If LEN is positive, remove bases from the beginning. If LEN is negative, remove bases from the end. Can be used twice if LENs have different signs. Applied *before* adapter trimming.
-- `l`: Shorten reads to LENGTH. Positive values remove bases at the end while negative ones remove bases at the beginning. This and the following modifications are applied after adapter trimming.
-- `extra`: Extra arguments for cutadapt
+- `-g`/`-a`: adapter sequences to trim from the 5'/3' end
+- `-u`: remove a fixed number of bases from a read before adapter trimming
+- `-q`: quality-trim the 3' end below the given Phred score
+- `-l`: shorten reads to a fixed length after adapter/quality trimming
+
+`--minimum-length 10` is always added by the workflow (Bowtie requires reads of at least 2 nt in mismatch mode, and very short reads can crash it); arguments in `cutadapt_args` are applied after this and take precedence if they conflict.
 
 
 BAGEL2 analysis
@@ -217,7 +238,7 @@ BAGEL2 can be customized as follows:
 
     bagel2:
         run: True # Perform bagel2 analysis
-        custom_gene_lists: 
+        custom_gene_lists:
         # Paths to custom gene lists for bagel2 analysis
         # Use "none" to use BAGEL2 default gene lists
             essential_genes: none
@@ -278,10 +299,10 @@ The MAGeCK analysis can be customized as follows:
         run: True # Perform mageck analysis
         command: test # test or mle
         mle:
-            design_matrix: ["config/matrix.txt"] # Design matrix for mageck mle
+            design_matrix: ["config/matrix.txt"] # Design matrix/matrices for mageck mle (must be in the config directory)
         # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
-        apply_crisprcleanr: False 
-        extra_mageck_arguments: "" 
+        apply_crisprcleanr: False
+        extra_mageck_arguments: ""
         mageck_control_genes: all # All or file with control genes
         apply_CNV_correction: False # Apply CNV correction to mageck results
         cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
@@ -303,7 +324,7 @@ A list of control genes can be provided in the `resources` directory. The file s
 
 These genes will then be used for normalisation and for generating the null distribution of RRA.
 
-Extra arguments for the MAGeCK `test` and `mle` commands can be provided in the `extra_mageck_arguments` section. 
+Extra arguments for the MAGeCK `test` and `mle` commands can be provided in the `extra_mageck_arguments` section.
 
 
 drugZ analysis
@@ -324,6 +345,28 @@ The drugZ analysis can be customized as follows:
 CRISPRcleanR can be used to create a normalised count table as input for MAGeCK.
 
 Extra arguments for the drugZ command can be provided in the `extra` section.
+
+
+Pathway and STRING-db analysis
+===============================
+
+Enrichment analysis on the MAGeCK results can optionally be performed with `g:Profiler <https://biit.cs.ut.ee/gprofiler/gost>`_ (`pathway_analysis`) and/or `STRING-db <https://string-db.org>`_ (`string_db`). Both are configured the same way:
+
+.. code-block:: yaml
+
+    pathway_analysis:
+        run: False # Perform pathway analysis on mageck results
+        data: both # enriched, depleted, or both
+        fdr: 0.25 # FDR threshold for significant genes
+        top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
+
+    string_db:
+        run: False # Perform STRING-db analysis on mageck results
+        data: both # enriched, depleted, or both
+        fdr: 0.25 # FDR threshold for significant genes
+        top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
+
+`data` selects whether enriched, depleted, or both gene sets (from the MAGeCK results) are analysed. `fdr` sets the significance threshold used to select genes. `top_genes`, if not 0, overrides `fdr` and instead takes the top N genes by significance.
 
 
 CRISPRcleanR
@@ -355,8 +398,12 @@ When CRISPRcleanR is not applied, the library csv file can be less extensive and
 In both cases, the column numbers (0-based) for the gene names, sgRNA sequences, and sgRNA names must be set in `config/config.yml` (under the csv section).
 
 .. note::
-    
+
     If `library_name` matches an internal CRISPRcleanR library, the information will be auto-loaded.
+
+.. note::
+
+    If your library does not come with genomic coordinates for its sgRNAs, the standalone `annotate_sgrna_coordinates.py` script can find them and write a CRISPRcleanR-formatted library file. See :doc:`../annotate_sgrna_coordinates/annotate_sgrna_coordinates`.
 
 
 Setup global Snakemake profile
@@ -414,4 +461,3 @@ When the workflow has finished, a report of the results can be generated (HTML f
 .. code-block:: console
 
     $ snakemake --report report.html
-
