@@ -45,6 +45,7 @@ The final directory structure should look like this:
         │   ├── lfc_pos.rst
         │   ├── mageck.rst
         │   ├── missed-rgrnas.rst
+        │   ├── mle_beta.rst
         │   ├── multiqc.rst
         │   ├── pathway_analysis.rst
         │   ├── plot-coverage.rst
@@ -82,12 +83,13 @@ The final directory structure should look like this:
         │   ├── plot_gini_index.R
         │   ├── plot_lfc.R
         │   ├── plot_missed_sgrnas.R
+        │   ├── plot_mle.R
         │   ├── plot_pr.R
         │   ├── plot_sgrank.R
         │   └── string_db.py
         └── Snakefile
 
-    9 directories, 55 files
+    9 directories, 57 files
 
 
 Experiment meta data

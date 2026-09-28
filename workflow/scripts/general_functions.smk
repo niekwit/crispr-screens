@@ -106,6 +106,11 @@ def targets():
                         cnv=CNV,
                         matrix=MATRIX_NAMES,
                     ),
+                    expand(
+                        "results/plots/mageck/mle/{cnv}/{matrix}.beta_scores.pdf",
+                        cnv=CNV,
+                        matrix=MATRIX_NAMES,
+                    ),
                 ]
             )
     if config["stats"]["bagel2"]["run"]:

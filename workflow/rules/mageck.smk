@@ -99,6 +99,28 @@ rule mageck_mle:
         "../scripts/mageck.py"
 
 
+rule mle_beta_plot:
+    input:
+        "results/mageck/mle/{cnv}/{matrix}.gene_summary.txt",
+    output:
+        report(
+            "results/plots/mageck/mle/{cnv}/{matrix}.beta_scores.pdf",
+            caption="../report/mle_beta.rst",
+            category="MAGeCK plots",
+            subcategory="{matrix}",
+            labels={"Design matrix": "{matrix}", "Figure": "beta score plot"},
+        ),
+    log:
+        "logs/mageck_plots/mle_{matrix}_{cnv}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=5,
+    script:
+        "../scripts/plot_mle.R"
+
+
 rule lfc_plots:
     input:
         "results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
