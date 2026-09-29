@@ -62,7 +62,7 @@ rule multiqc:
     params:
         extra="",  # Optional: extra parameters for multiqc
     wrapper:
-        "v5.2.1/bio/multiqc"
+        "v9.18.0/bio/multiqc"
 
 
 rule plot_alignment_rate:

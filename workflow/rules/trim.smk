@@ -13,4 +13,4 @@ rule cutadapt:
         # Bowtie requires reads of at least 2 characters in mismatch mode, and very short reads crash it; user arguments come last so they take precedence
         extra=f"--minimum-length 10 {config['cutadapt_args']}",
     wrapper:
-        "v5.2.1/bio/cutadapt/se"
+        "v9.18.0/bio/cutadapt/se"
