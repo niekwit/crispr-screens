@@ -76,16 +76,15 @@ for direction, path in [
     except Exception as e:
         logging.warning(f"Could not load STRING-db terms from {path}: {e}")
 
+
 # ── Build Plotly figures ──────────────────────────────────────────────────────
 def make_figure(df, title):
     fig = go.Figure()
     fig.add_trace(
-        go.Scatter(
+        go.Scattergl(
             x=df["x"],
             y=df["lfc"],
-            mode="markers+text",
-            text=[""] * len(df),
-            textposition="top center",
+            mode="markers",
             marker=dict(
                 color=df["log_pval"],
                 colorscale="Viridis",
