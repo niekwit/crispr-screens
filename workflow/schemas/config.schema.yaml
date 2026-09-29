@@ -163,33 +163,6 @@ properties:
           - run
           - extra
 
-      pathway_analysis:
-        type: object
-        properties:
-          run:
-            type: boolean
-            description: Perform pathway analysis on mageck results
-
-          data:
-            type: string
-            description: enriched, depleted, or both
-
-          fdr:
-            type: number
-            minimum: 0
-            maximum: 1
-            description: FDR threshold for significant genes
-
-          top_genes:
-            type: integer
-            description: Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
-
-        required:
-          - run
-          - data
-          - fdr
-          - top_genes
-
       string_db:
         type: object
         properties:

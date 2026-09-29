@@ -186,33 +186,6 @@ rule sg_rank_plot:
         "../scripts/plot_sgrank.R"
 
 
-rule gprofiler_mageck:
-    input:
-        txt="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
-    output:
-        csv="results/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",
-        pdf=report(
-            "results/plots/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf",
-            caption="../report/pathway_analysis.rst",
-            category="gprofiler plots",
-            subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "pathway analysis"},
-        ),
-    log:
-        "logs/gprofiler/mageck/{comparison}_{cnv}_{pathway_data}.log",
-    conda:
-        "../envs/stats.yaml"
-    threads: 1
-    resources:
-        runtime=10,
-    params:
-        fdr=config["stats"]["pathway_analysis"]["fdr"],
-        top_genes=config["stats"]["pathway_analysis"]["top_genes"],
-        data="mageck",
-    script:
-        "../scripts/gprofiler.R"
-
-
 rule interactive_lfc_report:
     input:
         txt="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",

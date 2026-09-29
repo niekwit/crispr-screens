@@ -24,7 +24,7 @@ top_genes = snakemake.config["stats"]["string_db"]["top_genes"]
 organism = snakemake.config["lib_info"]["species"]
 data_source = snakemake.params["data"]
 
-# Column names differ per upstream tool (same id/rank/fdr split as gprofiler.R)
+# Column names differ per upstream tool
 if data_source == "mageck":
     id_column = "id"
     rank_column = "pos|rank" if pathway_data == "enriched" else "neg|rank"

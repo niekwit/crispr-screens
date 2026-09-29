@@ -47,7 +47,6 @@ The final directory structure should look like this:
         │   ├── missed-rgrnas.rst
         │   ├── mle_beta.rst
         │   ├── multiqc.rst
-        │   ├── pathway_analysis.rst
         │   ├── plot-coverage.rst
         │   ├── sample-correlation.rst
         │   ├── sgrank_neg.rst
@@ -72,7 +71,6 @@ The final directory structure should look like this:
         │   ├── crisprcleaner.R
         │   ├── csv_to_fasta.py
         │   ├── general_functions.smk
-        │   ├── gprofiler.R
         │   ├── interactive_drugz_report.py
         │   ├── interactive_lfc_report.py
         │   ├── mageck.py
@@ -90,7 +88,7 @@ The final directory structure should look like this:
         │   └── string_db.py
         └── Snakefile
 
-    9 directories, 58 files
+    9 directories, 56 files
 
 
 Experiment meta data
@@ -160,12 +158,6 @@ Experiment meta data is described in `config/config.yml`:
             # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
             apply_crisprcleanr: False
             extra: "" # Extra arguments for drugZ
-
-        pathway_analysis:
-            run: False # Perform pathway analysis (g:Profiler) on mageck, drugz, and bagel2 results
-            data: both # enriched, depleted, or both
-            fdr: 0.25 # FDR threshold for significant genes
-            top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
 
         string_db:
             run: False # Perform STRING-db analysis on mageck and drugz results
@@ -350,18 +342,12 @@ CRISPRcleanR can be used to create a normalised count table as input for MAGeCK.
 Extra arguments for the drugZ command can be provided in the `extra` section.
 
 
-Pathway and STRING-db analysis
-===============================
+STRING-db analysis
+==================
 
-Enrichment analysis can optionally be performed with `g:Profiler <https://biit.cs.ut.ee/gprofiler/gost>`_ (`pathway_analysis`) on MAGeCK, DrugZ, and BAGEL2 results, and/or with `STRING-db <https://string-db.org>`_ (`string_db`) on MAGeCK and DrugZ results. Both are configured the same way:
+Enrichment analysis can optionally be performed with `STRING-db <https://string-db.org>`_ (`string_db`) on MAGeCK and DrugZ results:
 
 .. code-block:: yaml
-
-    pathway_analysis:
-        run: False # Perform pathway analysis on mageck, drugz, and bagel2 results
-        data: both # enriched, depleted, or both
-        fdr: 0.25 # FDR threshold for significant genes
-        top_genes: 50 # Number of top genes to consider for pathway analysis (overrides fdr, use 0 to disable)
 
     string_db:
         run: False # Perform STRING-db analysis on mageck and drugz results
@@ -369,7 +355,7 @@ Enrichment analysis can optionally be performed with `g:Profiler <https://biit.c
         fdr: 0.25 # FDR threshold for significant genes
         top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
 
-`data` selects whether enriched, depleted, or both gene sets are analysed. `fdr` sets the significance threshold used to select genes. `top_genes`, if not 0, overrides `fdr` and instead takes the top N genes by significance. STRING-db results (and, for MAGeCK/DrugZ, the corresponding interactive HTML report) also show a side panel of significant STRING-db terms that highlights the genes belonging to a checked term.
+`data` selects whether enriched, depleted, or both gene sets are analysed. `fdr` sets the significance threshold used to select genes (this also sets the significance line on the DrugZ dot plot). `top_genes`, if not 0, overrides `fdr` and instead takes the top N genes by significance. STRING-db results (and, for MAGeCK/DrugZ, the corresponding interactive HTML report) also show a side panel of significant STRING-db terms that highlights the genes belonging to a checked term.
 
 
 CRISPRcleanR

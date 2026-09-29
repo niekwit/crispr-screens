@@ -64,36 +64,9 @@ rule plot_drugz_results:
     resources:
         runtime=5,
     params:
-        fdr=config["stats"]["pathway_analysis"]["fdr"],
+        fdr=config["stats"]["string_db"]["fdr"],
     script:
         "../scripts/plot_drugz_results.R"
-
-
-rule gprofiler_drugz:
-    input:
-        txt="results/drugz/{comparison}.txt",
-    output:
-        csv="results/drugz/gprofiler/{comparison}/{pathway_data}.csv",
-        pdf=report(
-            "results/plots/drugz/gprofiler/{comparison}/{pathway_data}.pdf",
-            caption="../report/pathway_analysis.rst",
-            category="gprofiler plots",
-            subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "pathway analysis"},
-        ),
-    log:
-        "logs/gprofiler/drugz/{comparison}_{pathway_data}.log",
-    conda:
-        "../envs/stats.yaml"
-    threads: 1
-    resources:
-        runtime=10,
-    params:
-        fdr=config["stats"]["pathway_analysis"]["fdr"],
-        top_genes=config["stats"]["pathway_analysis"]["top_genes"],
-        data="drugz",
-    script:
-        "../scripts/gprofiler.R"
 
 
 rule string_db_drugz:

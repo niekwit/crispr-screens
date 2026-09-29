@@ -2,16 +2,13 @@ include: "scripts/general_functions.smk"
 
 
 # Workflow version
-VERSION = "v1.1.0"
+VERSION = "v1.2.0"
 
 # Set minimum snakemake version
 min_version("8.25.5")
 
-# Wrapper version
-wrapper_version = "v5.2.1"
 
 logger.info(f"Workflow version: {VERSION}")
-logger.info(f"Wrapper version: {wrapper_version}")
 
 
 # Define report file
@@ -36,7 +33,7 @@ validate(stats, "schemas/stats.schema.yaml")
 SAMPLES = sample_names()
 COMPARISONS, COMPARISONS_BAGEL2 = comparisons()
 CNV = cnv()
-PATHWAY_DATA = pathway_data()
+STRING_DB_DATA = string_db_data()
 MATRIX_NAMES = matrix_names()
 
 # Get fasta/csv paths

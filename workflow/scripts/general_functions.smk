@@ -49,23 +49,6 @@ def targets():
                     ),
                 ]
             )
-            if config["stats"]["pathway_analysis"]["run"]:
-                TARGETS.extend(
-                    [
-                        expand(
-                            "results/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.csv",
-                            pathway_data=PATHWAY_DATA,
-                            comparison=COMPARISONS,
-                            cnv=CNV,
-                        ),
-                        expand(
-                            "results/plots/mageck/gprofiler/{comparison}/{cnv}/{pathway_data}.pdf",
-                            pathway_data=PATHWAY_DATA,
-                            comparison=COMPARISONS,
-                            cnv=CNV,
-                        ),
-                    ]
-                )
             if config["stats"]["string_db"]["run"]:
                 TARGETS.extend(
                     [
@@ -73,13 +56,13 @@ def targets():
                             "results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.svg",
                             comparison=COMPARISONS,
                             cnv=CNV,
-                            pathway_data=PATHWAY_DATA,
+                            pathway_data=STRING_DB_DATA,
                         ),
                         expand(
                             "results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.csv",
                             comparison=COMPARISONS,
                             cnv=CNV,
-                            pathway_data=PATHWAY_DATA,
+                            pathway_data=STRING_DB_DATA,
                         ),
                     ]
                 )
@@ -128,21 +111,6 @@ def targets():
                     ),
                 ]
             )
-        if config["stats"]["pathway_analysis"]["run"]:
-            TARGETS.extend(
-                [
-                    expand(
-                        "results/bagel2/gprofiler/{comparison}/{pathway_data}.csv",
-                        pathway_data=["depleted"],
-                        comparison=COMPARISONS_BAGEL2,
-                    ),
-                    expand(
-                        "results/plots/bagel2/gprofiler/{comparison}/{pathway_data}.pdf",
-                        pathway_data=["depleted"],
-                        comparison=COMPARISONS_BAGEL2,
-                    ),
-                ]
-            )
     if config["stats"]["drugz"]["run"]:
         if COMPARISONS:
             # Check csv file for empty columns
@@ -165,33 +133,18 @@ def targets():
                     ),
                 ]
             )
-            if config["stats"]["pathway_analysis"]["run"]:
-                TARGETS.extend(
-                    [
-                        expand(
-                            "results/drugz/gprofiler/{comparison}/{pathway_data}.csv",
-                            pathway_data=PATHWAY_DATA,
-                            comparison=COMPARISONS,
-                        ),
-                        expand(
-                            "results/plots/drugz/gprofiler/{comparison}/{pathway_data}.pdf",
-                            pathway_data=PATHWAY_DATA,
-                            comparison=COMPARISONS,
-                        ),
-                    ]
-                )
             if config["stats"]["string_db"]["run"]:
                 TARGETS.extend(
                     [
                         expand(
                             "results/drugz/stringdb/{comparison}/{pathway_data}/pathway_analysis.svg",
                             comparison=COMPARISONS,
-                            pathway_data=PATHWAY_DATA,
+                            pathway_data=STRING_DB_DATA,
                         ),
                         expand(
                             "results/drugz/stringdb/{comparison}/{pathway_data}/pathway_analysis.csv",
                             comparison=COMPARISONS,
-                            pathway_data=PATHWAY_DATA,
+                            pathway_data=STRING_DB_DATA,
                         ),
                     ]
                 )
@@ -438,11 +391,11 @@ def cnv():
         return ["not-CNV-corrected"]
 
 
-def pathway_data():
+def string_db_data():
     """
-    Returns value(s) for PATHWAY_DATA wildcard.
+    Returns value(s) for STRING_DB_DATA wildcard.
     """
-    data = config["stats"]["pathway_analysis"]["data"]
+    data = config["stats"]["string_db"]["data"]
     if data == "both":
         return ["enriched", "depleted"]
     else:

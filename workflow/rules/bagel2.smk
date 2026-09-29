@@ -103,30 +103,3 @@ rule plot_pr:
         runtime=5,
     script:
         "../scripts/plot_pr.R"
-
-
-rule gprofiler_bagel2:
-    input:
-        txt="results/bagel2/{comparison}/{comparison}.pr",
-    output:
-        csv="results/bagel2/gprofiler/{comparison}/{pathway_data}.csv",
-        pdf=report(
-            "results/plots/bagel2/gprofiler/{comparison}/{pathway_data}.pdf",
-            caption="../report/pathway_analysis.rst",
-            category="gprofiler plots",
-            subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "pathway analysis"},
-        ),
-    log:
-        "logs/gprofiler/bagel2/{comparison}_{pathway_data}.log",
-    conda:
-        "../envs/stats.yaml"
-    threads: 1
-    resources:
-        runtime=10,
-    params:
-        fdr=config["stats"]["pathway_analysis"]["fdr"],
-        top_genes=config["stats"]["pathway_analysis"]["top_genes"],
-        data="bagel2",
-    script:
-        "../scripts/gprofiler.R"
