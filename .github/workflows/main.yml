@@ -62,3 +62,11 @@ jobs:
           snakefile: workflow/Snakefile
           snakemake-version: 8.25.5
           args: "--use-conda --show-failed-logs --cores 3 --conda-cleanup-pkgs cache"
+
+      - name: Test workflow BAGEL2
+        uses: snakemake/snakemake-github-action@v2
+        with:
+          directory: .test_bagel2
+          snakefile: workflow/Snakefile
+          snakemake-version: 8.25.5
+          args: "--use-conda --show-failed-logs --cores 3 --conda-cleanup-pkgs cache"

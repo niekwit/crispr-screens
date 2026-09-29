@@ -7,3 +7,22 @@ logs/**
 .Rhistory
 *~
 .test-docs/
+
+# results/, logs/, and .snakemake/ above are anchored to the repo root and
+# don't cover the same directories nested inside .test_* fixtures (e.g.
+# .test_bagel2/results/); ignore those at any depth too, so a run against a
+# fixture can't accidentally get its generated output committed. resources/**
+# stays root-only on purpose: fixtures' resources/ holds small, checked-in
+# input data (library CSVs), not generated output.
+**/results/**
+**/logs/**
+**/.snakemake
+**/.snakemake/**
+Rplots.pdf
+
+# install_bagel2/install_drugz clone these fresh into resources/ at runtime;
+# never meant to be committed (same reason resources/** is root-only above:
+# don't blanket-ignore resources/, since fixtures' small input CSVs there
+# are meant to be tracked).
+**/resources/bagel2/
+**/resources/drugz/

@@ -1,0 +1,92 @@
+lib_info:
+  library_file: resources/tkov3_subset.csv
+  species: human
+
+cutadapt_args: "-q 20 -l 20"
+
+csv: # If no fasta is available, provide a csv file with sgRNA sequences
+  name_column: 0 # Column number with sgRNA names
+  gene_column: 1 # Column number with gene names
+  sequence_column: 2 # Column number with sgRNA sequences
+
+bowtie_args: "-v 1 -m 1" # Extra arguments for Bowtie (default: allow 1 mismatch and discard reads that align to multiple sgRNAs)
+
+stats:
+  crisprcleanr:
+    # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better
+    # It is optional for MAGeCK and DrugZ
+    # Path to library file for crisprcleanr with sgRNA annotations
+    # With column names: GENES,seq,CODE,CHRM,STARTpos,ENDpos,EXONE(optional),STRAND
+    # tkov3_subset.csv is not one of CRISPRcleanR's bundled libraries, so its
+    # own seq/GENES/CODE/CHRM/STARTpos/ENDpos/STRAND columns are used directly
+    # (see .test_bagel2/README.md for how this file was built)
+    library_name: TKOv3_subset
+    min_reads: 10
+
+  bagel2:
+    run: True # Perform bagel2 analysis
+    custom_gene_lists: # Paths to custom gene lists for bagel2 analysis
+      essential_genes: none
+      non_essential_genes: none
+    extra_args: # Extra arguments for bagel2 subcommands
+      bf: ""
+      pr: ""
+
+  mageck:
+    run: True # Perform mageck analysis
+    command: test # test or mle
+    mle:
+      design_matrix: [resources/matrix.txt] # Design matrix for mageck mle
+    # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
+    apply_crisprcleanr: False
+    extra_mageck_arguments: ""
+    mageck_control_genes: all # All or file with control genes
+    apply_CNV_correction: False # Apply CNV correction to mageck results
+    cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
+
+  drugz:
+    run: True # Perform drugZ analysis
+    # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
+    apply_crisprcleanr: False
+    extra: "" # Extra arguments for drugZ
+
+  string_db:
+    run: True # Perform STRING-db analysis on mageck, drugz, and bagel2 results
+    data: both # enriched, depleted, or both (mageck/drugz only; bagel2 is always depleted-only)
+    fdr: 0.25 # FDR threshold for significant genes (mageck/drugz)
+    bf_cutoff: 0 # BAGEL2 Bayes Factor cutoff; genes with BF above this are considered depleted/essential (bagel2 only)
+    top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr/bf_cutoff, use 0 to disable)
+
+# Integration with NGS Tracker for workflow registration and file attachment
+# https://github.com/niekwit/ngs-tracker
+ngs_tracker:
+  enabled: false # set to false to skip registration
+
+  # Connection
+  base_url: "http://127.0.0.1:5000/api" # change host/port if needed
+
+  # Run identity  (find project_id on the project detail page)
+  project_id: 3
+  workflow_name: "crispr-screens"
+  workflow_tag: "v0.9.1"
+  workflow_system: "snakemake" # snakemake | nextflow | cwl | other
+  description: "Testing REST API integration with NGS Tracker"
+  tags:
+    - Test
+
+  # Files to attach — paths relative to the working directory or absolute
+  # type: config | sample_info | qc | results | mapping_rates | other
+  files:
+    - path: "config/config.yml"
+      type: config
+      description: "Workflow config"
+    - path: "results/qc/multiqc.html"
+      type: qc
+      description: "MultiQC report"
+    - path: "results/qc/alignment-rates.csv"
+      type: mapping_rates
+      description: "Bowtie alignment mapping rates"
+    - path: "results/qc/*.pdf"
+      type: qc
+    - path: logs/snakemake/*.log
+      type: snakemake_log
