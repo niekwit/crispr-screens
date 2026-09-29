@@ -71,6 +71,7 @@ The final directory structure should look like this:
         │   ├── crisprcleaner.R
         │   ├── csv_to_fasta.py
         │   ├── general_functions.smk
+        │   ├── interactive_bagel2_report.py
         │   ├── interactive_drugz_report.py
         │   ├── interactive_lfc_report.py
         │   ├── mageck.py
@@ -88,7 +89,7 @@ The final directory structure should look like this:
         │   └── string_db.py
         └── Snakefile
 
-    9 directories, 56 files
+    9 directories, 57 files
 
 
 Experiment meta data
@@ -357,7 +358,7 @@ Enrichment analysis can optionally be performed with `STRING-db <https://string-
         bf_cutoff: 0 # BAGEL2 Bayes Factor cutoff; genes with BF above this are considered depleted/essential (bagel2 only)
         top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr/bf_cutoff, use 0 to disable)
 
-For MAGeCK and DrugZ, `data` selects whether enriched, depleted, or both gene sets are analysed, and `fdr` sets the significance threshold used to select genes (this also sets the significance line on the DrugZ dot plot). BAGEL2 has no enriched set (its `.bf` output only ever represents depleted/essential genes), so it always runs depleted-only and selects genes by `bf_cutoff`: genes with a Bayes Factor above this value are used, since a higher BF means higher confidence the gene is essential. `top_genes`, if not 0, overrides `fdr`/`bf_cutoff` and instead takes the top N genes by significance (MAGeCK/DrugZ) or by BF (BAGEL2). STRING-db results (and, for MAGeCK/DrugZ, the corresponding interactive HTML report) also show a side panel of significant STRING-db terms that highlights the genes belonging to a checked term.
+For MAGeCK and DrugZ, `data` selects whether enriched, depleted, or both gene sets are analysed, and `fdr` sets the significance threshold used to select genes (this also sets the significance line on the DrugZ dot plot). BAGEL2 has no enriched set (its `.bf` output only ever represents depleted/essential genes), so it always runs depleted-only and selects genes by `bf_cutoff`: genes with a Bayes Factor above this value are used, since a higher BF means higher confidence the gene is essential. `top_genes`, if not 0, overrides `fdr`/`bf_cutoff` and instead takes the top N genes by significance (MAGeCK/DrugZ) or by BF (BAGEL2). STRING-db results (and the corresponding MAGeCK/DrugZ/BAGEL2 interactive HTML report) also show a side panel of significant STRING-db terms that highlights the genes belonging to a checked term.
 
 
 CRISPRcleanR

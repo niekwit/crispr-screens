@@ -109,6 +109,10 @@ def targets():
                         "results/plots/bagel2/{comparison}/{comparison}.pr.pdf",
                         comparison=COMPARISONS_BAGEL2,
                     ),
+                    expand(
+                        "results/bagel2/interactive/{comparison}.html",
+                        comparison=COMPARISONS_BAGEL2,
+                    ),
                 ]
             )
             if config["stats"]["string_db"]["run"]:

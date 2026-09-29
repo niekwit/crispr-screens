@@ -122,3 +122,24 @@ rule string_db_bagel2:
         data="bagel2",
     script:
         "../scripts/string_db.py"
+
+
+rule interactive_bagel2_report:
+    input:
+        txt="results/bagel2/{comparison}/{comparison}.pr",
+        string_depleted=lambda wc: (
+            f"results/bagel2/stringdb/{wc.comparison}/depleted/pathway_analysis.csv"
+            if config["stats"]["string_db"]["run"]
+            else []
+        ),
+    output:
+        html="results/bagel2/interactive/{comparison}.html",
+    log:
+        "logs/bagel2/interactive_{comparison}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=5,
+    script:
+        "../scripts/interactive_bagel2_report.py"
