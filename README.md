@@ -4,11 +4,9 @@
 [![Snakemake](https://img.shields.io/badge/snakemake-≥8.25.5-brightgreen.svg)](https://snakemake.github.io)
 [![Tests](https://github.com/niekwit/crispr-screens/actions/workflows/main.yml/badge.svg)](https://github.com/niekwit/crispr-screens/actions/workflows/main.yml)
 
-
 <p align="center">
   <img src="docs/_static/logo2_small.png" width="200" alt="GPSW Logo" />
 </p>
-
 
 A Snakemake workflow for the analysis of CRISPR screens.
 
@@ -18,8 +16,12 @@ Instructions of how to use `crispr-screens` can be found here:
 
 https://crispr-screens.readthedocs.io/en/latest/
 
-## Annotating sgRNAs with genomic coordinates
+## Rule graph
 
-CRISPRcleanR, which is always run before BAGEL2 (and optionally before MAGeCK and DrugZ), needs the genomic coordinates of every sgRNA. Some libraries do not provide them. The standalone script `annotate_sgrna_coordinates.py` (not part of the Snakemake workflow) finds them by searching the sgRNA sequences in a genome FASTA file and writes a CRISPRcleanR library file.
-
-See the [documentation](https://crispr-screens.readthedocs.io/en/latest/annotate_sgrna_coordinates/annotate_sgrna_coordinates.html) for usage, options, output format, and test results.
+<a href="https://crispr-screens.readthedocs.io/en/latest/">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/rule_graph-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="images/rule_graph-light.svg">
+    <img alt="Rule graph" src="images/rule_graph-light.svg">
+  </picture>
+</a>
