@@ -160,10 +160,11 @@ Experiment meta data is described in `config/config.yml`:
             extra: "" # Extra arguments for drugZ
 
         string_db:
-            run: False # Perform STRING-db analysis on mageck and drugz results
-            data: both # enriched, depleted, or both
-            fdr: 0.25 # FDR threshold for significant genes
-            top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
+            run: False # Perform STRING-db analysis on mageck, drugz, and bagel2 results
+            data: both # enriched, depleted, or both (mageck/drugz only; bagel2 is always depleted-only)
+            fdr: 0.25 # FDR threshold for significant genes (mageck/drugz)
+            bf_cutoff: 0 # BAGEL2 Bayes Factor cutoff; genes with BF above this are considered depleted/essential (bagel2 only)
+            top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr/bf_cutoff, use 0 to disable)
 
     # Optional integration with NGS Tracker (https://github.com/niekwit/ngs-tracker)
     # for workflow registration and file attachment
@@ -345,17 +346,18 @@ Extra arguments for the drugZ command can be provided in the `extra` section.
 STRING-db analysis
 ==================
 
-Enrichment analysis can optionally be performed with `STRING-db <https://string-db.org>`_ (`string_db`) on MAGeCK and DrugZ results:
+Enrichment analysis can optionally be performed with `STRING-db <https://string-db.org>`_ (`string_db`) on MAGeCK, DrugZ, and BAGEL2 results:
 
 .. code-block:: yaml
 
     string_db:
-        run: False # Perform STRING-db analysis on mageck and drugz results
-        data: both # enriched, depleted, or both
-        fdr: 0.25 # FDR threshold for significant genes
-        top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
+        run: False # Perform STRING-db analysis on mageck, drugz, and bagel2 results
+        data: both # enriched, depleted, or both (mageck/drugz only; bagel2 is always depleted-only)
+        fdr: 0.25 # FDR threshold for significant genes (mageck/drugz)
+        bf_cutoff: 0 # BAGEL2 Bayes Factor cutoff; genes with BF above this are considered depleted/essential (bagel2 only)
+        top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr/bf_cutoff, use 0 to disable)
 
-`data` selects whether enriched, depleted, or both gene sets are analysed. `fdr` sets the significance threshold used to select genes (this also sets the significance line on the DrugZ dot plot). `top_genes`, if not 0, overrides `fdr` and instead takes the top N genes by significance. STRING-db results (and, for MAGeCK/DrugZ, the corresponding interactive HTML report) also show a side panel of significant STRING-db terms that highlights the genes belonging to a checked term.
+For MAGeCK and DrugZ, `data` selects whether enriched, depleted, or both gene sets are analysed, and `fdr` sets the significance threshold used to select genes (this also sets the significance line on the DrugZ dot plot). BAGEL2 has no enriched set (its `.bf` output only ever represents depleted/essential genes), so it always runs depleted-only and selects genes by `bf_cutoff`: genes with a Bayes Factor above this value are used, since a higher BF means higher confidence the gene is essential. `top_genes`, if not 0, overrides `fdr`/`bf_cutoff` and instead takes the top N genes by significance (MAGeCK/DrugZ) or by BF (BAGEL2). STRING-db results (and, for MAGeCK/DrugZ, the corresponding interactive HTML report) also show a side panel of significant STRING-db terms that highlights the genes belonging to a checked term.
 
 
 CRISPRcleanR

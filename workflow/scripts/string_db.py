@@ -33,8 +33,23 @@ elif data_source == "drugz":
     id_column = "GENE"
     rank_column = "rank_supp" if pathway_data == "enriched" else "rank_synth"
     fdr_column = "fdr_supp" if pathway_data == "enriched" else "fdr_synth"
+elif data_source == "bagel2":
+    # BAGEL2's .bf file only ever represents depleted (essential) genes,
+    # as a raw BF value rather than a rank/FDR column: a higher BF means
+    # higher confidence the gene is essential/depleted.
+    if pathway_data != "depleted":
+        message = (
+            f"BAGEL2 only supports 'depleted' STRING-db analysis, got {pathway_data!r}."
+        )
+        logging.error(message)
+        raise ValueError(message)
+    id_column = "GENE"
+    bf_cutoff = snakemake.config["stats"]["string_db"]["bf_cutoff"]
 else:
-    message = f"Unsupported data source: {data_source}. Please use 'mageck' or 'drugz'."
+    message = (
+        f"Unsupported data source: {data_source}. "
+        "Please use 'mageck', 'drugz', or 'bagel2'."
+    )
     logging.error(message)
     raise ValueError(message)
 
@@ -51,8 +66,15 @@ else:
 # Load upstream results
 data = pd.read_csv(results_txt, sep="\t")
 
-# Subset to top genes based on FDR or top N genes
-if top_genes > 0:
+# Subset to top genes based on FDR/BF cutoff or top N genes
+if data_source == "bagel2":
+    if top_genes > 0:
+        logging.info(f"Selecting top {top_genes} genes based on BF ranking.")
+        data = data.sort_values(by="BF", ascending=False).head(top_genes)
+    else:
+        logging.info(f"Filtering genes based on BF cutoff of {bf_cutoff}.")
+        data = data[data["BF"] > bf_cutoff]
+elif top_genes > 0:
     logging.info(f"Selecting top {top_genes} genes based on {pathway_data} ranking.")
     data = data.sort_values(by=rank_column, ascending=True).head(top_genes)
 else:

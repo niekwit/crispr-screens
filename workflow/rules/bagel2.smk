@@ -103,3 +103,22 @@ rule plot_pr:
         runtime=5,
     script:
         "../scripts/plot_pr.R"
+
+
+rule string_db_bagel2:
+    input:
+        txt="results/bagel2/{comparison}/{comparison}.bf",
+    output:
+        svg="results/bagel2/stringdb/{comparison}/{pathway_data}/pathway_analysis.svg",
+        csv="results/bagel2/stringdb/{comparison}/{pathway_data}/pathway_analysis.csv",
+    log:
+        "logs/stringdb/bagel2/{comparison}_{pathway_data}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=10,
+    params:
+        data="bagel2",
+    script:
+        "../scripts/string_db.py"

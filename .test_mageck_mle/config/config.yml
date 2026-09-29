@@ -56,10 +56,11 @@ stats:
     extra: "" # Extra arguments for drugZ
 
   string_db:
-    run: True # Perform STRING-db analysis on mageck and drugz results
-    data: both # enriched, depleted, or both
-    fdr: 0.25 # FDR threshold for significant genes
-    top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
+    run: True # Perform STRING-db analysis on mageck, drugz, and bagel2 results
+    data: both # enriched, depleted, or both (mageck/drugz only; bagel2 is always depleted-only)
+    fdr: 0.25 # FDR threshold for significant genes (mageck/drugz)
+    bf_cutoff: 0 # BAGEL2 Bayes Factor cutoff; genes with BF above this are considered depleted/essential (bagel2 only)
+    top_genes: 50 # Number of top genes to consider for STRING-db analysis (overrides fdr/bf_cutoff, use 0 to disable)
 
 # Integration with NGS Tracker for workflow registration and file attachment
 # https://github.com/niekwit/ngs-tracker

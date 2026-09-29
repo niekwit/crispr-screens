@@ -111,6 +111,21 @@ def targets():
                     ),
                 ]
             )
+            if config["stats"]["string_db"]["run"]:
+                TARGETS.extend(
+                    [
+                        expand(
+                            "results/bagel2/stringdb/{comparison}/{pathway_data}/pathway_analysis.svg",
+                            comparison=COMPARISONS_BAGEL2,
+                            pathway_data=["depleted"],
+                        ),
+                        expand(
+                            "results/bagel2/stringdb/{comparison}/{pathway_data}/pathway_analysis.csv",
+                            comparison=COMPARISONS_BAGEL2,
+                            pathway_data=["depleted"],
+                        ),
+                    ]
+                )
     if config["stats"]["drugz"]["run"]:
         if COMPARISONS:
             # Check csv file for empty columns

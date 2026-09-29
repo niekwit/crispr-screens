@@ -168,26 +168,31 @@ properties:
         properties:
           run:
             type: boolean
-            description: Perform STRING-db analysis on mageck and drugz results
+            description: Perform STRING-db analysis on mageck, drugz, and bagel2 results
 
           data:
             type: string
-            description: enriched, depleted, or both
+            description: enriched, depleted, or both (mageck/drugz only; bagel2 is always depleted-only)
 
           fdr:
             type: number
             minimum: 0
             maximum: 1
-            description: FDR threshold for significant genes
+            description: FDR threshold for significant genes (mageck/drugz)
+
+          bf_cutoff:
+            type: number
+            description: BAGEL2 Bayes Factor cutoff; genes with BF above this are considered depleted/essential (bagel2 only)
 
           top_genes:
             type: integer
-            description: Number of top genes to consider for STRING-db analysis (overrides fdr, use 0 to disable)
+            description: Number of top genes to consider for STRING-db analysis (overrides fdr/bf_cutoff, use 0 to disable)
 
         required:
           - run
           - data
           - fdr
+          - bf_cutoff
           - top_genes
 
   ngs_tracker:

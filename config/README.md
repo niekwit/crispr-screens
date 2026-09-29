@@ -30,7 +30,7 @@ Each statistical tool (`bagel2`, `mageck`, `drugz`) has its own `run: True`/`Fal
 - `bagel2`: `custom_gene_lists.essential_genes`/`non_essential_genes` can point to custom essential/non-essential gene list files (`none` uses BAGEL2's own default lists). `extra_args.bf`/`pr` pass extra arguments to the BAGEL2 `bf` and `pr` subcommands respectively.
 - `mageck`: `command` is `test` (pairwise, needs `config/stats.csv`) or `mle` (needs one or more design matrices, see `mle.design_matrix`; each file must be placed in the `config` directory). `extra_mageck_arguments` passes extra arguments to the MAGeCK `test`/`mle` command. `mageck_control_genes` is `all` or a path to a file with control gene names, one per line, used to build the null distribution/normalisation instead of the whole library. `apply_CNV_correction` and `cell_line` enable copy-number correction of MAGeCK results.
 - `drugz`: `extra` passes extra arguments to the `drugz` command.
-- `string_db`: run STRING-db enrichment analysis on the MAGeCK and DrugZ results. `data` selects `enriched`, `depleted`, or `both` gene sets, `fdr` sets the significance threshold, and `top_genes` (if not 0) overrides `fdr` and takes the top N genes instead.
+- `string_db`: run STRING-db enrichment analysis on the MAGeCK, DrugZ, and BAGEL2 results. For MAGeCK/DrugZ, `data` selects `enriched`, `depleted`, or `both` gene sets and `fdr` sets the significance threshold. BAGEL2 has no `enriched` set, so it always runs depleted-only, selecting genes by `bf_cutoff` (genes with a Bayes Factor above this, from the `.bf` output) instead of `fdr`. `top_genes`, if not 0, overrides `fdr`/`bf_cutoff` and takes the top N genes by significance/BF instead.
 
 ### stats.csv
 
