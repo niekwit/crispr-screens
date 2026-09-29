@@ -195,7 +195,7 @@ properties:
         properties:
           run:
             type: boolean
-            description: Perform STRING-db analysis on mageck results
+            description: Perform STRING-db analysis on mageck and drugz results
 
           data:
             type: string

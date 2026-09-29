@@ -254,5 +254,7 @@ rule string_db:
     threads: 1
     resources:
         runtime=10,
+    params:
+        data="mageck",
     script:
         "../scripts/string_db.py"

@@ -94,3 +94,50 @@ rule gprofiler_drugz:
         data="drugz",
     script:
         "../scripts/gprofiler.R"
+
+
+rule string_db_drugz:
+    input:
+        txt="results/drugz/{comparison}.txt",
+    output:
+        svg="results/drugz/stringdb/{comparison}/{pathway_data}/pathway_analysis.svg",
+        csv="results/drugz/stringdb/{comparison}/{pathway_data}/pathway_analysis.csv",
+    log:
+        "logs/stringdb/drugz/{comparison}_{pathway_data}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=10,
+    params:
+        data="drugz",
+    script:
+        "../scripts/string_db.py"
+
+
+rule interactive_drugz_report:
+    input:
+        txt="results/drugz/{comparison}.txt",
+        string_enriched=lambda wc: (
+            f"results/drugz/stringdb/{wc.comparison}/enriched/pathway_analysis.csv"
+            if config["stats"]["string_db"]["run"]
+            and config["stats"]["string_db"]["data"] in ("enriched", "both")
+            else []
+        ),
+        string_depleted=lambda wc: (
+            f"results/drugz/stringdb/{wc.comparison}/depleted/pathway_analysis.csv"
+            if config["stats"]["string_db"]["run"]
+            and config["stats"]["string_db"]["data"] in ("depleted", "both")
+            else []
+        ),
+    output:
+        html="results/drugz/interactive/{comparison}.html",
+    log:
+        "logs/drugz/interactive_{comparison}.log",
+    conda:
+        "../envs/stats.yaml"
+    threads: 1
+    resources:
+        runtime=5,
+    script:
+        "../scripts/interactive_drugz_report.py"

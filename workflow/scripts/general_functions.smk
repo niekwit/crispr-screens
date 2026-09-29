@@ -159,6 +159,10 @@ def targets():
                         "results/plots/drugz/dot_plot_{comparison}.pdf",
                         comparison=COMPARISONS,
                     ),
+                    expand(
+                        "results/drugz/interactive/{comparison}.html",
+                        comparison=COMPARISONS,
+                    ),
                 ]
             )
             if config["stats"]["pathway_analysis"]["run"]:
@@ -173,6 +177,21 @@ def targets():
                             "results/plots/drugz/gprofiler/{comparison}/{pathway_data}.pdf",
                             pathway_data=PATHWAY_DATA,
                             comparison=COMPARISONS,
+                        ),
+                    ]
+                )
+            if config["stats"]["string_db"]["run"]:
+                TARGETS.extend(
+                    [
+                        expand(
+                            "results/drugz/stringdb/{comparison}/{pathway_data}/pathway_analysis.svg",
+                            comparison=COMPARISONS,
+                            pathway_data=PATHWAY_DATA,
+                        ),
+                        expand(
+                            "results/drugz/stringdb/{comparison}/{pathway_data}/pathway_analysis.csv",
+                            comparison=COMPARISONS,
+                            pathway_data=PATHWAY_DATA,
                         ),
                     ]
                 )

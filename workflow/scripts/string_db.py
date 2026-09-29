@@ -16,12 +16,27 @@ logging.basicConfig(
 
 # Load Snakemake variables
 pathway_data = snakemake.wildcards["pathway_data"]
-mageck_results = snakemake.input["txt"]
+results_txt = snakemake.input["txt"]
 svg_output = snakemake.output["svg"]
 csv_output = snakemake.output["csv"]
 fdr_cutoff = snakemake.config["stats"]["string_db"]["fdr"]
 top_genes = snakemake.config["stats"]["string_db"]["top_genes"]
 organism = snakemake.config["lib_info"]["species"]
+data_source = snakemake.params["data"]
+
+# Column names differ per upstream tool (same id/rank/fdr split as gprofiler.R)
+if data_source == "mageck":
+    id_column = "id"
+    rank_column = "pos|rank" if pathway_data == "enriched" else "neg|rank"
+    fdr_column = "pos|fdr" if pathway_data == "enriched" else "neg|fdr"
+elif data_source == "drugz":
+    id_column = "GENE"
+    rank_column = "rank_supp" if pathway_data == "enriched" else "rank_synth"
+    fdr_column = "fdr_supp" if pathway_data == "enriched" else "fdr_synth"
+else:
+    message = f"Unsupported data source: {data_source}. Please use 'mageck' or 'drugz'."
+    logging.error(message)
+    raise ValueError(message)
 
 # Set NCBI taxon ID based on species
 if organism == "human":
@@ -33,35 +48,25 @@ else:
     logging.error(message)
     raise ValueError(message)
 
-# Load MAGeCK RRA results
-data = pd.read_csv(mageck_results, sep="\t")
+# Load upstream results
+data = pd.read_csv(results_txt, sep="\t")
 
 # Subset to top genes based on FDR or top N genes
 if top_genes > 0:
     logging.info(f"Selecting top {top_genes} genes based on {pathway_data} ranking.")
-    # Sort data by ranking based on pathway_data (enriched or depleted)
-    if pathway_data == "enriched":
-        # Take top N genes
-        data = data.sort_values(by="pos|rank", ascending=True).head(top_genes)
-    elif pathway_data == "depleted":
-        # Take top N genes
-        data = data.sort_values(by="neg|rank", ascending=True).head(top_genes)
+    data = data.sort_values(by=rank_column, ascending=True).head(top_genes)
 else:
     logging.info(f"Filtering genes based on FDR threshold of {fdr_cutoff}.")
-    # Filter by FDR threshold
-    if pathway_data == "enriched":
-        data = data[data["pos|fdr"] < fdr_cutoff]
-    elif pathway_data == "depleted":
-        data = data[data["neg|fdr"] < fdr_cutoff]
+    data = data[data[fdr_column] < fdr_cutoff]
 
 # Get genes for STRING-db analysis
-genes = data["id"].tolist()
+genes = data[id_column].tolist()
 
 # Raise error if no genes are found after filtering
 if not genes:
     message = (
         f"No genes found for {pathway_data} analysis after filtering. "
-        f"Please check your MAGeCK results and filtering criteria."
+        f"Please check your {data_source} results and filtering criteria."
     )
     logging.error(message)
     raise ValueError(message)
