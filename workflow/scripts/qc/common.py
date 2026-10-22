@@ -13,6 +13,18 @@ FLAG_COLOR = "#f43f5e"  # rose-500
 TEMPLATE = "plotly_white"
 FONT = dict(family="Inter, -apple-system, 'Segoe UI', Roboto, sans-serif", size=15)
 
+# Qualitative palette for multi-series charts (one colour per sample).
+SAMPLE_PALETTE = [
+    "#6366f1",  # indigo-500
+    "#0ea5e9",  # sky-500
+    "#f43f5e",  # rose-500
+    "#f59e0b",  # amber-500
+    "#10b981",  # emerald-500
+    "#8b5cf6",  # violet-500
+    "#ec4899",  # pink-500
+    "#14b8a6",  # teal-500
+]
+
 
 def clean_sample_name(name):
     # remove prepended X from sample names (only happens when they start
@@ -20,13 +32,17 @@ def clean_sample_name(name):
     return re.sub(r"^X", "", name)
 
 
-def style_fig(fig, height=450, margin=None, **layout_kwargs):
+def sample_color(i):
+    return SAMPLE_PALETTE[i % len(SAMPLE_PALETTE)]
+
+
+def style_fig(fig, height=450, margin=None, showlegend=False, **layout_kwargs):
     fig.update_layout(
         template=TEMPLATE,
         font=FONT,
         height=height,
         margin=margin or dict(t=60, b=80, l=60, r=30),
-        showlegend=False,
+        showlegend=showlegend,
         **layout_kwargs,
     )
     return fig
