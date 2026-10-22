@@ -45,12 +45,14 @@ SIMPLE_PLOT_ROW_TEMPLATE = Template(
 )
 
 # A STRING-db network SVG — not a Plotly figure, just embedded markup.
+# data-stats-div points at the sibling scatter plot whose per-gene hover
+# stats (PLOT_META[...].hover_by_gene) are shown when hovering a node.
 SVG_PANEL_TEMPLATE = Template(
     """
 <div class="plot-row">
   <div class="plot-wrap plot-wrap-full svg-wrap">
     <div class="svg-panel-title">$panel_title</div>
-    <div class="svg-embed">$svg_content</div>
+    <div class="svg-embed" data-stats-div="$stats_div_id">$svg_content</div>
   </div>
 </div>
 """
@@ -179,6 +181,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   padding: 6px 0 10px; text-align: center;
 }
 .svg-embed svg { max-width: 100%; height: auto; }
+#svg-tooltip {
+  position: fixed; display: none; z-index: 1000;
+  background: #1e293b; color: #fff; padding: 7px 11px; border-radius: 6px;
+  font-size: 12px; line-height: 1.5; pointer-events: none; max-width: 260px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
 
 .string-panel {
   display: flex; flex-direction: column;
@@ -218,6 +226,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 </style>
 </head>
 <body>
+
+<div id="svg-tooltip"></div>
 
 <div id="topbar">
   <h1>Results report</h1>
@@ -511,6 +521,31 @@ document.getElementById("search-input").addEventListener("keydown", e => {
   if (e.key === "Enter") doSearch();
 });
 
+/* ── STRING-db network node tooltips (same stats as the dot plots) ───── */
+const svgTooltip = document.getElementById("svg-tooltip");
+document.querySelectorAll(".svg-embed[data-stats-div]").forEach(container => {
+  const meta = PLOT_META[container.dataset.statsDiv];
+  const hoverByGene = meta && meta.hover_by_gene;
+  if (!hoverByGene) return;
+
+  container.addEventListener("mousemove", e => {
+    const node = e.target.closest(".nwnodecontainer");
+    const gene = node && node.getAttribute("data-safe_div_label");
+    const html = gene && hoverByGene[gene];
+    if (!html) {
+      svgTooltip.style.display = "none";
+      return;
+    }
+    svgTooltip.innerHTML = html;
+    svgTooltip.style.left = (e.clientX + 14) + "px";
+    svgTooltip.style.top  = (e.clientY + 14) + "px";
+    svgTooltip.style.display = "block";
+  });
+  container.addEventListener("mouseleave", () => {
+    svgTooltip.style.display = "none";
+  });
+});
+
 })();
 </script>
 </body>
@@ -533,6 +568,7 @@ def _render_plot_row(plot, figs, plot_meta):
         return SVG_PANEL_TEMPLATE.substitute(
             panel_title=plot["panel_title"],
             svg_content=plot["svg"],
+            stats_div_id=plot.get("stats_div_id") or "",
         )
     figs[div_id] = plot["fig"].to_json()
     if plot.get("simple"):
@@ -544,6 +580,7 @@ def _render_plot_row(plot, figs, plot_meta):
         "gene_data": plot["gene_data"],
         "terms": plot["terms"],
         "term_list_id": plot["term_list_id"],
+        "hover_by_gene": plot["hover_by_gene"],
     }
     return PLOT_ROW_TEMPLATE.substitute(
         div_id=div_id,

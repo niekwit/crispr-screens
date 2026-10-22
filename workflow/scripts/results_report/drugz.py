@@ -88,6 +88,7 @@ def build_entries(
                     string_depleted_svg_files[i] if string_depleted_svg_files else None
                 ),
                 direction="depleted",
+                stats_div_id=f"{key}-depleted",
             ),
             common.build_plot(
                 div_id=f"{key}-enriched",
@@ -112,6 +113,7 @@ def build_entries(
                     string_enriched_svg_files[i] if string_enriched_svg_files else None
                 ),
                 direction="enriched",
+                stats_div_id=f"{key}-enriched",
             ),
         ]
         plots = [p for p in plots if p is not None]

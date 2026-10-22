@@ -55,6 +55,16 @@ def load_string_terms(path):
         return []
 
 
+def _render_hover_html(hovertemplate, customdata_cols, row):
+    """Renders the same per-point hover text used by the Plotly scatter
+    (minus the %{customdata[i]} placeholders) as plain HTML, so the STRING
+    network's nodes can show identical stats in a custom tooltip."""
+    html = hovertemplate
+    for i, col in enumerate(customdata_cols):
+        html = html.replace(f"%{{customdata[{i}]}}", str(row[col]))
+    return html
+
+
 def build_plot(
     div_id,
     title,
@@ -102,6 +112,11 @@ def build_plot(
         showlegend=True,  # needed so term legend traces show when added
     )
 
+    hover_by_gene = {
+        str(r[id_col]): _render_hover_html(hovertemplate, customdata_cols, r)
+        for _, r in df.iterrows()
+    }
+
     return {
         "div_id": div_id,
         "panel_title": title,
@@ -115,6 +130,7 @@ def build_plot(
         ],
         "terms": terms,
         "direction": direction,
+        "hover_by_gene": hover_by_gene,
     }
 
 
@@ -131,9 +147,15 @@ def build_simple_plot(div_id, title, fig, direction):
     }
 
 
-def build_svg_panel(div_id, title, svg_path, direction):
+def build_svg_panel(div_id, title, svg_path, direction, stats_div_id=None):
     """An inline-embedded STRING-db network SVG — not a Plotly figure, so
-    it's rendered as raw markup rather than via Plotly.newPlot."""
+    it's rendered as raw markup rather than via Plotly.newPlot.
+
+    stats_div_id: the div_id of the sibling scatter plot (same direction)
+    whose per-gene hover stats should be shown when hovering a network
+    node — STRING tags each node with the gene's name
+    (data-safe_div_label), matched against that plot's hover_by_gene map.
+    """
     if not svg_path or not os.path.exists(svg_path):
         return None
     try:
@@ -148,4 +170,5 @@ def build_svg_panel(div_id, title, svg_path, direction):
         "kind": "svg",
         "svg": svg,
         "direction": direction,
+        "stats_div_id": stats_div_id,
     }
