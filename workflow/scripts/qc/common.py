@@ -48,21 +48,73 @@ def style_fig(fig, height=450, margin=None, showlegend=False, **layout_kwargs):
     return fig
 
 
-def bar_fig(df, x, y, y_title, title, y_range=None, flagged=None):
+def _sort_menu(categories, values, bar_color, bar_line_color):
+    """A dropdown (Plotly updatemenu) that restyles the bar order in place,
+    between the original sample order and ascending/descending by value."""
+    is_list_color = isinstance(bar_color, list)
+    orig_idx = list(range(len(categories)))
+    orders = {
+        "Sample order": orig_idx,
+        "Value: high → low": sorted(orig_idx, key=lambda i: values[i], reverse=True),
+        "Value: low → high": sorted(orig_idx, key=lambda i: values[i]),
+    }
+
+    def restyle_args(idx):
+        update = {
+            "x": [[categories[i] for i in idx]],
+            "y": [[values[i] for i in idx]],
+        }
+        if is_list_color:
+            update["marker.color"] = [[bar_color[i] for i in idx]]
+            update["marker.line.color"] = [[bar_line_color[i] for i in idx]]
+        return update
+
+    return dict(
+        type="dropdown",
+        direction="down",
+        buttons=[
+            dict(label=label, method="restyle", args=[restyle_args(idx)])
+            for label, idx in orders.items()
+        ],
+        x=0,
+        xanchor="left",
+        y=1.2,
+        yanchor="top",
+        showactive=True,
+        bgcolor="#ffffff",
+        bordercolor="#cbd5e1",
+        font=dict(size=13),
+    )
+
+
+def bar_fig(df, x, y, y_title, title, y_range=None, flagged=None, sortable=True):
+    categories = list(df[x])
+    values = list(df[y])
     if flagged is None:
         bar_color = BAR_COLOR
         bar_line_color = BAR_LINE_COLOR
     else:
+        flagged = list(flagged)
         bar_color = [FLAG_COLOR if f else BAR_COLOR for f in flagged]
         bar_line_color = [FLAG_COLOR if f else BAR_LINE_COLOR for f in flagged]
     fig = go.Figure(
         go.Bar(
-            x=df[x],
-            y=df[y],
+            x=categories,
+            y=values,
             marker=dict(color=bar_color, line=dict(color=bar_line_color, width=1)),
             hovertemplate=f"<b>%{{x}}</b><br>{y_title}: %{{y:.3f}}<extra></extra>",
         )
     )
     fig.update_xaxes(tickangle=45, title=None)
     fig.update_yaxes(title=y_title, range=y_range, rangemode="tozero")
-    return style_fig(fig, title=dict(text=title, x=0.5))
+
+    updatemenus = []
+    if sortable and len(categories) > 1:
+        updatemenus = [_sort_menu(categories, values, bar_color, bar_line_color)]
+
+    return style_fig(
+        fig,
+        title=dict(text=title, x=0.5),
+        margin=dict(t=110, b=80, l=60, r=30),
+        updatemenus=updatemenus,
+    )
