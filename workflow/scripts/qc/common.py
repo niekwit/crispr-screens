@@ -11,7 +11,7 @@ MEDIAN_COLOR = "#0ea5e9"  # sky-500
 CUTOFF_COLOR = "#64748b"  # slate-500
 FLAG_COLOR = "#f43f5e"  # rose-500
 TEMPLATE = "plotly_white"
-FONT = dict(family="Inter, -apple-system, 'Segoe UI', Roboto, sans-serif", size=13)
+FONT = dict(family="Inter, -apple-system, 'Segoe UI', Roboto, sans-serif", size=15)
 
 
 def clean_sample_name(name):
@@ -20,12 +20,12 @@ def clean_sample_name(name):
     return re.sub(r"^X", "", name)
 
 
-def style_fig(fig, height=450, **layout_kwargs):
+def style_fig(fig, height=450, margin=None, **layout_kwargs):
     fig.update_layout(
         template=TEMPLATE,
         font=FONT,
         height=height,
-        margin=dict(t=60, b=80, l=60, r=30),
+        margin=margin or dict(t=60, b=80, l=60, r=30),
         showlegend=False,
         **layout_kwargs,
     )

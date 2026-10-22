@@ -46,11 +46,12 @@ def build(counts, sample_cols, samples, output_csv):
         rows=nrow_facet,
         cols=ncol_facet,
         subplot_titles=[
-            f"{row['sample']}<br>"
-            f"{100 * row['fraction_low']:.0f}% sgRNAs < {100 * LOW_FRACTION:.0f}% of mean"
-            f" | median/mean {row['median_over_mean']:.2f}"
+            f"<b>{row['sample']}</b><br>"
+            f"{100 * row['fraction_low']:.0f}% low<br>"
+            f"median/mean {row['median_over_mean']:.2f}"
             for _, row in df.iterrows()
         ],
+        vertical_spacing=max(0.5 / nrow_facet, 0.12),
     )
     for i, (_, row) in enumerate(df.iterrows()):
         r, c = i // ncol_facet + 1, i % ncol_facet + 1
@@ -94,21 +95,10 @@ def build(counts, sample_cols, samples, output_csv):
         )
         fig.add_vline(x=median_log, line_color=MEDIAN_COLOR, line_width=2, row=r, col=c)
 
-    fig.update_annotations(font_size=10)
-    fig.update_xaxes(title_text="log10(count + 1)", title_font_size=10)
-    fig.update_yaxes(title_text="sgRNAs", title_font_size=10)
-    style_fig(
-        fig,
-        height=260 * nrow_facet + 120,
-        title=dict(
-            text=(
-                "Read count distribution per sample<br>"
-                "<sup>Blue: median. Dashed: low-count cut-off. "
-                "Shaded: sample flagged for sgRNA dropout</sup>"
-            ),
-            x=0.5,
-        ),
-    )
+    fig.update_annotations(font_size=12)
+    fig.update_xaxes(title_text="log10(count + 1)", title_font_size=13)
+    fig.update_yaxes(title_text="sgRNAs", title_font_size=13)
+    style_fig(fig, height=320 * nrow_facet + 80, margin=dict(t=60, b=80, l=60, r=30))
 
     return dict(
         id="count-distribution",
@@ -120,7 +110,8 @@ def build(counts, sample_cols, samples, output_csv):
             "caused by a bottleneck when too few cells were sorted or collected. In "
             "such samples MAGeCK gene-level LFCs can show discrete bands, because "
             "the median of the sgRNA LFCs depends mainly on how many sgRNAs per "
-            "gene were lost by chance."
+            "gene were lost by chance. Blue line: median. Dashed line: low-count "
+            "cut-off. Shaded panel: sample flagged for sgRNA dropout."
         ),
         fig=fig,
         df=df,

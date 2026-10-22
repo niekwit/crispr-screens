@@ -49,8 +49,8 @@ body {
   background: #0f172a; color: #fff;
   padding: 18px 24px;
 }
-#topbar h1 { font-size: 18px; font-weight: 600; }
-#topbar p { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+#topbar h1 { font-size: 22px; font-weight: 600; }
+#topbar p { font-size: 15px; color: #94a3b8; margin-top: 4px; }
 #tabs {
   display: flex; gap: 4px; flex-wrap: wrap;
   background: #fff; border-bottom: 1px solid #e2e8f0;
@@ -58,7 +58,7 @@ body {
 }
 .tab {
   border: none; background: none; cursor: pointer;
-  padding: 12px 16px; font-size: 13px; font-weight: 600; color: #64748b;
+  padding: 14px 18px; font-size: 15px; font-weight: 600; color: #64748b;
   border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s;
 }
 .tab:hover { color: #0f172a; }
@@ -74,17 +74,17 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px; }
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   flex-wrap: wrap;
 }
-.card-head h2 { font-size: 16px; font-weight: 600; }
+.card-head h2 { font-size: 19px; font-weight: 600; }
 .actions { display: flex; gap: 8px; }
 .btn {
   display: inline-block; text-decoration: none; text-align: center;
-  padding: 6px 12px; border: none; border-radius: 6px;
-  font-size: 12px; font-weight: 600; cursor: pointer; color: #fff;
+  padding: 7px 14px; border: none; border-radius: 6px;
+  font-size: 13px; font-weight: 600; cursor: pointer; color: #fff;
   background: #6366f1; transition: opacity 0.15s;
 }
 .btn:hover { opacity: 0.85; }
 .btn[disabled] { background: #cbd5e1; cursor: not-allowed; }
-.desc { font-size: 13px; color: #475569; margin: 10px 0 16px; max-width: 900px; line-height: 1.5; }
+.desc { font-size: 15px; color: #475569; margin: 10px 0 16px; max-width: 900px; line-height: 1.6; }
 .plot { width: 100%; }
 </style>
 </head>
