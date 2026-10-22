@@ -178,6 +178,7 @@ def build_plots(gene_txt, sgrna_txt, key, comparison, cnv):
                 div_id=f"{key}-sgrank-enriched",
                 title="sgRNA rank (enriched)",
                 fig=fig,
+                direction="enriched",
             )
         )
     if genes_depleted:
@@ -193,6 +194,7 @@ def build_plots(gene_txt, sgrna_txt, key, comparison, cnv):
                 div_id=f"{key}-sgrank-depleted",
                 title="sgRNA rank (depleted)",
                 fig=fig,
+                direction="depleted",
             )
         )
     return plots

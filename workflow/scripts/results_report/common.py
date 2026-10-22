@@ -69,6 +69,7 @@ def build_plot(
     customdata_cols,
     hovertemplate,
     terms,
+    direction,
 ):
     """One Scattergl figure + the JS payload needed to drive it (gene
     search, click-to-label, STRING-db term highlighting)."""
@@ -113,10 +114,11 @@ def build_plot(
             {"id": str(r[id_col]), "x": r["x"], "y": r[y_col]} for _, r in df.iterrows()
         ],
         "terms": terms,
+        "direction": direction,
     }
 
 
-def build_simple_plot(div_id, title, fig):
+def build_simple_plot(div_id, title, fig, direction):
     """A plain zoomable/pannable Plotly chart with no STRING-db panel and
     no gene-search wiring (e.g. a fixed top-N-genes view rather than a
     searchable scatter of every gene)."""
@@ -125,10 +127,11 @@ def build_simple_plot(div_id, title, fig):
         "panel_title": title,
         "simple": True,
         "fig": fig,
+        "direction": direction,
     }
 
 
-def build_svg_panel(div_id, title, svg_path):
+def build_svg_panel(div_id, title, svg_path, direction):
     """An inline-embedded STRING-db network SVG — not a Plotly figure, so
     it's rendered as raw markup rather than via Plotly.newPlot."""
     if not svg_path or not os.path.exists(svg_path):
@@ -144,4 +147,5 @@ def build_svg_panel(div_id, title, svg_path):
         "panel_title": title,
         "kind": "svg",
         "svg": svg,
+        "direction": direction,
     }

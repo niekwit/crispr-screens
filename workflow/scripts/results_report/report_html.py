@@ -1,8 +1,10 @@
 """Assemble one self-contained interactive HTML report combining every
 MAGeCK/DrugZ/BAGEL2 comparison. Navigation: a tool tab bar (MAGeCK / DrugZ /
-BAGEL2 — only tools with data get a tab) and, within each tool, a dropdown
-to pick the comparison. Plots are lazily initialised the first time their
-comparison becomes visible.
+BAGEL2 — only tools with data get a tab), within each tool a dropdown to
+pick the comparison, and within each comparison an Enriched/Depleted
+sub-tab (when both directions exist) so the two don't sit on one long
+page. Plots are lazily initialised the first time their direction panel
+becomes visible.
 """
 
 import json
@@ -54,9 +56,20 @@ SVG_PANEL_TEMPLATE = Template(
 """
 )
 
+DIRECTION_TAB_TEMPLATE = Template(
+    '<button type="button" class="direction-tab" data-direction="$direction">$label</button>'
+)
+
+DIRECTION_PANEL_TEMPLATE = Template(
+    """<div class="direction-panel" data-direction="$direction">
+$plot_rows
+</div>"""
+)
+
 ENTRY_PANEL_TEMPLATE = Template(
     """<div class="entry-panel" id="entry-$key">
-$plot_rows
+$direction_tabs
+$direction_panels
 </div>"""
 )
 
@@ -138,6 +151,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 
 .entry-panel { display: none; }
 .entry-panel.active { display: block; }
+
+.direction-tabs {
+  display: flex; gap: 2px; background: #fff;
+  padding: 0 18px; border-bottom: 1px solid #dde1e7;
+}
+.direction-tab {
+  border: none; background: none; cursor: pointer; color: #7f8c8d;
+  padding: 9px 16px; font-size: 13px; font-weight: 600;
+  border-bottom: 3px solid transparent; transition: color 0.15s, border-color 0.15s;
+}
+.direction-tab:hover { color: #2c3e50; }
+.direction-tab.active { color: #2c3e50; border-bottom-color: #3498db; }
+
+.direction-panel { display: none; }
+.direction-panel.active { display: block; }
 
 .plot-row {
   display: flex; background: #fff;
@@ -375,8 +403,27 @@ function getOrInitPlot(divId) {
   return api;
 }
 
+function initDirectionPanel(panelDiv) {
+  panelDiv.querySelectorAll(".plot").forEach(d => getOrInitPlot(d.id));
+}
+
+function showDirection(entryDiv, direction) {
+  entryDiv.querySelectorAll(".direction-tab").forEach(t =>
+    t.classList.toggle("active", t.dataset.direction === direction));
+  entryDiv.querySelectorAll(".direction-panel").forEach(p =>
+    p.classList.toggle("active", p.dataset.direction === direction));
+  const panel = entryDiv.querySelector('.direction-panel[data-direction="' + direction + '"]');
+  if (panel) initDirectionPanel(panel);
+}
+
 function initEntry(entryDiv) {
-  entryDiv.querySelectorAll(".plot").forEach(d => getOrInitPlot(d.id));
+  if (entryDiv.dataset.initialized) return;
+  entryDiv.dataset.initialized = "true";
+  entryDiv.querySelectorAll(".direction-tab").forEach(tab => {
+    tab.addEventListener("click", () => showDirection(entryDiv, tab.dataset.direction));
+  });
+  const firstPanel = entryDiv.querySelector(".direction-panel");
+  if (firstPanel) showDirection(entryDiv, firstPanel.dataset.direction);
 }
 
 /* ── Tool tab / comparison dropdown navigation ────────────────────────── */
@@ -420,7 +467,15 @@ function activePlots() {
   if (!select) return [];
   const entryDiv = document.getElementById("entry-" + select.value);
   if (!entryDiv) return [];
-  return [...entryDiv.querySelectorAll(".plot")].map(d => ({
+  const activeTab = entryDiv.querySelector(".direction-tab.active");
+  const direction = activeTab
+    ? activeTab.dataset.direction
+    : entryDiv.querySelector(".direction-panel")?.dataset.direction;
+  const panel = direction
+    ? entryDiv.querySelector('.direction-panel[data-direction="' + direction + '"]')
+    : entryDiv;
+  if (!panel) return [];
+  return [...panel.querySelectorAll(".plot")].map(d => ({
     role: d.id.endsWith("-enriched") ? "enriched" : d.id.endsWith("-depleted") ? "depleted" : "plot",
     api: getOrInitPlot(d.id),
   }));
@@ -469,6 +524,34 @@ EMPTY_HTML = """<!DOCTYPE html>
 </body></html>"""
 
 
+def _render_plot_row(plot, figs, plot_meta):
+    """Renders one plot's row markup and, as a side effect, registers its
+    figure/metadata (for Plotly plots) into the shared figs/plot_meta dicts
+    keyed by div_id."""
+    div_id = plot["div_id"]
+    if plot.get("kind") == "svg":
+        return SVG_PANEL_TEMPLATE.substitute(
+            panel_title=plot["panel_title"],
+            svg_content=plot["svg"],
+        )
+    figs[div_id] = plot["fig"].to_json()
+    if plot.get("simple"):
+        plot_meta[div_id] = {"simple": True}
+        return SIMPLE_PLOT_ROW_TEMPLATE.substitute(div_id=div_id)
+    plot_meta[div_id] = {
+        "genes": plot["genes"],
+        "color_values": plot["color_values"],
+        "gene_data": plot["gene_data"],
+        "terms": plot["terms"],
+        "term_list_id": plot["term_list_id"],
+    }
+    return PLOT_ROW_TEMPLATE.substitute(
+        div_id=div_id,
+        term_panel_title=plot["term_panel_title"],
+        term_list_id=plot["term_list_id"],
+    )
+
+
 def render(tools):
     """tools: ordered list of (tool_id, tool_label, entries). Tools with no
     entries are skipped entirely (no tab)."""
@@ -490,39 +573,44 @@ def render(tools):
 
         entry_panels = []
         for entry in entries:
-            plot_rows = []
+            # Group plots by direction (enriched/depleted), preserving the
+            # order each direction first appears in, so enriched/depleted
+            # results show on separate sub-tabs instead of one long page.
+            directions = []
+            rows_by_direction = {}
             for plot in entry["plots"]:
-                div_id = plot["div_id"]
-                if plot.get("kind") == "svg":
-                    plot_rows.append(
-                        SVG_PANEL_TEMPLATE.substitute(
-                            panel_title=plot["panel_title"],
-                            svg_content=plot["svg"],
+                direction = plot["direction"]
+                if direction not in rows_by_direction:
+                    directions.append(direction)
+                    rows_by_direction[direction] = []
+                rows_by_direction[direction].append(
+                    _render_plot_row(plot, figs, plot_meta)
+                )
+
+            direction_tabs = ""
+            if len(directions) > 1:
+                direction_tabs = (
+                    '<div class="direction-tabs">\n'
+                    + "\n".join(
+                        DIRECTION_TAB_TEMPLATE.substitute(
+                            direction=d, label=d.capitalize()
                         )
+                        for d in directions
                     )
-                    continue
-                figs[div_id] = plot["fig"].to_json()
-                if plot.get("simple"):
-                    plot_meta[div_id] = {"simple": True}
-                    plot_rows.append(SIMPLE_PLOT_ROW_TEMPLATE.substitute(div_id=div_id))
-                else:
-                    plot_meta[div_id] = {
-                        "genes": plot["genes"],
-                        "color_values": plot["color_values"],
-                        "gene_data": plot["gene_data"],
-                        "terms": plot["terms"],
-                        "term_list_id": plot["term_list_id"],
-                    }
-                    plot_rows.append(
-                        PLOT_ROW_TEMPLATE.substitute(
-                            div_id=div_id,
-                            term_panel_title=plot["term_panel_title"],
-                            term_list_id=plot["term_list_id"],
-                        )
-                    )
+                    + "\n</div>"
+                )
+            direction_panels = "\n".join(
+                DIRECTION_PANEL_TEMPLATE.substitute(
+                    direction=d, plot_rows="\n".join(rows_by_direction[d])
+                )
+                for d in directions
+            )
+
             entry_panels.append(
                 ENTRY_PANEL_TEMPLATE.substitute(
-                    key=entry["key"], plot_rows="\n".join(plot_rows)
+                    key=entry["key"],
+                    direction_tabs=direction_tabs,
+                    direction_panels=direction_panels,
                 )
             )
 

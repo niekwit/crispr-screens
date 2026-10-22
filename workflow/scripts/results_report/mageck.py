@@ -82,6 +82,7 @@ def build_entries(
                 customdata_cols=customdata_cols,
                 hovertemplate=hovertemplate,
                 terms=enriched_terms,
+                direction="enriched",
             ),
             common.build_svg_panel(
                 div_id=f"{key}-enriched-svg",
@@ -89,6 +90,7 @@ def build_entries(
                 svg_path=(
                     string_enriched_svg_files[i] if string_enriched_svg_files else None
                 ),
+                direction="enriched",
             ),
             common.build_plot(
                 div_id=f"{key}-depleted",
@@ -104,6 +106,7 @@ def build_entries(
                 customdata_cols=customdata_cols,
                 hovertemplate=hovertemplate,
                 terms=depleted_terms,
+                direction="depleted",
             ),
             common.build_svg_panel(
                 div_id=f"{key}-depleted-svg",
@@ -111,6 +114,7 @@ def build_entries(
                 svg_path=(
                     string_depleted_svg_files[i] if string_depleted_svg_files else None
                 ),
+                direction="depleted",
             ),
         ]
         plots = [p for p in plots if p is not None]

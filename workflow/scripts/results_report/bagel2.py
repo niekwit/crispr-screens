@@ -50,6 +50,7 @@ def build_entries(
                 "<b>%{customdata[0]}</b><br>BF: %{customdata[1]}<br>FDR: %{customdata[2]}"
             ),
             terms=terms,
+            direction="depleted",
         )
         svg_panel = common.build_svg_panel(
             div_id=f"{key}-depleted-svg",
@@ -57,6 +58,7 @@ def build_entries(
             svg_path=(
                 string_depleted_svg_files[i] if string_depleted_svg_files else None
             ),
+            direction="depleted",
         )
         plots = [p for p in [plot, svg_panel] if p is not None]
 
