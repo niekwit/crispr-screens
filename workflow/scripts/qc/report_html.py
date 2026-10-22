@@ -1,7 +1,8 @@
 """Assemble a self-contained interactive HTML report from QC sections.
 
 Each section is a dict with keys: id, title, description, fig (a Plotly
-Figure), df (the underlying data) and filename (download basename).
+Figure), df (the underlying data) and filename (download basename). The
+report shows one figure at a time, selected via tabs along the top.
 """
 
 import base64
@@ -10,9 +11,13 @@ from string import Template
 
 import plotly.offline
 
-SECTION_TEMPLATE = Template(
+TAB_TEMPLATE = Template(
+    """<button type="button" class="tab" data-target="$div_id">$title</button>"""
+)
+
+PANEL_TEMPLATE = Template(
     """
-<section class="card">
+<section class="panel card" id="panel-$div_id">
   <div class="card-head">
     <h2>$title</h2>
     <div class="actions">
@@ -46,11 +51,25 @@ body {
 }
 #topbar h1 { font-size: 18px; font-weight: 600; }
 #topbar p { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+#tabs {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  background: #fff; border-bottom: 1px solid #e2e8f0;
+  padding: 0 24px; position: sticky; top: 0; z-index: 10;
+}
+.tab {
+  border: none; background: none; cursor: pointer;
+  padding: 12px 16px; font-size: 13px; font-weight: 600; color: #64748b;
+  border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s;
+}
+.tab:hover { color: #0f172a; }
+.tab.active { color: #4338ca; border-bottom-color: #6366f1; }
 main { max-width: 1200px; margin: 0 auto; padding: 24px; }
 .card {
   background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-  margin-bottom: 24px; padding: 20px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  padding: 20px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
+.panel { display: none; }
+.panel.active { display: block; }
 .card-head {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   flex-wrap: wrap;
@@ -74,15 +93,44 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px; }
   <h1>CRISPR screen QC report</h1>
   <p>Alignment rate, sequence coverage, sgRNA evenness and read count distribution across all samples.</p>
 </div>
+<nav id="tabs">
+$tabs
+</nav>
 <main>
-$sections
+$panels
 </main>
 <script>
 $plotly_js
 </script>
 <script>
 const FIGS = $figs_json;
-$newplot_calls
+const rendered = new Set();
+
+function renderPanel(id) {
+  if (rendered.has(id)) {
+    Plotly.Plots.resize(id);
+    return;
+  }
+  Plotly.newPlot(id, FIGS[id].data, FIGS[id].layout, { responsive: true, displaylogo: false });
+  rendered.add(id);
+}
+
+function activateTab(tab) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  tab.classList.add("active");
+  const target = tab.dataset.target;
+  document.getElementById("panel-" + target).classList.add("active");
+  renderPanel(target);
+}
+
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => activateTab(tab));
+});
+
+const firstTab = document.querySelector(".tab");
+if (firstTab) activateTab(firstTab);
+
 document.querySelectorAll(".btn-png").forEach(btn => {
   btn.addEventListener("click", () => {
     Plotly.downloadImage(btn.dataset.div, { format: "png", filename: btn.dataset.filename, scale: 2 });
@@ -112,8 +160,8 @@ def _encode_pdf(fig, filename):
 def render(sections):
     plotly_js = plotly.offline.get_plotlyjs()
 
-    section_html = []
-    newplot_calls = []
+    tab_html = []
+    panel_html = []
     for section in sections:
         div_id = f"fig-{section['id']}"
         data_uri, _ = _encode_csv(section["df"], f"{section['filename']}.csv")
@@ -125,8 +173,9 @@ def render(sections):
             if pdf_uri
             else '<button class="btn btn-pdf" disabled title="PDF export unavailable">PDF</button>'
         )
-        section_html.append(
-            SECTION_TEMPLATE.substitute(
+        tab_html.append(TAB_TEMPLATE.substitute(div_id=div_id, title=section["title"]))
+        panel_html.append(
+            PANEL_TEMPLATE.substitute(
                 title=section["title"],
                 div_id=div_id,
                 filename=section["filename"],
@@ -134,10 +183,6 @@ def render(sections):
                 data_uri=data_uri,
                 description=section["description"],
             )
-        )
-        newplot_calls.append(
-            f'Plotly.newPlot("{div_id}", FIGS["{div_id}"].data, FIGS["{div_id}"].layout, '
-            "{responsive: true, displaylogo: false});"
         )
 
     figs_json = (
@@ -147,8 +192,8 @@ def render(sections):
     )
 
     return HTML_TEMPLATE.substitute(
-        sections="\n".join(section_html),
+        tabs="\n".join(tab_html),
+        panels="\n".join(panel_html),
         plotly_js=plotly_js,
         figs_json=figs_json,
-        newplot_calls="\n".join(newplot_calls),
     )
