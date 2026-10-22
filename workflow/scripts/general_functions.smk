@@ -433,6 +433,28 @@ def comparisons():
     return COMPARISONS, COMPARISONS_BAGEL2
 
 
+def crisprcleanr_comparisons():
+    """Comparisons the crisprcleanr rule actually runs for: the union of
+    whichever downstream tool consumes its corrected counts/logFCs (see
+    mageck_input/drugz_input and the bagel2bf rule's "fc" input, which
+    always depends on it unconditionally when BAGEL2 is run)."""
+    comps = set()
+    if (
+        config["stats"]["mageck"]["run"]
+        and config["stats"]["mageck"]["command"] == "test"
+        and config["stats"]["mageck"]["apply_crisprcleanr"]
+    ):
+        comps.update(COMPARISONS)
+    if (
+        config["stats"]["drugz"]["run"]
+        and config["stats"]["drugz"]["apply_crisprcleanr"]
+    ):
+        comps.update(COMPARISONS)
+    if config["stats"]["bagel2"]["run"]:
+        comps.update(COMPARISONS_BAGEL2)
+    return sorted(comps)
+
+
 def mageck_control():
     """
     Load control genes for MAGeCK

@@ -69,6 +69,18 @@ rule qc_report:
     input:
         logs=expand("logs/count/{sample}.log", sample=SAMPLES),
         counts="results/count/counts-aggregated.tsv",
+        crisprcleanr_roc=expand(
+            "results/crisprcleanr/roc_{comparison}.pdf",
+            comparison=crisprcleanr_comparisons(),
+        ),
+        crisprcleanr_pr=expand(
+            "results/crisprcleanr/pr_{comparison}.pdf",
+            comparison=crisprcleanr_comparisons(),
+        ),
+        crisprcleanr_drnk=expand(
+            "results/crisprcleanr/depletion_rank_{comparison}.pdf",
+            comparison=crisprcleanr_comparisons(),
+        ),
     output:
         html=report(
             "results/qc/qc-report.html",
@@ -86,5 +98,6 @@ rule qc_report:
         runtime=10,
     params:
         fasta=fasta,
+        crisprcleanr_comparisons=crisprcleanr_comparisons(),
     script:
         "../scripts/qc_report.py"

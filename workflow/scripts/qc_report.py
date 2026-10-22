@@ -19,6 +19,7 @@ from qc import (
     correlation,
     coverage,
     count_distribution,
+    crisprcleanr,
     gini,
     missed_sgrnas,
     pca,
@@ -87,6 +88,20 @@ sections = [
     correlation_section,
     pca_section,
 ]
+
+# CRISPRcleanR only ran for a comparison if MAGeCK/DrugZ/BAGEL2 config asked
+# for it (see crisprcleanr_comparisons() in general_functions.smk) — append
+# last, and only when there's anything to show.
+crisprcleanr_comparisons = snakemake.params["crisprcleanr_comparisons"]
+if crisprcleanr_comparisons:
+    sections.append(
+        crisprcleanr.build(
+            crisprcleanr_comparisons,
+            snakemake.input["crisprcleanr_roc"],
+            snakemake.input["crisprcleanr_pr"],
+            snakemake.input["crisprcleanr_drnk"],
+        )
+    )
 
 html = report_html.render(sections)
 
