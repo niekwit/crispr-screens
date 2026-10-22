@@ -33,31 +33,31 @@ long <- map_dfr(conditions, function(cond) {
     log.fdr = -log10(data[[paste0(cond, "|fdr")]]),
     x = sample.int(nrow(data), nrow(data))
   )
-}) %>%
+}) |>
   arrange(condition, x)
 
 # a gene can get fdr = 0 (common with few permutation rounds), which turns
 # -log10(fdr) into Inf and breaks the colour scale; clip it to the largest
 # finite value instead of dropping/greying out the point
-finite.max <- max(long$log.fdr[is.finite(long$log.fdr)], na.rm = TRUE)
-long <- long %>%
-  mutate(log.fdr = ifelse(is.finite(log.fdr), log.fdr, finite.max))
+finite_max <- max(long$log.fdr[is.finite(long$log.fdr)], na.rm = TRUE)
+long <- long |>
+  mutate(log.fdr = ifelse(is.finite(log.fdr), log.fdr, finite_max))
 
 # label the top 5 most enriched and top 5 most depleted genes per condition
-df.label <- long %>%
-  group_by(condition) %>%
+df_label <- long |>
+  group_by(condition) |>
   group_modify(
     ~ bind_rows(
       slice_max(.x, beta, n = 5),
       slice_min(.x, beta, n = 5)
     )
-  ) %>%
+  ) |>
   ungroup()
 
 # create plot: one facet per design matrix condition
 p <- ggplot(long, aes(x = x, y = beta, fill = log.fdr)) +
   geom_point(size = 4, shape = 21) +
-  geom_text_repel(data = df.label, aes(x = x, y = beta, label = Gene)) +
+  geom_text_repel(data = df_label, aes(x = x, y = beta, label = Gene)) +
   labs(
     x = "Random Index",
     y = "Beta score",
@@ -70,12 +70,12 @@ p <- ggplot(long, aes(x = x, y = beta, fill = log.fdr)) +
   )
 
 # scale canvas size to the number of conditions (facets)
-n.cond <- length(conditions)
-n.col <- min(3, n.cond)
-n.row <- ceiling(n.cond / 3)
+n_cond <- length(conditions)
+n_col <- min(3, n_cond)
+n_row <- ceiling(n_cond / 3)
 
 # save to file
-ggsave(snakemake@output[[1]], p, width = 6 * n.col, height = 5 * n.row)
+ggsave(snakemake@output[[1]], p, width = 6 * n_col, height = 5 * n_row)
 
 # close redirection of output/messages
 sink(log, type = "output")

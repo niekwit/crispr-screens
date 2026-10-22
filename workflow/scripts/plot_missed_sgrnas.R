@@ -8,12 +8,12 @@ library(reshape2)
 library(cowplot)
 
 # load count table
-counts <- read.delim(snakemake@input[[1]]) %>%
+counts <- read.delim(snakemake@input[[1]]) |>
   dplyr::select(-c("sgRNA", "gene"))
 
 # get number of sgRNAs with zero counts
-df <- colSums(counts == 0) %>%
-  melt() %>%
+df <- colSums(counts == 0) |>
+  melt() |>
   rownames_to_column(var = "sample")
 
 # create bar graph

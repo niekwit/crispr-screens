@@ -14,13 +14,13 @@ pdf <- snakemake@output[["pdf"]]
 fdr <- snakemake@params[["fdr"]]
 
 # Load data
-df <- read.delim(txt) %>%
+df <- read.delim(txt) |>
   # if normZ is greater than 0, fdr is fdr_synthetic, else fdr_supp
   mutate(fdr = ifelse(normZ < 0, fdr_synth, fdr_supp))
 
 # Data for labels (top 10 genes of lowest and highest normZ)
-lowest <- df %>% top_n(10, -normZ) %>% arrange(normZ)
-highest <- df %>% top_n(10, normZ) %>% arrange(normZ)
+lowest <- df |> top_n(10, -normZ) |> arrange(normZ)
+highest <- df |> top_n(10, normZ) |> arrange(normZ)
 
 # Plot normZ against fdr
 p <- ggplot(df, aes(x = normZ, y = -log10(fdr))) +
