@@ -62,15 +62,6 @@ def targets():
                         ),
                     ]
                 )
-            TARGETS.extend(
-                [
-                    expand(
-                        "results/mageck/interactive/{cnv}/{comparison}.html",
-                        comparison=COMPARISONS,
-                        cnv=CNV,
-                    ),
-                ]
-            )
         else:
             logger.info("Running MAGeCK mle...")
             TARGETS.extend(
@@ -103,10 +94,6 @@ def targets():
                     ),
                     expand(
                         "results/plots/bagel2/{comparison}/{comparison}.pr.pdf",
-                        comparison=COMPARISONS_BAGEL2,
-                    ),
-                    expand(
-                        "results/bagel2/interactive/{comparison}.html",
                         comparison=COMPARISONS_BAGEL2,
                     ),
                 ]
@@ -142,10 +129,6 @@ def targets():
                         "results/plots/drugz/dot_plot_{comparison}.pdf",
                         comparison=COMPARISONS,
                     ),
-                    expand(
-                        "results/drugz/interactive/{comparison}.html",
-                        comparison=COMPARISONS,
-                    ),
                 ]
             )
             if config["stats"]["string_db"]["run"]:
@@ -163,7 +146,106 @@ def targets():
                         ),
                     ]
                 )
+    if has_interactive_results():
+        TARGETS.append("results/interactive_report.html")
     return TARGETS
+
+
+def _interactive_results_keys():
+    """(mageck_pairs, drugz_comparisons, bagel2_comparisons) feeding the
+    combined interactive_results_report rule, each empty when that tool
+    isn't run (or, for MAGeCK, not in "test" mode)."""
+    mageck_on = (
+        config["stats"]["mageck"]["run"]
+        and config["stats"]["mageck"]["command"] == "test"
+    )
+    mageck_pairs = [(c, v) for c in COMPARISONS for v in CNV] if mageck_on else []
+
+    drugz_on = config["stats"]["drugz"]["run"] and bool(COMPARISONS)
+    drugz_comparisons = list(COMPARISONS) if drugz_on else []
+
+    bagel2_on = config["stats"]["bagel2"]["run"] and bool(COMPARISONS_BAGEL2)
+    bagel2_comparisons = list(COMPARISONS_BAGEL2) if bagel2_on else []
+
+    return mageck_pairs, drugz_comparisons, bagel2_comparisons
+
+
+def has_interactive_results():
+    return any(_interactive_results_keys())
+
+
+def interactive_results_report_input():
+    mageck_pairs, drugz_comparisons, bagel2_comparisons = _interactive_results_keys()
+    string_db_on = config["stats"]["string_db"]["run"]
+    string_db_data = config["stats"]["string_db"]["data"]
+
+    mageck_txt = [
+        f"results/mageck/{c}/{v}/{c}.gene_summary.txt" for c, v in mageck_pairs
+    ]
+    mageck_string_enriched = (
+        [
+            f"results/mageck/stringdb/{v}/{c}/enriched/pathway_analysis.csv"
+            for c, v in mageck_pairs
+        ]
+        if mageck_pairs and string_db_on and string_db_data in ("enriched", "both")
+        else []
+    )
+    mageck_string_depleted = (
+        [
+            f"results/mageck/stringdb/{v}/{c}/depleted/pathway_analysis.csv"
+            for c, v in mageck_pairs
+        ]
+        if mageck_pairs and string_db_on and string_db_data in ("depleted", "both")
+        else []
+    )
+
+    drugz_txt = [f"results/drugz/{c}.txt" for c in drugz_comparisons]
+    drugz_string_enriched = (
+        [
+            f"results/drugz/stringdb/{c}/enriched/pathway_analysis.csv"
+            for c in drugz_comparisons
+        ]
+        if drugz_comparisons and string_db_on and string_db_data in ("enriched", "both")
+        else []
+    )
+    drugz_string_depleted = (
+        [
+            f"results/drugz/stringdb/{c}/depleted/pathway_analysis.csv"
+            for c in drugz_comparisons
+        ]
+        if drugz_comparisons and string_db_on and string_db_data in ("depleted", "both")
+        else []
+    )
+
+    bagel2_txt = [f"results/bagel2/{c}/{c}.pr" for c in bagel2_comparisons]
+    bagel2_string_depleted = (
+        [
+            f"results/bagel2/stringdb/{c}/depleted/pathway_analysis.csv"
+            for c in bagel2_comparisons
+        ]
+        if bagel2_comparisons and string_db_on
+        else []
+    )
+
+    return {
+        "mageck_txt": mageck_txt,
+        "mageck_string_enriched": mageck_string_enriched,
+        "mageck_string_depleted": mageck_string_depleted,
+        "drugz_txt": drugz_txt,
+        "drugz_string_enriched": drugz_string_enriched,
+        "drugz_string_depleted": drugz_string_depleted,
+        "bagel2_txt": bagel2_txt,
+        "bagel2_string_depleted": bagel2_string_depleted,
+    }
+
+
+def interactive_results_report_params():
+    mageck_pairs, drugz_comparisons, bagel2_comparisons = _interactive_results_keys()
+    return {
+        "mageck_pairs": mageck_pairs,
+        "drugz_comparisons": drugz_comparisons,
+        "bagel2_comparisons": bagel2_comparisons,
+    }
 
 
 def fasta():

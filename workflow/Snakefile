@@ -47,6 +47,7 @@ include: "rules/count.smk"
 include: "rules/mageck.smk"
 include: "rules/bagel2.smk"
 include: "rules/drugz.smk"
+include: "rules/interactive_report.smk"
 
 
 # Set target rule
