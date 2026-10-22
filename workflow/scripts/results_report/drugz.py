@@ -8,6 +8,19 @@ import pandas as pd
 from . import common
 
 
+def _color_options(df, suffix):
+    """DrugZ's output columns for one direction (_synth/_supp), offered as
+    "Color by" choices for the dot plot's marker fill."""
+    log_fdr = -np.log10(df[f"fdr_{suffix}"].clip(lower=1e-300))
+    log_pval = -np.log10(df[f"pval_{suffix}"].clip(lower=1e-300))
+    return [
+        ("neg_log10_fdr", "-log10(FDR)", log_fdr),
+        ("neg_log10_pvalue", "-log10(p-value)", log_pval),
+        ("rank", "Rank", df[f"rank_{suffix}"]),
+        ("num_obs", "numObs", df["numObs"]),
+    ]
+
+
 def build_entries(
     txt_files,
     string_enriched_files,
@@ -30,16 +43,18 @@ def build_entries(
         # (significance in fdr_supp) — same split plot_drugz_results.R uses.
         depleted = data[data["normZ"] < 0].copy()
         depleted["x"] = np.random.RandomState(42).permutation(len(depleted))
-        depleted["log_fdr"] = -np.log10(depleted["fdr_synth"].clip(lower=1e-300))
         depleted["_normz_str"] = depleted["normZ"].round(4).astype(str)
-        depleted["_logfdr_str"] = depleted["log_fdr"].round(3).astype(str)
+        depleted["_logfdr_str"] = (
+            (-np.log10(depleted["fdr_synth"].clip(lower=1e-300))).round(3).astype(str)
+        )
         depleted["_numobs_str"] = depleted["numObs"].astype(str)
 
         enriched = data[data["normZ"] > 0].copy()
         enriched["x"] = np.random.RandomState(42).permutation(len(enriched))
-        enriched["log_fdr"] = -np.log10(enriched["fdr_supp"].clip(lower=1e-300))
         enriched["_normz_str"] = enriched["normZ"].round(4).astype(str)
-        enriched["_logfdr_str"] = enriched["log_fdr"].round(3).astype(str)
+        enriched["_logfdr_str"] = (
+            (-np.log10(enriched["fdr_supp"].clip(lower=1e-300))).round(3).astype(str)
+        )
         enriched["_numobs_str"] = enriched["numObs"].astype(str)
 
         logging.info(
@@ -85,8 +100,7 @@ def build_entries(
                 df=depleted,
                 y_col="normZ",
                 y_title="normZ",
-                color_col="log_fdr",
-                color_title="-log10(FDR)",
+                color_options=_color_options(depleted, "synth"),
                 id_col="GENE",
                 customdata_cols=customdata_cols,
                 hovertemplate=hovertemplate,
@@ -111,8 +125,7 @@ def build_entries(
                 df=enriched,
                 y_col="normZ",
                 y_title="normZ",
-                color_col="log_fdr",
-                color_title="-log10(FDR)",
+                color_options=_color_options(enriched, "supp"),
                 id_col="GENE",
                 customdata_cols=customdata_cols,
                 hovertemplate=hovertemplate,

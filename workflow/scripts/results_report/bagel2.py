@@ -12,6 +12,17 @@ import pandas as pd
 from . import common
 
 
+def _color_options(df):
+    """BAGEL2's .pr columns, offered as "Color by" choices for the dot
+    plot's marker fill."""
+    log_fdr = -np.log10(df["FDR"].clip(lower=1e-300))
+    return [
+        ("neg_log10_fdr", "-log10(FDR)", log_fdr),
+        ("recall", "Recall", df["Recall"]),
+        ("precision", "Precision", df["Precision"]),
+    ]
+
+
 def build_entries(
     txt_files,
     string_depleted_files,
@@ -25,7 +36,6 @@ def build_entries(
         logging.info(f"Loading {txt}")
         data = pd.read_csv(txt, sep="\t")
         data["x"] = np.random.RandomState(42).permutation(len(data))
-        data["log_fdr"] = -np.log10(data["FDR"].clip(lower=1e-300))
         data["_bf_str"] = data["BF"].round(3).astype(str)
         data["_fdr_str"] = data["FDR"].round(6).astype(str)
 
@@ -51,8 +61,7 @@ def build_entries(
             df=data,
             y_col="BF",
             y_title="Bayes Factor (BF)",
-            color_col="log_fdr",
-            color_title="-log10(FDR)",
+            color_options=_color_options(data),
             id_col="Gene",
             customdata_cols=["Gene", "_bf_str", "_fdr_str"],
             hovertemplate=(

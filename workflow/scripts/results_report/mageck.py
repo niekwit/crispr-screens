@@ -8,6 +8,19 @@ import pandas as pd
 from . import common
 
 
+def _color_options(df, prefix):
+    """MAGeCK's gene_summary.txt columns for one direction (pos|/neg|),
+    offered as "Color by" choices for the dot plot's marker fill."""
+    log_pval = -np.log10(df[f"{prefix}|p-value"].clip(lower=1e-300))
+    log_fdr = -np.log10(df[f"{prefix}|fdr"].clip(lower=1e-300))
+    return [
+        ("neg_log10_pvalue", "-log10(p-value)", log_pval),
+        ("neg_log10_fdr", "-log10(FDR)", log_fdr),
+        ("score", "MAGeCK score", df[f"{prefix}|score"]),
+        ("rank", "Rank", df[f"{prefix}|rank"]),
+    ]
+
+
 def build_entries(
     txt_files,
     string_enriched_files,
@@ -32,17 +45,19 @@ def build_entries(
         enriched = data[data["pos|lfc"] > 0].copy()
         enriched["x"] = np.random.permutation(len(enriched))
         enriched["lfc"] = enriched["pos|lfc"]
-        enriched["log_pval"] = -np.log10(enriched["pos|p-value"].clip(lower=1e-300))
         enriched["_lfc_str"] = enriched["lfc"].round(4).astype(str)
-        enriched["_logpval_str"] = enriched["log_pval"].round(3).astype(str)
+        enriched["_logpval_str"] = (
+            (-np.log10(enriched["pos|p-value"].clip(lower=1e-300))).round(3).astype(str)
+        )
         enriched["_fdr_str"] = enriched["pos|fdr"].round(6).astype(str)
 
         depleted = data[data["neg|lfc"] < 0].copy()
         depleted["x"] = np.random.permutation(len(depleted))
         depleted["lfc"] = depleted["neg|lfc"]
-        depleted["log_pval"] = -np.log10(depleted["neg|p-value"].clip(lower=1e-300))
         depleted["_lfc_str"] = depleted["lfc"].round(4).astype(str)
-        depleted["_logpval_str"] = depleted["log_pval"].round(3).astype(str)
+        depleted["_logpval_str"] = (
+            (-np.log10(depleted["neg|p-value"].clip(lower=1e-300))).round(3).astype(str)
+        )
         depleted["_fdr_str"] = depleted["neg|fdr"].round(6).astype(str)
 
         logging.info(
@@ -88,8 +103,7 @@ def build_entries(
                 df=enriched,
                 y_col="lfc",
                 y_title="Log₂ Fold Change",
-                color_col="log_pval",
-                color_title="-log10(p-value)",
+                color_options=_color_options(enriched, "pos"),
                 id_col="id",
                 customdata_cols=customdata_cols,
                 hovertemplate=hovertemplate,
@@ -114,8 +128,7 @@ def build_entries(
                 df=depleted,
                 y_col="lfc",
                 y_title="Log₂ Fold Change",
-                color_col="log_pval",
-                color_title="-log10(p-value)",
+                color_options=_color_options(depleted, "neg"),
                 id_col="id",
                 customdata_cols=customdata_cols,
                 hovertemplate=hovertemplate,

@@ -88,8 +88,7 @@ def build_plot(
     df,
     y_col,
     y_title,
-    color_col,
-    color_title,
+    color_options,
     id_col,
     customdata_cols,
     hovertemplate,
@@ -98,7 +97,15 @@ def build_plot(
     id_mapping=None,
 ):
     """One Scattergl figure + the JS payload needed to drive it (gene
-    search, click-to-label, STRING-db term highlighting)."""
+    search, click-to-label, STRING-db term highlighting, and switching
+    which column governs marker fill colour).
+
+    color_options: ordered list of (key, label, series) tuples — series is
+    a column of df, same length/order. The first option is the initial
+    marker colour; all are embedded so the "Color by" dropdown can switch
+    between them client-side with no server round-trip.
+    """
+    default_key, default_label, default_series = color_options[0]
     fig = go.Figure()
     fig.add_trace(
         go.Scattergl(
@@ -106,10 +113,10 @@ def build_plot(
             y=df[y_col],
             mode="markers",
             marker=dict(
-                color=df[color_col],
+                color=default_series,
                 colorscale="Viridis",
                 showscale=True,
-                colorbar=dict(title=color_title),
+                colorbar=dict(title=default_label),
                 size=8,
                 line=dict(width=0.5, color="black"),
             ),
@@ -138,6 +145,11 @@ def build_plot(
         if query_gene in hover_by_gene and preferred_name not in hover_by_gene:
             hover_by_gene[preferred_name] = hover_by_gene[query_gene]
 
+    color_values_by_option = {
+        key: [round(float(v), 4) for v in series.tolist()]
+        for key, _, series in color_options
+    }
+
     return {
         "div_id": div_id,
         "panel_title": title,
@@ -145,7 +157,9 @@ def build_plot(
         "term_list_id": term_list_id,
         "fig": fig,
         "genes": df[id_col].astype(str).tolist(),
-        "color_values": [round(float(v), 4) for v in df[color_col].tolist()],
+        "color_options": [(key, label) for key, label, _ in color_options],
+        "color_values_by_option": color_values_by_option,
+        "default_color_key": default_key,
         "gene_data": [
             {"id": str(r[id_col]), "x": r["x"], "y": r[y_col]} for _, r in df.iterrows()
         ],

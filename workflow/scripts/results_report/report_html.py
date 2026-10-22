@@ -20,6 +20,13 @@ PLOT_ROW_TEMPLATE = Template(
     """
 <div class="plot-row">
   <div class="plot-wrap">
+    <div class="plot-controls">
+      <label>Color by:
+        <select class="color-select" data-div="$div_id">
+$color_option_html
+        </select>
+      </label>
+    </div>
     <div id="$div_id" class="plot" style="width:100%;height:500px;"></div>
   </div>
   <div class="string-panel">
@@ -174,6 +181,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   border-bottom: 2px solid #e0e4e8;
 }
 .plot-wrap { flex: 1; padding: 8px; overflow: hidden; }
+.plot-controls {
+  display: flex; justify-content: flex-end; padding: 0 4px 4px;
+  font-size: 12px; color: #555;
+}
+.plot-controls select {
+  padding: 3px 6px; border: 1px solid #dde1e7; border-radius: 4px;
+  font-size: 12px; margin-left: 5px;
+}
 .plot-wrap-full { width: 100%; }
 .svg-wrap { text-align: center; }
 .svg-panel-title {
@@ -382,6 +397,11 @@ function initPlot(cfg) {
       updateColors();
       Plotly.relayout(DIV, { annotations: [] });
     },
+    setColorBy(key, label) {
+      cfg.colorValues = cfg.colorValuesByOption[key];
+      Plotly.restyle(DIV, { "marker.colorbar.title.text": [label] }, [0]);
+      updateColors();
+    },
   };
 }
 
@@ -403,11 +423,12 @@ function getOrInitPlot(divId) {
   }
   const api = initPlot({
     divId,
-    genes:       meta.genes,
-    colorValues: meta.color_values,
-    geneData:    meta.gene_data,
-    terms:       meta.terms,
-    termListId:  meta.term_list_id,
+    genes:               meta.genes,
+    colorValues:         meta.color_values_by_option[meta.default_color_key],
+    colorValuesByOption: meta.color_values_by_option,
+    geneData:            meta.gene_data,
+    terms:               meta.terms,
+    termListId:          meta.term_list_id,
   });
   plotApis.set(divId, api);
   return api;
@@ -546,6 +567,15 @@ document.querySelectorAll(".svg-embed[data-stats-div]").forEach(container => {
   });
 });
 
+/* ── "Color by" dropdown: switch which stat governs marker fill ──────── */
+document.querySelectorAll(".color-select").forEach(sel => {
+  sel.addEventListener("change", () => {
+    const divId = sel.dataset.div;
+    const label = sel.options[sel.selectedIndex].textContent;
+    getOrInitPlot(divId).setColorBy(sel.value, label);
+  });
+});
+
 })();
 </script>
 </body>
@@ -576,16 +606,22 @@ def _render_plot_row(plot, figs, plot_meta):
         return SIMPLE_PLOT_ROW_TEMPLATE.substitute(div_id=div_id)
     plot_meta[div_id] = {
         "genes": plot["genes"],
-        "color_values": plot["color_values"],
+        "color_values_by_option": plot["color_values_by_option"],
+        "default_color_key": plot["default_color_key"],
         "gene_data": plot["gene_data"],
         "terms": plot["terms"],
         "term_list_id": plot["term_list_id"],
         "hover_by_gene": plot["hover_by_gene"],
     }
+    color_option_html = "\n".join(
+        OPTION_TEMPLATE.substitute(key=key, label=label)
+        for key, label in plot["color_options"]
+    )
     return PLOT_ROW_TEMPLATE.substitute(
         div_id=div_id,
         term_panel_title=plot["term_panel_title"],
         term_list_id=plot["term_list_id"],
+        color_option_html=color_option_html,
     )
 
 
