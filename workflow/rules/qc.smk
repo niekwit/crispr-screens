@@ -65,109 +65,26 @@ rule multiqc:
         "v9.18.0/bio/multiqc"
 
 
-rule plot_alignment_rate:
+rule qc_report:
     input:
-        expand("logs/count/{sample}.log", sample=SAMPLES),
+        logs=expand("logs/count/{sample}.log", sample=SAMPLES),
+        counts="results/count/counts-aggregated.tsv",
     output:
-        report(
-            "results/qc/alignment-rates.pdf",
-            caption="../report/alignment-rates.rst",
-            category="Alignment rates",
+        html=report(
+            "results/qc/qc-report.html",
+            caption="../report/qc-report.rst",
+            category="QC report",
         ),
         csv="results/qc/alignment-rates.csv",
+        count_csv="results/qc/count-distribution.csv",
     log:
-        "logs/plot-alignment-rate.log",
+        "logs/qc-report.log",
     conda:
         "../envs/stats.yaml"
     threads: 1
     resources:
-        runtime=5,
-    script:
-        "../scripts/plot_alignment_rate.R"
-
-
-rule plot_coverage:
-    input:
-        "results/count/counts-aggregated.tsv",
-    output:
-        report(
-            "results/qc/sequence-coverage.pdf",
-            caption="../report/plot-coverage.rst",
-            category="Sequence coverage",
-        ),
-    log:
-        "logs/plot-coverage.log",
-    conda:
-        "../envs/stats.yaml"
-    threads: 1
-    resources:
-        runtime=5,
+        runtime=10,
     params:
         fasta=fasta,
     script:
-        "../scripts/plot_coverage.R"
-
-
-rule plot_gini_index:
-    input:
-        "results/count/counts-aggregated.tsv",
-    output:
-        report(
-            "results/qc/gini-index.pdf",
-            caption="../report/gini-index.rst",
-            category="Gini index",
-        ),
-    log:
-        "logs/gini-index.log",
-    conda:
-        "../envs/stats.yaml"
-    threads: 1
-    resources:
-        runtime=5,
-    params:
-        yaml="workflow/envs/plot_settings.yaml",
-    script:
-        "../scripts/plot_gini_index.R"
-
-
-rule plot_count_distribution:
-    input:
-        "results/count/counts-aggregated.tsv",
-    output:
-        report(
-            "results/qc/count-distribution.pdf",
-            caption="../report/count-distribution.rst",
-            category="Count distribution",
-        ),
-        csv="results/qc/count-distribution.csv",
-    log:
-        "logs/count-distribution.log",
-    conda:
-        "../envs/stats.yaml"
-    threads: 1
-    resources:
-        runtime=5,
-    script:
-        "../scripts/plot_count_distribution.R"
-
-
-rule plot_missed_sgrnas:
-    input:
-        "results/count/counts-aggregated.tsv",
-    output:
-        report(
-            "results/qc/missed-rgrnas.pdf",
-            caption="../report/missed-rgrnas.rst",
-            category="Missed sgRNAs",
-        ),
-    log:
-        "logs/missed-rgrnas.log",
-    conda:
-        "../envs/stats.yaml"
-    threads: 1
-    resources:
-        runtime=5,
-    params:
-        yaml="workflow/envs/plot_settings.yaml",
-    script:
-        "../scripts/plot_missed_sgrnas.R"
+        "../scripts/qc_report.py"

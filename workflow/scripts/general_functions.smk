@@ -11,12 +11,8 @@ from snakemake.shell import shell
 def targets():
     TARGETS = [
         "results/qc/multiqc.html",
-        "results/qc/alignment-rates.pdf",
+        "results/qc/qc-report.html",
         "results/qc/alignment-rates.csv",
-        "results/qc/sequence-coverage.pdf",
-        "results/qc/gini-index.pdf",
-        "results/qc/missed-rgrnas.pdf",
-        "results/qc/count-distribution.pdf",
     ]
     if config["stats"]["mageck"]["run"]:
         # Check csv file for empty columns

@@ -1,0 +1,52 @@
+"""Shared styling helpers for the QC report figures."""
+
+import re
+
+import plotly.graph_objects as go
+
+# ── Modern colour palette (replaces the old "snakemake green" #419179) ───────
+BAR_COLOR = "#6366f1"  # indigo-500
+BAR_LINE_COLOR = "#3730a3"  # indigo-800
+MEDIAN_COLOR = "#0ea5e9"  # sky-500
+CUTOFF_COLOR = "#64748b"  # slate-500
+FLAG_COLOR = "#f43f5e"  # rose-500
+TEMPLATE = "plotly_white"
+FONT = dict(family="Inter, -apple-system, 'Segoe UI', Roboto, sans-serif", size=13)
+
+
+def clean_sample_name(name):
+    # remove prepended X from sample names (only happens when they start
+    # with a number)
+    return re.sub(r"^X", "", name)
+
+
+def style_fig(fig, height=450, **layout_kwargs):
+    fig.update_layout(
+        template=TEMPLATE,
+        font=FONT,
+        height=height,
+        margin=dict(t=60, b=80, l=60, r=30),
+        showlegend=False,
+        **layout_kwargs,
+    )
+    return fig
+
+
+def bar_fig(df, x, y, y_title, title, y_range=None, flagged=None):
+    if flagged is None:
+        bar_color = BAR_COLOR
+        bar_line_color = BAR_LINE_COLOR
+    else:
+        bar_color = [FLAG_COLOR if f else BAR_COLOR for f in flagged]
+        bar_line_color = [FLAG_COLOR if f else BAR_LINE_COLOR for f in flagged]
+    fig = go.Figure(
+        go.Bar(
+            x=df[x],
+            y=df[y],
+            marker=dict(color=bar_color, line=dict(color=bar_line_color, width=1)),
+            hovertemplate=f"<b>%{{x}}</b><br>{y_title}: %{{y:.3f}}<extra></extra>",
+        )
+    )
+    fig.update_xaxes(tickangle=45, title=None)
+    fig.update_yaxes(title=y_title, range=y_range, rangemode="tozero")
+    return style_fig(fig, title=dict(text=title, x=0.5))

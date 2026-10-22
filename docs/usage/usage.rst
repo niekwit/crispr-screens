@@ -36,18 +36,14 @@ The final directory structure should look like this:
         ├── envs
         │   └── stats.yaml
         ├── report
-        │   ├── alignment-rates.rst
         │   ├── bagel2_plots.rst
-        │   ├── count-distribution.rst
         │   ├── drugz.rst
-        │   ├── gini-index.rst
         │   ├── lfc_neg.rst
         │   ├── lfc_pos.rst
         │   ├── mageck.rst
-        │   ├── missed-rgrnas.rst
         │   ├── mle_beta.rst
         │   ├── multiqc.rst
-        │   ├── plot-coverage.rst
+        │   ├── qc-report.rst
         │   ├── sample-correlation.rst
         │   ├── sgrank_neg.rst
         │   ├── sgrank_pos.rst
@@ -75,21 +71,17 @@ The final directory structure should look like this:
         │   ├── interactive_drugz_report.py
         │   ├── interactive_lfc_report.py
         │   ├── mageck.py
-        │   ├── plot_alignment_rate.R
         │   ├── plot_bf.R
-        │   ├── plot_count_distribution.R
-        │   ├── plot_coverage.R
         │   ├── plot_drugz_results.R
-        │   ├── plot_gini_index.R
         │   ├── plot_lfc.R
-        │   ├── plot_missed_sgrnas.R
         │   ├── plot_mle.R
         │   ├── plot_pr.R
         │   ├── plot_sgrank.R
+        │   ├── qc_report.py
         │   └── string_db.py
         └── Snakefile
 
-    9 directories, 57 files
+    9 directories, 49 files
 
 
 Experiment meta data
