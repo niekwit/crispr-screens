@@ -15,6 +15,7 @@ import pandas as pd
 from qc import (
     abundance,
     alignment,
+    correlation,
     coverage,
     count_distribution,
     gini,
@@ -59,6 +60,7 @@ count_dist_section = count_distribution.build(
 )
 logging.info(f"Written count distribution stats to {output_count_dist_csv}")
 abundance_section = abundance.build(counts, sample_cols, samples)
+correlation_section = correlation.build(counts, sample_cols, samples)
 
 summary_section = summary.build(
     alignment_section,
@@ -76,6 +78,7 @@ sections = [
     missed_section,
     count_dist_section,
     abundance_section,
+    correlation_section,
 ]
 
 html = report_html.render(sections)

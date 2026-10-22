@@ -44,7 +44,6 @@ The final directory structure should look like this:
         │   ├── mle_beta.rst
         │   ├── multiqc.rst
         │   ├── qc-report.rst
-        │   ├── sample-correlation.rst
         │   ├── sgrank_neg.rst
         │   ├── sgrank_pos.rst
         │   └── workflow.rst
@@ -81,7 +80,7 @@ The final directory structure should look like this:
         │   └── string_db.py
         └── Snakefile
 
-    9 directories, 49 files
+    9 directories, 48 files
 
 
 Experiment meta data
