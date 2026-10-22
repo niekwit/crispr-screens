@@ -99,12 +99,17 @@ if not genes:
 # Format input genes as a carriage-return (\r) separated payload
 genes_payload = "%0d".join(genes)
 
-# Session with retry: backoff on 429/500/502/503/504, up to 5 attempts.
-# backoff_factor=2 gives waits of 2, 4, 8, 16 s between retries.
+# Session with retry: backoff on 400 (STRING returns this, not 429, when
+# concurrent CI jobs exceed its request rate), 429/500/502/503/504, up to 5
+# attempts. backoff_factor=2 gives waits of 2, 4, 8, 16 s between retries.
+# allowed_methods must include POST explicitly — urllib3's Retry excludes
+# non-idempotent methods by default, so without this every retry setting
+# here is a silent no-op for our session.post() calls.
 retry = Retry(
     total=5,
     backoff_factor=2,
-    status_forcelist=[429, 500, 502, 503, 504],
+    status_forcelist=[400, 429, 500, 502, 503, 504],
+    allowed_methods=frozenset(["POST"]),
     raise_on_status=False,
 )
 session = requests.Session()
