@@ -1,6 +1,7 @@
 """Build a single interactive HTML QC report (overview, alignment rate,
-sequence coverage, Gini index, missed sgRNAs, read count distribution,
-sgRNA abundance) and the alignment-rates.csv file consumed by ngs-tracker.
+total reads, sequence coverage, Gini index, missed sgRNAs, read count
+distribution, sgRNA abundance, sample correlation) and the
+alignment-rates.csv file consumed by ngs-tracker.
 
 Each metric lives in its own module under qc/ (one dict with id, title,
 description, fig and df) so new QC metrics can be added without touching
@@ -20,6 +21,7 @@ from qc import (
     count_distribution,
     gini,
     missed_sgrnas,
+    read_counts,
     report_html,
     summary,
 )
@@ -44,6 +46,7 @@ output_count_dist_csv = snakemake.output["count_csv"]
 logging.info("Parsing Bowtie alignment logs")
 alignment_section = alignment.build(log_files, output_alignment_csv)
 logging.info(f"Written alignment rates to {output_alignment_csv}")
+read_counts_section = read_counts.build(log_files)
 
 # ── Load count table (shared by coverage, Gini, missed sgRNAs, distribution) ─
 logging.info(f"Loading {counts_file}")
@@ -73,6 +76,7 @@ summary_section = summary.build(
 sections = [
     summary_section,
     alignment_section,
+    read_counts_section,
     coverage_section,
     gini_section,
     missed_section,
