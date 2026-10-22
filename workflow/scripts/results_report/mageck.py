@@ -13,10 +13,11 @@ def _color_options(df, prefix):
     offered as "Color by" choices for the dot plot's marker fill."""
     log_pval = -np.log10(df[f"{prefix}|p-value"].clip(lower=1e-300))
     log_fdr = -np.log10(df[f"{prefix}|fdr"].clip(lower=1e-300))
+    log_score = -np.log10(df[f"{prefix}|score"].clip(lower=1e-300))
     return [
         ("neg_log10_pvalue", "-log10(p-value)", log_pval),
         ("neg_log10_fdr", "-log10(FDR)", log_fdr),
-        ("score", "MAGeCK score", df[f"{prefix}|score"]),
+        ("neg_log10_score", "-log10(MAGeCK score)", log_score),
         ("rank", "Rank", df[f"{prefix}|rank"]),
     ]
 
