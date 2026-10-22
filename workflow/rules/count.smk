@@ -114,13 +114,13 @@ if (
             fasta=fasta,
         output:
             # Input for MAGeCK/DrugZ (if run)
-            corr_counts="results/count/crisprcleanr/corrected_counts_{comparison}.tsv",
+            corr_counts="results/crisprcleanr/corrected_counts_{comparison}.tsv",
             # Input for BAGEL2
-            corr_lfc="results/count/crisprcleanr/corrected_lfc_{comparison}.foldchange",
+            corr_lfc="results/crisprcleanr/corrected_lfc_{comparison}.foldchange",
             # QC plots
-            roc="results/plots/crisprcleanr/roc_{comparison}.pdf",
-            pr="results/plots/crisprcleanr/pr_{comparison}.pdf",
-            drnk="results/plots/crisprcleanr/depletion_rank_{comparison}.pdf",
+            roc="results/crisprcleanr/roc_{comparison}.pdf",
+            pr="results/crisprcleanr/pr_{comparison}.pdf",
+            drnk="results/crisprcleanr/depletion_rank_{comparison}.pdf",
         log:
             "logs/crisprcleanr/{comparison}.log",
         conda:

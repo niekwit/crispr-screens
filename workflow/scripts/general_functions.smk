@@ -24,22 +24,22 @@ def targets():
             TARGETS.extend(
                 [
                     expand(
-                        "results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf",
+                        "results/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf",
                         comparison=COMPARISONS,
                         cnv=CNV,
                     ),
                     expand(
-                        "results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf",
+                        "results/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf",
                         comparison=COMPARISONS,
                         cnv=CNV,
                     ),
                     expand(
-                        "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank_pos.pdf",
+                        "results/mageck/{comparison}/{cnv}/{comparison}.sgrank_pos.pdf",
                         comparison=COMPARISONS,
                         cnv=CNV,
                     ),
                     expand(
-                        "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank_neg.pdf",
+                        "results/mageck/{comparison}/{cnv}/{comparison}.sgrank_neg.pdf",
                         comparison=COMPARISONS,
                         cnv=CNV,
                     ),
@@ -77,7 +77,7 @@ def targets():
                         matrix=MATRIX_NAMES,
                     ),
                     expand(
-                        "results/plots/mageck/mle/{cnv}/{matrix}.beta_scores.pdf",
+                        "results/mageck/mle/{cnv}/{matrix}.beta_scores.pdf",
                         cnv=CNV,
                         matrix=MATRIX_NAMES,
                     ),
@@ -89,11 +89,11 @@ def targets():
             TARGETS.extend(
                 [
                     expand(
-                        "results/plots/bagel2/{comparison}/{comparison}.bf.pdf",
+                        "results/bagel2/{comparison}/{comparison}.bf.pdf",
                         comparison=COMPARISONS_BAGEL2,
                     ),
                     expand(
-                        "results/plots/bagel2/{comparison}/{comparison}.pr.pdf",
+                        "results/bagel2/{comparison}/{comparison}.pr.pdf",
                         comparison=COMPARISONS_BAGEL2,
                     ),
                 ]
@@ -126,7 +126,7 @@ def targets():
                         comparison=COMPARISONS,
                     ),
                     expand(
-                        "results/plots/drugz/dot_plot_{comparison}.pdf",
+                        "results/drugz/dot_plot_{comparison}.pdf",
                         comparison=COMPARISONS,
                     ),
                 ]
@@ -480,7 +480,7 @@ def mageck_input(wildcards):
         and config["stats"]["mageck"]["command"] == "test"
     ):
         input_data["counts"] = (
-            "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
+            "results/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
                 wildcards=wildcards
             )
         )
@@ -515,7 +515,7 @@ def drugz_input(wildcards):
 
     if config["stats"]["drugz"]["apply_crisprcleanr"]:
         input_data["counts"] = (
-            "results/count/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
+            "results/crisprcleanr/corrected_counts_{wildcards.comparison}.tsv".format(
                 wildcards=wildcards
             )
         )

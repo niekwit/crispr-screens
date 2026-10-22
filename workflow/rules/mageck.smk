@@ -104,7 +104,7 @@ rule mle_beta_plot:
         "results/mageck/mle/{cnv}/{matrix}.gene_summary.txt",
     output:
         report(
-            "results/plots/mageck/mle/{cnv}/{matrix}.beta_scores.pdf",
+            "results/mageck/mle/{cnv}/{matrix}.beta_scores.pdf",
             caption="../report/mle_beta.rst",
             category="MAGeCK plots",
             subcategory="{matrix}",
@@ -126,14 +126,14 @@ rule lfc_plots:
         "results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
     output:
         pos=report(
-            "results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf",
+            "results/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf",
             caption="../report/lfc_pos.rst",
             category="MAGeCK plots",
             subcategory="{comparison}",
             labels={"Comparison": "{comparison}", "Figure": "lfc plot enriched genes"},
         ),
         neg=report(
-            "results/plots/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf",
+            "results/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf",
             caption="../report/lfc_neg.rst",
             category="MAGeCK plots",
             subcategory="{comparison}",
@@ -156,7 +156,7 @@ rule sg_rank_plot:
         gene="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
     output:
         pos=report(
-            "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank_pos.pdf",
+            "results/mageck/{comparison}/{cnv}/{comparison}.sgrank_pos.pdf",
             caption="../report/sgrank_pos.rst",
             category="MAGeCK plots",
             subcategory="{comparison}",
@@ -166,7 +166,7 @@ rule sg_rank_plot:
             },
         ),
         neg=report(
-            "results/plots/mageck/{comparison}/{cnv}/{comparison}.sgrank_neg.pdf",
+            "results/mageck/{comparison}/{cnv}/{comparison}.sgrank_neg.pdf",
             caption="../report/sgrank_neg.rst",
             category="MAGeCK plots",
             subcategory="{comparison}",

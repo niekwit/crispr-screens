@@ -50,7 +50,7 @@ rule plot_drugz_results:
         txt="results/drugz/{comparison}.txt",
     output:
         pdf=report(
-            "results/plots/drugz/dot_plot_{comparison}.pdf",
+            "results/drugz/dot_plot_{comparison}.pdf",
             caption="../report/drugz.rst",
             category="DrugZ plots",
             subcategory="{comparison}",

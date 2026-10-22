@@ -15,7 +15,7 @@ rule install_bagel2:
 rule bagel2bf:
     input:
         b2dir="resources/bagel2/",
-        fc="results/count/crisprcleanr/corrected_lfc_{comparison}.foldchange",
+        fc="results/crisprcleanr/corrected_lfc_{comparison}.foldchange",
     output:
         bf="results/bagel2/{comparison}/{comparison}.bf",
     log:
@@ -66,7 +66,7 @@ rule plot_bf:
         "results/bagel2/{comparison}/{comparison}.bf",
     output:
         report(
-            "results/plots/bagel2/{comparison}/{comparison}.bf.pdf",
+            "results/bagel2/{comparison}/{comparison}.bf.pdf",
             caption="../report/bagel2_plots.rst",
             category="BAGEL2 plots",
             subcategory="{comparison}",
@@ -88,7 +88,7 @@ rule plot_pr:
         "results/bagel2/{comparison}/{comparison}.pr",
     output:
         report(
-            "results/plots/bagel2/{comparison}/{comparison}.pr.pdf",
+            "results/bagel2/{comparison}/{comparison}.pr.pdf",
             caption="../report/bagel2_plots.rst",
             category="BAGEL2 plots",
             subcategory="{comparison}",
