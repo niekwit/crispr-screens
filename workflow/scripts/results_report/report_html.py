@@ -132,6 +132,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .btn:hover { opacity: 0.85; }
 .btn-primary   { background: #3498db; color: #fff; }
 .btn-secondary { background: #7f8c8d; color: #fff; }
+.btn-link { background: #34495e; color: #fff; text-decoration: none; }
 #status { font-size: 12px; color: #bdc3c7; min-width: 120px; }
 
 #tool-tabs {
@@ -249,6 +250,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   <input id="search-input" type="text" placeholder="Search gene&hellip;" autocomplete="off">
   <button class="btn btn-primary"   id="search-btn">Search</button>
   <button class="btn btn-secondary" id="clear-btn">Clear all</button>
+  <a class="btn btn-link" href="https://github.com/niekwit/crispr-screens" target="_blank" rel="noopener noreferrer">GitHub</a>
+  <a class="btn btn-link" href="https://crispr-screens.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer">Docs</a>
   <span id="status"></span>
 </div>
 
