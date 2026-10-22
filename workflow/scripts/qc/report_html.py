@@ -9,6 +9,7 @@ import base64
 import logging
 from string import Template
 
+import plotly.graph_objects as go
 import plotly.offline
 
 TAB_TEMPLATE = Template(
@@ -111,7 +112,11 @@ function renderPanel(id) {
     Plotly.Plots.resize(id);
     return;
   }
-  Plotly.newPlot(id, FIGS[id].data, FIGS[id].layout, { responsive: true, displaylogo: false });
+  Plotly.newPlot(id, FIGS[id].data, FIGS[id].layout, {
+    responsive: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ["lasso2d", "select2d", "toImage"],
+  });
   rendered.add(id);
 }
 
@@ -132,8 +137,12 @@ const firstTab = document.querySelector(".tab");
 if (firstTab) activateTab(firstTab);
 
 document.querySelectorAll(".btn-png").forEach(btn => {
-  btn.addEventListener("click", () => {
-    Plotly.downloadImage(btn.dataset.div, { format: "png", filename: btn.dataset.filename, scale: 2 });
+  btn.addEventListener("click", async () => {
+    const div = document.getElementById(btn.dataset.div);
+    const hasMenu = div.layout.updatemenus && div.layout.updatemenus.length > 0;
+    if (hasMenu) await Plotly.relayout(div, { "updatemenus[0].visible": false });
+    await Plotly.downloadImage(div, { format: "png", filename: btn.dataset.filename, scale: 2 });
+    if (hasMenu) await Plotly.relayout(div, { "updatemenus[0].visible": true });
   });
 });
 </script>
@@ -148,8 +157,16 @@ def _encode_csv(df, filename):
 
 
 def _encode_pdf(fig, filename):
+    # Interactive-only controls (e.g. the bar-sort dropdown) have no place
+    # in a static export, so strip them from a copy before rendering, along
+    # with the extra top margin reserved for the dropdown.
+    export_fig = go.Figure(fig)
+    had_menu = bool(export_fig.layout.updatemenus)
+    export_fig.layout.updatemenus = []  # update_layout(updatemenus=[]) is a no-op
+    if had_menu:
+        export_fig.update_layout(margin=dict(t=60, b=80, l=60, r=30))
     try:
-        pdf_bytes = fig.to_image(format="pdf")
+        pdf_bytes = export_fig.to_image(format="pdf")
     except Exception as exc:  # pragma: no cover - depends on kaleido install
         logging.warning(f"Could not render PDF for {filename}: {exc}")
         return None, filename
