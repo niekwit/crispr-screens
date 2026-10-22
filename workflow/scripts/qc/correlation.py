@@ -37,8 +37,14 @@ def build(counts, sample_cols, samples):
             hovertemplate="<b>%{x} vs %{y}</b><br>r = %{z:.3f}<extra></extra>",
         )
     )
-    fig.update_xaxes(tickangle=45, showgrid=False)
-    fig.update_yaxes(autorange="reversed", showgrid=False)
+    fig.update_xaxes(tickangle=45, showgrid=False, constrain="domain")
+    fig.update_yaxes(
+        autorange="reversed",
+        showgrid=False,
+        scaleanchor="x",
+        scaleratio=1,
+        constrain="domain",
+    )
     style_fig(
         fig,
         height=max(450, 80 * len(samples) + 150),
