@@ -1,6 +1,6 @@
-"""Build a single interactive HTML QC report (alignment rate, sequence
-coverage, Gini index, missed sgRNAs, read count distribution) and the
-alignment-rates.csv file consumed by ngs-tracker.
+"""Build a single interactive HTML QC report (overview, alignment rate,
+sequence coverage, Gini index, missed sgRNAs, read count distribution) and
+the alignment-rates.csv file consumed by ngs-tracker.
 
 Each metric lives in its own module under qc/ (one dict with id, title,
 description, fig and df) so new QC metrics can be added without touching
@@ -12,7 +12,15 @@ import os
 
 import pandas as pd
 
-from qc import alignment, coverage, count_distribution, gini, missed_sgrnas, report_html
+from qc import (
+    alignment,
+    coverage,
+    count_distribution,
+    gini,
+    missed_sgrnas,
+    report_html,
+    summary,
+)
 from qc.common import clean_sample_name
 
 log = snakemake.log[0]
@@ -42,14 +50,30 @@ sample_cols = list(counts.columns[2:])
 samples = [clean_sample_name(c) for c in sample_cols]
 
 # ── Assemble report ───────────────────────────────────────────────────────────
-sections = [
-    alignment_section,
-    coverage.build(counts, sample_cols, samples, fasta_file),
-    gini.build(counts, sample_cols, samples),
-    missed_sgrnas.build(counts, sample_cols, samples),
-    count_distribution.build(counts, sample_cols, samples, output_count_dist_csv),
-]
+coverage_section = coverage.build(counts, sample_cols, samples, fasta_file)
+gini_section = gini.build(counts, sample_cols, samples)
+missed_section = missed_sgrnas.build(counts, sample_cols, samples)
+count_dist_section = count_distribution.build(
+    counts, sample_cols, samples, output_count_dist_csv
+)
 logging.info(f"Written count distribution stats to {output_count_dist_csv}")
+
+summary_section = summary.build(
+    alignment_section,
+    coverage_section,
+    gini_section,
+    missed_section,
+    count_dist_section,
+)
+
+sections = [
+    summary_section,
+    alignment_section,
+    coverage_section,
+    gini_section,
+    missed_section,
+    count_dist_section,
+]
 
 html = report_html.render(sections)
 

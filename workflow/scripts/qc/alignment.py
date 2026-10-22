@@ -46,6 +46,9 @@ def build(log_files, output_csv):
         y_range=[0, 100],
         flagged=flagged,
     )
+    # Added after the CSV write above so the ngs-tracker-facing file keeps
+    # only its original (sample, mapping_rate) columns.
+    df = df.assign(flagged=flagged)
     return dict(
         id="alignment-rate",
         title="Alignment rate",
