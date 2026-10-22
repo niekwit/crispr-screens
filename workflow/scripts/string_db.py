@@ -1,5 +1,7 @@
 import io
 import logging
+import re
+
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
@@ -138,8 +140,18 @@ svg_params = {**params, "block_structure_pics_in_bubbles": 1}
 svg_response = session.post(network_url, data=svg_params, timeout=60)
 
 if svg_response.status_code == 200:
+    # STRING always draws a radial-gradient "3D bubble" highlight circle on
+    # top of each flat node circle (no API parameter disables it, unlike
+    # the structure thumbnails above), which reads as a border/ring around
+    # otherwise-flat nodes. Strip those overlay circles for a truly flat
+    # look; the unused gradient <defs> they reference are harmless to leave.
+    svg_text = re.sub(
+        r"<circle[^>]*fill='url\(#bubble_gradient[^']*'[^>]*/>",
+        "",
+        svg_response.text,
+    )
     with open(svg_output, "w") as f:
-        f.write(svg_response.text)
+        f.write(svg_text)
     logging.info(f"Saved network SVG to {svg_output}.")
 else:
     raise RuntimeError(
