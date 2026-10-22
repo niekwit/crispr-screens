@@ -21,6 +21,7 @@ pathway_data = snakemake.wildcards["pathway_data"]
 results_txt = snakemake.input["txt"]
 svg_output = snakemake.output["svg"]
 csv_output = snakemake.output["csv"]
+id_mapping_output = snakemake.output["id_mapping"]
 fdr_cutoff = snakemake.config["stats"]["string_db"]["fdr"]
 top_genes = snakemake.config["stats"]["string_db"]["top_genes"]
 organism = snakemake.config["lib_info"]["species"]
@@ -109,12 +110,37 @@ retry = Retry(
 session = requests.Session()
 session.mount("https://", HTTPAdapter(max_retries=retry))
 
-# Query the STRING Enrichment endpoint
-enrichment_url = "https://string-db.org/api/tsv/enrichment"
 params = {
     "identifiers": genes_payload,
     "species": taxon_id,
 }
+
+# STRING resolves each submitted identifier to its current canonical gene
+# symbol (e.g. the deprecated alias FAM192A resolves to PSME3IP1), and that
+# resolved name — not our submitted identifier — is what labels the node in
+# the network SVG. Fetch that mapping so results_report can look up a
+# node's stats by the name STRING actually displays.
+id_mapping_url = "https://string-db.org/api/tsv/get_string_ids"
+id_mapping_response = session.post(id_mapping_url, data=params, timeout=60)
+
+if id_mapping_response.status_code == 200:
+    mapping_df = pd.read_csv(io.StringIO(id_mapping_response.text), sep="\t")
+    mapping_df["query_gene"] = mapping_df["queryIndex"].apply(lambda i: genes[i])
+    mapping_df = mapping_df[["query_gene", "preferredName"]].rename(
+        columns={"preferredName": "preferred_name"}
+    )
+    mapping_df.to_csv(id_mapping_output, index=False)
+    logging.info(
+        f"Saved {len(mapping_df)} resolved gene identifiers to {id_mapping_output}."
+    )
+else:
+    raise RuntimeError(
+        f"STRING-db identifier resolution request failed with status "
+        f"{id_mapping_response.status_code}: {id_mapping_response.text}"
+    )
+
+# Query the STRING Enrichment endpoint
+enrichment_url = "https://string-db.org/api/tsv/enrichment"
 
 response = session.post(enrichment_url, data=params, timeout=60)
 

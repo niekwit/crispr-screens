@@ -30,6 +30,8 @@ mageck_entries = (
         snakemake.input["mageck_string_depleted"],
         snakemake.input["mageck_string_enriched_svg"],
         snakemake.input["mageck_string_depleted_svg"],
+        snakemake.input["mageck_string_enriched_id_mapping"],
+        snakemake.input["mageck_string_depleted_id_mapping"],
         mageck_pairs,
     )
     if mageck_pairs
@@ -55,6 +57,8 @@ drugz_entries = (
         snakemake.input["drugz_string_depleted"],
         snakemake.input["drugz_string_enriched_svg"],
         snakemake.input["drugz_string_depleted_svg"],
+        snakemake.input["drugz_string_enriched_id_mapping"],
+        snakemake.input["drugz_string_depleted_id_mapping"],
         drugz_comparisons,
     )
     if drugz_comparisons
@@ -67,6 +71,7 @@ bagel2_entries = (
         snakemake.input["bagel2_txt"],
         snakemake.input["bagel2_string_depleted"],
         snakemake.input["bagel2_string_depleted_svg"],
+        snakemake.input["bagel2_string_depleted_id_mapping"],
         bagel2_comparisons,
     )
     if bagel2_comparisons

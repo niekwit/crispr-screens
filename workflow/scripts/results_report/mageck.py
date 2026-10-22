@@ -14,12 +14,14 @@ def build_entries(
     string_depleted_files,
     string_enriched_svg_files,
     string_depleted_svg_files,
+    string_enriched_id_mapping_files,
+    string_depleted_id_mapping_files,
     pairs,
 ):
     """pairs: list of (comparison, cnv) tuples, positionally matching
     txt_files / string_enriched_files / string_depleted_files (the latter
-    two, and their _svg counterparts, are empty lists when STRING-db is
-    disabled for that direction)."""
+    two, and their _svg/_id_mapping counterparts, are empty lists when
+    STRING-db is disabled for that direction)."""
     entries = []
     for i, (comparison, cnv) in enumerate(pairs):
         txt = txt_files[i]
@@ -57,6 +59,16 @@ def build_entries(
             if string_depleted_files
             else []
         )
+        enriched_id_mapping = (
+            common.load_id_mapping(string_enriched_id_mapping_files[i])
+            if string_enriched_id_mapping_files
+            else {}
+        )
+        depleted_id_mapping = (
+            common.load_id_mapping(string_depleted_id_mapping_files[i])
+            if string_depleted_id_mapping_files
+            else {}
+        )
 
         key = common.slugify(f"mageck__{cnv}__{comparison}")
         hovertemplate = (
@@ -83,6 +95,7 @@ def build_entries(
                 hovertemplate=hovertemplate,
                 terms=enriched_terms,
                 direction="enriched",
+                id_mapping=enriched_id_mapping,
             ),
             common.build_svg_panel(
                 div_id=f"{key}-enriched-svg",
@@ -108,6 +121,7 @@ def build_entries(
                 hovertemplate=hovertemplate,
                 terms=depleted_terms,
                 direction="depleted",
+                id_mapping=depleted_id_mapping,
             ),
             common.build_svg_panel(
                 div_id=f"{key}-depleted-svg",

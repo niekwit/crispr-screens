@@ -14,6 +14,8 @@ def build_entries(
     string_depleted_files,
     string_enriched_svg_files,
     string_depleted_svg_files,
+    string_enriched_id_mapping_files,
+    string_depleted_id_mapping_files,
     comparisons,
 ):
     entries = []
@@ -54,6 +56,16 @@ def build_entries(
             if string_depleted_files
             else []
         )
+        enriched_id_mapping = (
+            common.load_id_mapping(string_enriched_id_mapping_files[i])
+            if string_enriched_id_mapping_files
+            else {}
+        )
+        depleted_id_mapping = (
+            common.load_id_mapping(string_depleted_id_mapping_files[i])
+            if string_depleted_id_mapping_files
+            else {}
+        )
 
         key = common.slugify(f"drugz__{comparison}")
         hovertemplate = (
@@ -80,6 +92,7 @@ def build_entries(
                 hovertemplate=hovertemplate,
                 terms=depleted_terms,
                 direction="depleted",
+                id_mapping=depleted_id_mapping,
             ),
             common.build_svg_panel(
                 div_id=f"{key}-depleted-svg",
@@ -105,6 +118,7 @@ def build_entries(
                 hovertemplate=hovertemplate,
                 terms=enriched_terms,
                 direction="enriched",
+                id_mapping=enriched_id_mapping,
             ),
             common.build_svg_panel(
                 div_id=f"{key}-enriched-svg",

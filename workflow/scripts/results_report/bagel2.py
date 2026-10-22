@@ -13,7 +13,11 @@ from . import common
 
 
 def build_entries(
-    txt_files, string_depleted_files, string_depleted_svg_files, comparisons
+    txt_files,
+    string_depleted_files,
+    string_depleted_svg_files,
+    string_depleted_id_mapping_files,
+    comparisons,
 ):
     entries = []
     for i, comparison in enumerate(comparisons):
@@ -31,6 +35,11 @@ def build_entries(
             common.load_string_terms(string_depleted_files[i])
             if string_depleted_files
             else []
+        )
+        id_mapping = (
+            common.load_id_mapping(string_depleted_id_mapping_files[i])
+            if string_depleted_id_mapping_files
+            else {}
         )
 
         key = common.slugify(f"bagel2__{comparison}")
@@ -51,6 +60,7 @@ def build_entries(
             ),
             terms=terms,
             direction="depleted",
+            id_mapping=id_mapping,
         )
         svg_panel = common.build_svg_panel(
             div_id=f"{key}-depleted-svg",

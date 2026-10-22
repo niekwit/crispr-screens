@@ -111,6 +111,7 @@ rule string_db_bagel2:
     output:
         svg="results/bagel2/stringdb/{comparison}/{pathway_data}/pathway_analysis.svg",
         csv="results/bagel2/stringdb/{comparison}/{pathway_data}/pathway_analysis.csv",
+        id_mapping="results/bagel2/stringdb/{comparison}/{pathway_data}/id_mapping.csv",
     log:
         "logs/stringdb/bagel2/{comparison}_{pathway_data}.log",
     conda:

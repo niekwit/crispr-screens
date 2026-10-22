@@ -207,6 +207,14 @@ def interactive_results_report_input():
     mageck_string_depleted_svg = [
         p.replace(".csv", ".svg") for p in mageck_string_depleted
     ]
+    mageck_string_enriched_id_mapping = [
+        p.replace("pathway_analysis.csv", "id_mapping.csv")
+        for p in mageck_string_enriched
+    ]
+    mageck_string_depleted_id_mapping = [
+        p.replace("pathway_analysis.csv", "id_mapping.csv")
+        for p in mageck_string_depleted
+    ]
 
     drugz_txt = [f"results/drugz/{c}.txt" for c in drugz_comparisons]
     drugz_string_enriched = (
@@ -231,6 +239,14 @@ def interactive_results_report_input():
     drugz_string_depleted_svg = [
         p.replace(".csv", ".svg") for p in drugz_string_depleted
     ]
+    drugz_string_enriched_id_mapping = [
+        p.replace("pathway_analysis.csv", "id_mapping.csv")
+        for p in drugz_string_enriched
+    ]
+    drugz_string_depleted_id_mapping = [
+        p.replace("pathway_analysis.csv", "id_mapping.csv")
+        for p in drugz_string_depleted
+    ]
 
     bagel2_txt = [f"results/bagel2/{c}/{c}.pr" for c in bagel2_comparisons]
     bagel2_string_depleted = (
@@ -244,6 +260,10 @@ def interactive_results_report_input():
     bagel2_string_depleted_svg = [
         p.replace(".csv", ".svg") for p in bagel2_string_depleted
     ]
+    bagel2_string_depleted_id_mapping = [
+        p.replace("pathway_analysis.csv", "id_mapping.csv")
+        for p in bagel2_string_depleted
+    ]
 
     return {
         "mageck_txt": mageck_txt,
@@ -252,14 +272,19 @@ def interactive_results_report_input():
         "mageck_string_depleted": mageck_string_depleted,
         "mageck_string_enriched_svg": mageck_string_enriched_svg,
         "mageck_string_depleted_svg": mageck_string_depleted_svg,
+        "mageck_string_enriched_id_mapping": mageck_string_enriched_id_mapping,
+        "mageck_string_depleted_id_mapping": mageck_string_depleted_id_mapping,
         "drugz_txt": drugz_txt,
         "drugz_string_enriched": drugz_string_enriched,
         "drugz_string_depleted": drugz_string_depleted,
         "drugz_string_enriched_svg": drugz_string_enriched_svg,
         "drugz_string_depleted_svg": drugz_string_depleted_svg,
+        "drugz_string_enriched_id_mapping": drugz_string_enriched_id_mapping,
+        "drugz_string_depleted_id_mapping": drugz_string_depleted_id_mapping,
         "bagel2_txt": bagel2_txt,
         "bagel2_string_depleted": bagel2_string_depleted,
         "bagel2_string_depleted_svg": bagel2_string_depleted_svg,
+        "bagel2_string_depleted_id_mapping": bagel2_string_depleted_id_mapping,
     }
 
 

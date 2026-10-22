@@ -192,6 +192,7 @@ rule string_db:
     output:
         svg="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.svg",
         csv="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.csv",
+        id_mapping="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/id_mapping.csv",
     log:
         "logs/stringdb/mageck/{cnv}/{comparison}_{pathway_data}.log",
     conda:

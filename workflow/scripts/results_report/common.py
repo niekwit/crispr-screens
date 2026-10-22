@@ -55,6 +55,21 @@ def load_string_terms(path):
         return []
 
 
+def load_id_mapping(path):
+    """query_gene -> preferred_name, as resolved by STRING (see
+    string_db.py) — the preferred name is what labels a node in the
+    network SVG, which can differ from our submitted identifier (e.g. a
+    deprecated alias resolving to its current official symbol)."""
+    if not path or not os.path.exists(path):
+        return {}
+    try:
+        df = pd.read_csv(path)
+        return dict(zip(df["query_gene"].astype(str), df["preferred_name"].astype(str)))
+    except Exception as exc:  # pragma: no cover - defensive
+        logging.warning(f"Could not load STRING-db id mapping from {path}: {exc}")
+        return {}
+
+
 def _render_hover_html(hovertemplate, customdata_cols, row):
     """Renders the same per-point hover text used by the Plotly scatter
     (minus the %{customdata[i]} placeholders) as plain HTML, so the STRING
@@ -80,6 +95,7 @@ def build_plot(
     hovertemplate,
     terms,
     direction,
+    id_mapping=None,
 ):
     """One Scattergl figure + the JS payload needed to drive it (gene
     search, click-to-label, STRING-db term highlighting)."""
@@ -116,6 +132,11 @@ def build_plot(
         str(r[id_col]): _render_hover_html(hovertemplate, customdata_cols, r)
         for _, r in df.iterrows()
     }
+    # Also key by the name STRING actually displays on the node, when it
+    # differs from our submitted identifier (see load_id_mapping).
+    for query_gene, preferred_name in (id_mapping or {}).items():
+        if query_gene in hover_by_gene and preferred_name not in hover_by_gene:
+            hover_by_gene[preferred_name] = hover_by_gene[query_gene]
 
     return {
         "div_id": div_id,
