@@ -1,6 +1,6 @@
 """Build a single interactive HTML QC report (overview, alignment rate,
-sequence coverage, Gini index, missed sgRNAs, read count distribution) and
-the alignment-rates.csv file consumed by ngs-tracker.
+sequence coverage, Gini index, missed sgRNAs, read count distribution,
+sgRNA abundance) and the alignment-rates.csv file consumed by ngs-tracker.
 
 Each metric lives in its own module under qc/ (one dict with id, title,
 description, fig and df) so new QC metrics can be added without touching
@@ -13,6 +13,7 @@ import os
 import pandas as pd
 
 from qc import (
+    abundance,
     alignment,
     coverage,
     count_distribution,
@@ -57,6 +58,7 @@ count_dist_section = count_distribution.build(
     counts, sample_cols, samples, output_count_dist_csv
 )
 logging.info(f"Written count distribution stats to {output_count_dist_csv}")
+abundance_section = abundance.build(counts, sample_cols, samples)
 
 summary_section = summary.build(
     alignment_section,
@@ -73,6 +75,7 @@ sections = [
     gini_section,
     missed_section,
     count_dist_section,
+    abundance_section,
 ]
 
 html = report_html.render(sections)
