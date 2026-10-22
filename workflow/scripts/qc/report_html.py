@@ -12,6 +12,15 @@ from string import Template
 import plotly.graph_objects as go
 import plotly.offline
 
+# kaleido's chromium management (choreographer) logs noisily at DEBUG/INFO,
+# including from background threads and __del__ finalizers. Left alone,
+# those messages propagate to the root logger and reach our FileHandler,
+# where a finalizer's log call can fire mid-flush (via GC) and crash with
+# "reentrant call inside <_io.BufferedWriter>". Harmless but noisy — keep
+# it quiet instead.
+logging.getLogger("choreographer").setLevel(logging.WARNING)
+logging.getLogger("kaleido").setLevel(logging.WARNING)
+
 TAB_TEMPLATE = Template(
     """<button type="button" class="tab" data-target="$div_id">$title</button>"""
 )
