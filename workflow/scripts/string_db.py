@@ -128,9 +128,14 @@ else:
         f"STRING-db enrichment request failed with status {response.status_code}: {response.text}"
     )
 
-# Download network SVG
+# Download network SVG. Nodes get a structure-thumbnail image whenever
+# STRING happens to have 3D structure data for that gene, which looks like
+# a bordered node versus a flat circle for genes without one — purely a
+# per-gene coincidence, not something meaningful to this analysis. Disable
+# it so node appearance is consistent across all networks.
 network_url = "https://string-db.org/api/svg/network"
-svg_response = session.post(network_url, data=params, timeout=60)
+svg_params = {**params, "block_structure_pics_in_bubbles": 1}
+svg_response = session.post(network_url, data=svg_params, timeout=60)
 
 if svg_response.status_code == 200:
     with open(svg_output, "w") as f:
