@@ -8,10 +8,18 @@ import pandas as pd
 from . import common
 
 
-def build_entries(txt_files, string_enriched_files, string_depleted_files, pairs):
+def build_entries(
+    txt_files,
+    string_enriched_files,
+    string_depleted_files,
+    string_enriched_svg_files,
+    string_depleted_svg_files,
+    pairs,
+):
     """pairs: list of (comparison, cnv) tuples, positionally matching
     txt_files / string_enriched_files / string_depleted_files (the latter
-    two are empty lists when STRING-db is disabled for that direction)."""
+    two, and their _svg counterparts, are empty lists when STRING-db is
+    disabled for that direction)."""
     entries = []
     for i, (comparison, cnv) in enumerate(pairs):
         txt = txt_files[i]
@@ -75,6 +83,13 @@ def build_entries(txt_files, string_enriched_files, string_depleted_files, pairs
                 hovertemplate=hovertemplate,
                 terms=enriched_terms,
             ),
+            common.build_svg_panel(
+                div_id=f"{key}-enriched-svg",
+                title="STRING-db enriched network",
+                svg_path=(
+                    string_enriched_svg_files[i] if string_enriched_svg_files else None
+                ),
+            ),
             common.build_plot(
                 div_id=f"{key}-depleted",
                 title=f"Depleted genes — {comparison} ({cnv})",
@@ -90,7 +105,15 @@ def build_entries(txt_files, string_enriched_files, string_depleted_files, pairs
                 hovertemplate=hovertemplate,
                 terms=depleted_terms,
             ),
+            common.build_svg_panel(
+                div_id=f"{key}-depleted-svg",
+                title="STRING-db depleted network",
+                svg_path=(
+                    string_depleted_svg_files[i] if string_depleted_svg_files else None
+                ),
+            ),
         ]
+        plots = [p for p in plots if p is not None]
 
         entries.append(
             dict(

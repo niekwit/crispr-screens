@@ -42,6 +42,18 @@ SIMPLE_PLOT_ROW_TEMPLATE = Template(
 """
 )
 
+# A STRING-db network SVG — not a Plotly figure, just embedded markup.
+SVG_PANEL_TEMPLATE = Template(
+    """
+<div class="plot-row">
+  <div class="plot-wrap plot-wrap-full svg-wrap">
+    <div class="svg-panel-title">$panel_title</div>
+    <div class="svg-embed">$svg_content</div>
+  </div>
+</div>
+"""
+)
+
 ENTRY_PANEL_TEMPLATE = Template(
     """<div class="entry-panel" id="entry-$key">
 $plot_rows
@@ -133,6 +145,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 }
 .plot-wrap { flex: 1; padding: 8px; overflow: hidden; }
 .plot-wrap-full { width: 100%; }
+.svg-wrap { text-align: center; }
+.svg-panel-title {
+  font-size: 13px; font-weight: 600; color: #555;
+  padding: 6px 0 10px; text-align: center;
+}
+.svg-embed svg { max-width: 100%; height: auto; }
 
 .string-panel {
   display: flex; flex-direction: column;
@@ -475,6 +493,14 @@ def render(tools):
             plot_rows = []
             for plot in entry["plots"]:
                 div_id = plot["div_id"]
+                if plot.get("kind") == "svg":
+                    plot_rows.append(
+                        SVG_PANEL_TEMPLATE.substitute(
+                            panel_title=plot["panel_title"],
+                            svg_content=plot["svg"],
+                        )
+                    )
+                    continue
                 figs[div_id] = plot["fig"].to_json()
                 if plot.get("simple"):
                     plot_meta[div_id] = {"simple": True}

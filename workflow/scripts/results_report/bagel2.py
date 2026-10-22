@@ -12,7 +12,9 @@ import pandas as pd
 from . import common
 
 
-def build_entries(txt_files, string_depleted_files, comparisons):
+def build_entries(
+    txt_files, string_depleted_files, string_depleted_svg_files, comparisons
+):
     entries = []
     for i, comparison in enumerate(comparisons):
         txt = txt_files[i]
@@ -49,12 +51,20 @@ def build_entries(txt_files, string_depleted_files, comparisons):
             ),
             terms=terms,
         )
+        svg_panel = common.build_svg_panel(
+            div_id=f"{key}-depleted-svg",
+            title="STRING-db depleted network",
+            svg_path=(
+                string_depleted_svg_files[i] if string_depleted_svg_files else None
+            ),
+        )
+        plots = [p for p in [plot, svg_panel] if p is not None]
 
         entries.append(
             dict(
                 key=key,
                 label=comparison,
-                plots=[plot],
+                plots=plots,
             )
         )
     return entries

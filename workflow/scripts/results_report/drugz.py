@@ -8,7 +8,14 @@ import pandas as pd
 from . import common
 
 
-def build_entries(txt_files, string_enriched_files, string_depleted_files, comparisons):
+def build_entries(
+    txt_files,
+    string_enriched_files,
+    string_depleted_files,
+    string_enriched_svg_files,
+    string_depleted_svg_files,
+    comparisons,
+):
     entries = []
     for i, comparison in enumerate(comparisons):
         txt = txt_files[i]
@@ -73,6 +80,13 @@ def build_entries(txt_files, string_enriched_files, string_depleted_files, compa
                 hovertemplate=hovertemplate,
                 terms=depleted_terms,
             ),
+            common.build_svg_panel(
+                div_id=f"{key}-depleted-svg",
+                title="STRING-db depleted network",
+                svg_path=(
+                    string_depleted_svg_files[i] if string_depleted_svg_files else None
+                ),
+            ),
             common.build_plot(
                 div_id=f"{key}-enriched",
                 title=f"Enriched (suppressor) genes — {comparison}",
@@ -88,7 +102,15 @@ def build_entries(txt_files, string_enriched_files, string_depleted_files, compa
                 hovertemplate=hovertemplate,
                 terms=enriched_terms,
             ),
+            common.build_svg_panel(
+                div_id=f"{key}-enriched-svg",
+                title="STRING-db enriched network",
+                svg_path=(
+                    string_enriched_svg_files[i] if string_enriched_svg_files else None
+                ),
+            ),
         ]
+        plots = [p for p in plots if p is not None]
 
         entries.append(
             dict(

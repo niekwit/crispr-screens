@@ -126,3 +126,22 @@ def build_simple_plot(div_id, title, fig):
         "simple": True,
         "fig": fig,
     }
+
+
+def build_svg_panel(div_id, title, svg_path):
+    """An inline-embedded STRING-db network SVG — not a Plotly figure, so
+    it's rendered as raw markup rather than via Plotly.newPlot."""
+    if not svg_path or not os.path.exists(svg_path):
+        return None
+    try:
+        with open(svg_path) as fh:
+            svg = fh.read()
+    except OSError as exc:  # pragma: no cover - defensive
+        logging.warning(f"Could not read STRING-db SVG {svg_path}: {exc}")
+        return None
+    return {
+        "div_id": div_id,
+        "panel_title": title,
+        "kind": "svg",
+        "svg": svg,
+    }
