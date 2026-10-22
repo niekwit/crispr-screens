@@ -191,6 +191,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   font-size: 12px; margin-left: 5px;
 }
 .plot-wrap-full { width: 100%; }
+/* Cap "simple" plots (e.g. sgRNA rank) to roughly the same rendered width
+   as a STRING-db network SVG (~975-1074px), rather than stretching to the
+   full report width. */
+.plot-wrap-full .plot { max-width: 1000px; margin: 0 auto; }
 .svg-wrap { text-align: center; }
 .svg-panel-title {
   font-size: 13px; font-weight: 600; color: #555;
