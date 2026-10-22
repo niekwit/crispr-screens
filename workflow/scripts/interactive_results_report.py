@@ -1,12 +1,13 @@
 """Build one combined interactive HTML report for every MAGeCK, DrugZ and
-BAGEL2 comparison, replacing the old per-comparison interactive report
-files. Navigate via tool tabs and a per-tool comparison dropdown.
+BAGEL2 comparison (MAGeCK also gets its sgRNA-rank view), replacing the old
+per-comparison interactive report files. Navigate via tool tabs and a
+per-tool comparison dropdown.
 """
 
 import logging
 import os
 
-from results_report import bagel2, drugz, mageck, report_html
+from results_report import bagel2, drugz, mageck, report_html, sgrank
 
 log = snakemake.log[0]
 logging.basicConfig(
@@ -33,6 +34,17 @@ mageck_entries = (
     else []
 )
 logging.info(f"Built {len(mageck_entries)} MAGeCK comparison entries")
+
+mageck_sgrna_txt = snakemake.input["mageck_sgrna_txt"]
+for i, entry in enumerate(mageck_entries):
+    comparison, cnv = mageck_pairs[i]
+    entry["plots"] += sgrank.build_plots(
+        snakemake.input["mageck_txt"][i],
+        mageck_sgrna_txt[i],
+        entry["key"],
+        comparison,
+        cnv,
+    )
 
 drugz_entries = (
     drugz.build_entries(

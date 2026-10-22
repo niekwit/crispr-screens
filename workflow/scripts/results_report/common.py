@@ -114,3 +114,15 @@ def build_plot(
         ],
         "terms": terms,
     }
+
+
+def build_simple_plot(div_id, title, fig):
+    """A plain zoomable/pannable Plotly chart with no STRING-db panel and
+    no gene-search wiring (e.g. a fixed top-N-genes view rather than a
+    searchable scatter of every gene)."""
+    return {
+        "div_id": div_id,
+        "panel_title": title,
+        "simple": True,
+        "fig": fig,
+    }

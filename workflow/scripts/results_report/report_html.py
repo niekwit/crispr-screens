@@ -29,6 +29,19 @@ PLOT_ROW_TEMPLATE = Template(
 """
 )
 
+# A "simple" plot (see common.build_simple_plot) has no STRING-db panel and
+# no fixed height — its figure sets its own layout.height (e.g. the
+# sgRNA-rank view, whose height depends on how many genes are shown).
+SIMPLE_PLOT_ROW_TEMPLATE = Template(
+    """
+<div class="plot-row">
+  <div class="plot-wrap plot-wrap-full">
+    <div id="$div_id" class="plot"></div>
+  </div>
+</div>
+"""
+)
+
 ENTRY_PANEL_TEMPLATE = Template(
     """<div class="entry-panel" id="entry-$key">
 $plot_rows
@@ -119,6 +132,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   border-bottom: 2px solid #e0e4e8;
 }
 .plot-wrap { flex: 1; padding: 8px; overflow: hidden; }
+.plot-wrap-full { width: 100%; }
 
 .string-panel {
   display: flex; flex-direction: column;
@@ -326,6 +340,11 @@ function getOrInitPlot(divId) {
     displaylogo: false,
     modeBarButtonsToRemove: ["lasso2d", "select2d"],
   });
+  if (meta.simple) {
+    const api = { search: () => false, clear: () => {} };
+    plotApis.set(divId, api);
+    return api;
+  }
   const api = initPlot({
     divId,
     genes:       meta.genes,
@@ -457,20 +476,24 @@ def render(tools):
             for plot in entry["plots"]:
                 div_id = plot["div_id"]
                 figs[div_id] = plot["fig"].to_json()
-                plot_meta[div_id] = {
-                    "genes": plot["genes"],
-                    "color_values": plot["color_values"],
-                    "gene_data": plot["gene_data"],
-                    "terms": plot["terms"],
-                    "term_list_id": plot["term_list_id"],
-                }
-                plot_rows.append(
-                    PLOT_ROW_TEMPLATE.substitute(
-                        div_id=div_id,
-                        term_panel_title=plot["term_panel_title"],
-                        term_list_id=plot["term_list_id"],
+                if plot.get("simple"):
+                    plot_meta[div_id] = {"simple": True}
+                    plot_rows.append(SIMPLE_PLOT_ROW_TEMPLATE.substitute(div_id=div_id))
+                else:
+                    plot_meta[div_id] = {
+                        "genes": plot["genes"],
+                        "color_values": plot["color_values"],
+                        "gene_data": plot["gene_data"],
+                        "terms": plot["terms"],
+                        "term_list_id": plot["term_list_id"],
+                    }
+                    plot_rows.append(
+                        PLOT_ROW_TEMPLATE.substitute(
+                            div_id=div_id,
+                            term_panel_title=plot["term_panel_title"],
+                            term_list_id=plot["term_list_id"],
+                        )
                     )
-                )
             entry_panels.append(
                 ENTRY_PANEL_TEMPLATE.substitute(
                     key=entry["key"], plot_rows="\n".join(plot_rows)

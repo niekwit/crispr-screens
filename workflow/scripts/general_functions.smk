@@ -182,6 +182,9 @@ def interactive_results_report_input():
     mageck_txt = [
         f"results/mageck/{c}/{v}/{c}.gene_summary.txt" for c, v in mageck_pairs
     ]
+    mageck_sgrna_txt = [
+        f"results/mageck/{c}/{v}/{c}.sgrna_summary.txt" for c, v in mageck_pairs
+    ]
     mageck_string_enriched = (
         [
             f"results/mageck/stringdb/{v}/{c}/enriched/pathway_analysis.csv"
@@ -229,6 +232,7 @@ def interactive_results_report_input():
 
     return {
         "mageck_txt": mageck_txt,
+        "mageck_sgrna_txt": mageck_sgrna_txt,
         "mageck_string_enriched": mageck_string_enriched,
         "mageck_string_depleted": mageck_string_depleted,
         "drugz_txt": drugz_txt,
