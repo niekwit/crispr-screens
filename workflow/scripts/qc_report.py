@@ -1,6 +1,6 @@
 """Build a single interactive HTML QC report (overview, alignment rate,
 total reads, sequence coverage, Gini index, missed sgRNAs, read count
-distribution, sgRNA abundance, sample correlation) and the
+distribution, sgRNA abundance, sample correlation, PCA) and the
 alignment-rates.csv file consumed by ngs-tracker.
 
 Each metric lives in its own module under qc/ (one dict with id, title,
@@ -21,6 +21,7 @@ from qc import (
     count_distribution,
     gini,
     missed_sgrnas,
+    pca,
     read_counts,
     report_html,
     summary,
@@ -64,6 +65,7 @@ count_dist_section = count_distribution.build(
 logging.info(f"Written count distribution stats to {output_count_dist_csv}")
 abundance_section = abundance.build(counts, sample_cols, samples)
 correlation_section = correlation.build(counts, sample_cols, samples)
+pca_section = pca.build(counts, sample_cols, samples)
 
 summary_section = summary.build(
     alignment_section,
@@ -83,6 +85,7 @@ sections = [
     count_dist_section,
     abundance_section,
     correlation_section,
+    pca_section,
 ]
 
 html = report_html.render(sections)
