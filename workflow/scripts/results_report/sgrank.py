@@ -21,13 +21,35 @@ from scipy.stats import gaussian_kde
 from . import common
 
 TOP_N = 5  # number of top genes to show for enriched/depleted
-ENRICHED_COLOR = "#e41a1c"
-DEPLETED_COLOR = "#377eb8"
+# A gene's rank can disagree with some of its own individual sgRNAs — ticks
+# are coloured by each sgRNA's own LFC sign, not by which direction
+# (enriched/depleted) the surrounding plot is for.
+POS_COLOR = "#e41a1c"  # LFC > 0
+NEG_COLOR = "#377eb8"  # LFC < 0
 ROW_HEIGHT = 0.8
 ROW_GAP = 1.0  # centre-to-centre spacing between gene rows
 
 
-def _rank_plot(df_all, df_top, genes, tick_color, title):
+def _tick_trace(df_subset, row_of, color, name):
+    xs, ys, hover = [], [], []
+    for _, r in df_subset.iterrows():
+        y0 = row_of[r["Gene"]] - ROW_HEIGHT / 2
+        y1 = row_of[r["Gene"]] + ROW_HEIGHT / 2
+        xs += [r["LFC"], r["LFC"], None]
+        ys += [y0, y1, None]
+        hover.append(f"{r['sgrna']} ({r['Gene']})<br>LFC: {r['LFC']:.3f}")
+    return go.Scatter(
+        x=xs,
+        y=ys,
+        mode="lines",
+        line=dict(color=color, width=1.5),
+        name=name,
+        hoverinfo="skip",
+        showlegend=True,
+    )
+
+
+def _rank_plot(df_all, df_top, genes, title):
     n_genes = len(genes)
     x_min, x_max = df_all["LFC"].min(), df_all["LFC"].max()
     pad = (x_max - x_min) * 0.02
@@ -62,7 +84,10 @@ def _rank_plot(df_all, df_top, genes, tick_color, title):
     )
 
     # Same reference density repeated as a background shade behind every
-    # gene row (white = low density, black = high density).
+    # gene row (white = low density, black = high density). Without ygap,
+    # Plotly sizes each cell to the full row-to-row spacing (ROW_GAP),
+    # which paints straight through the gap between adjacent rows' outline
+    # rectangles instead of stopping at each one's own border.
     fig.add_trace(
         go.Heatmap(
             x=grid,
@@ -71,32 +96,29 @@ def _rank_plot(df_all, df_top, genes, tick_color, title):
             colorscale=[[0, "white"], [1, "black"]],
             showscale=False,
             hoverinfo="skip",
+            ygap=4,
         ),
         row=2,
         col=1,
     )
 
-    # One sgRNA tick (vertical segment) per row, drawn as a single traced
-    # polyline with None-separated breaks between segments.
-    xs, ys, hover = [], [], []
-    for _, r in df_top.iterrows():
-        y0 = row_of[r["Gene"]] - ROW_HEIGHT / 2
-        y1 = row_of[r["Gene"]] + ROW_HEIGHT / 2
-        xs += [r["LFC"], r["LFC"], None]
-        ys += [y0, y1, None]
-        hover.append(f"{r['sgrna']} ({r['Gene']})<br>LFC: {r['LFC']:.3f}")
-    fig.add_trace(
-        go.Scatter(
-            x=xs,
-            y=ys,
-            mode="lines",
-            line=dict(color=tick_color, width=1.5),
-            hoverinfo="skip",
-            showlegend=False,
-        ),
-        row=2,
-        col=1,
-    )
+    # One sgRNA tick (vertical segment) per row, as two traced polylines
+    # (None-separated breaks between segments) split by each sgRNA's own
+    # LFC sign, not by the plot's overall enriched/depleted direction.
+    pos = df_top[df_top["LFC"] >= 0]
+    neg = df_top[df_top["LFC"] < 0]
+    if len(pos):
+        fig.add_trace(
+            _tick_trace(pos, row_of, POS_COLOR, "sgRNA LFC > 0"), row=2, col=1
+        )
+    if len(neg):
+        fig.add_trace(
+            _tick_trace(neg, row_of, NEG_COLOR, "sgRNA LFC < 0"), row=2, col=1
+        )
+    hover = [
+        f"{r['sgrna']} ({r['Gene']})<br>LFC: {r['LFC']:.3f}"
+        for _, r in df_top.iterrows()
+    ]
     # Invisible markers at each tick's midpoint purely to carry hover text.
     fig.add_trace(
         go.Scatter(
@@ -140,7 +162,8 @@ def _rank_plot(df_all, df_top, genes, tick_color, title):
         template="plotly_white",
         height=180 + 45 * n_genes,
         margin=dict(t=60, b=60, l=100, r=20),
-        showlegend=False,
+        showlegend=True,
+        legend=dict(orientation="h", x=0.5, xanchor="center", y=1.0, yanchor="bottom"),
     )
     return fig
 
@@ -170,7 +193,6 @@ def build_plots(gene_txt, sgrna_txt, key, comparison, cnv):
             data,
             df_enriched,
             genes_enriched,
-            ENRICHED_COLOR,
             f"sgRNA rank — enriched genes — {comparison} ({cnv})",
         )
         plots.append(
@@ -186,7 +208,6 @@ def build_plots(gene_txt, sgrna_txt, key, comparison, cnv):
             data,
             df_depleted,
             genes_depleted,
-            DEPLETED_COLOR,
             f"sgRNA rank — depleted genes — {comparison} ({cnv})",
         )
         plots.append(
