@@ -1,11 +1,12 @@
-"""CRISPRcleanR QC diagnostics (ROC, precision-recall, depletion-rank), one
-comparison switchable via an in-figure dropdown per plot, same as every
-other QC section — built from the curve/rank data crisprcleaner.R exports
-per comparison, not pre-rendered PDFs (see workflow/scripts/crisprcleaner.R;
-the statistics themselves — ROC/PR curves, the 5% FDR rank threshold — are
-computed there by the CRISPRcleanR/pROC packages, not re-derived here).
+"""CRISPRcleanR QC diagnostics (ROC, precision-recall, depletion-rank), all
+three grouped under one "CRISPRcleanR" tab, each switchable by comparison
+via its own in-figure dropdown — built from the curve/rank data
+crisprcleaner.R exports per comparison, not pre-rendered PDFs (see
+workflow/scripts/crisprcleaner.R; the statistics themselves — ROC/PR
+curves, the 5% FDR rank threshold — are computed there by the
+CRISPRcleanR/pROC packages, not re-derived here).
 
-Three sections are returned, only when the crisprcleanr rule actually ran
+build() returns one section, only when the crisprcleanr rule actually ran
 for at least one comparison (see general_functions.smk's
 crisprcleanr_comparisons())."""
 
@@ -360,4 +361,28 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
         fig=fig,
         df=pd.concat(all_gene_dfs, ignore_index=True),
         filename="crisprcleanr-depletion-rank",
+    )
+
+
+def build(
+    comparisons,
+    roc_csv_paths,
+    pr_csv_paths,
+    drnk_gene_csv_paths,
+    drnk_signature_csv_paths,
+):
+    """All three plots under one "CRISPRcleanR" tab (see qc/report_html.py's
+    "multi"-kind section handling) rather than three separate top-level
+    tabs."""
+    return dict(
+        id="crisprcleanr",
+        title="CRISPRcleanR",
+        kind="multi",
+        subsections=[
+            build_roc(comparisons, roc_csv_paths),
+            build_pr(comparisons, pr_csv_paths),
+            build_depletion_rank(
+                comparisons, drnk_gene_csv_paths, drnk_signature_csv_paths
+            ),
+        ],
     )

@@ -6,6 +6,7 @@ report shows one figure at a time, selected via tabs along the top.
 """
 
 import base64
+import json
 import logging
 from string import Template
 
@@ -41,6 +42,35 @@ PANEL_TEMPLATE = Template(
   <p class="desc">$description</p>
   <div id="$div_id" class="plot"></div>
 </section>
+"""
+)
+
+# A "multi"-kind section (see e.g. qc/crisprcleanr.py's build()) groups
+# several plots under one tab instead of giving each its own — rendered as
+# one plain panel holding several card-styled sub-panels, each otherwise
+# identical to a PANEL_TEMPLATE card.
+MULTI_PANEL_TEMPLATE = Template(
+    """
+<section class="panel" id="panel-$div_id">
+$sub_panels
+</section>
+"""
+)
+
+SUB_PANEL_TEMPLATE = Template(
+    """
+<div class="card sub-panel">
+  <div class="card-head">
+    <h2>$title</h2>
+    <div class="actions">
+      <button class="btn btn-png" data-div="$div_id" data-filename="$filename">PNG</button>
+      $pdf_button
+      <a class="btn btn-data" href="$data_uri" download="$filename.csv">Data (CSV)</a>
+    </div>
+  </div>
+  <p class="desc">$description</p>
+  <div id="$div_id" class="plot"></div>
+</div>
 """
 )
 
@@ -98,6 +128,8 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px; }
 .btn[disabled] { background: #cbd5e1; cursor: not-allowed; }
 .desc { font-size: 15px; color: #475569; margin: 10px 0 16px; max-width: 900px; line-height: 1.6; }
 .plot { width: 100%; }
+.sub-panel { margin-bottom: 20px; }
+.sub-panel:last-child { margin-bottom: 0; }
 </style>
 </head>
 <body>
@@ -116,9 +148,10 @@ $plotly_js
 </script>
 <script>
 const FIGS = $figs_json;
+const SUBPLOTS = $subplot_map_json;  // tab div_id -> [sub-panel div_ids], for "multi" sections
 const rendered = new Set();
 
-function renderPanel(id) {
+function renderOne(id) {
   if (rendered.has(id)) {
     Plotly.Plots.resize(id);
     return;
@@ -129,6 +162,15 @@ function renderPanel(id) {
     modeBarButtonsToRemove: ["lasso2d", "select2d", "toImage"],
   });
   rendered.add(id);
+}
+
+function renderPanel(id) {
+  const subIds = SUBPLOTS[id];
+  if (subIds) {
+    subIds.forEach(renderOne);
+  } else {
+    renderOne(id);
+  }
 }
 
 function activateTab(tab) {
@@ -207,13 +249,52 @@ def _encode_pdf(fig, filename):
     return f"data:application/pdf;base64,{payload}", filename
 
 
+def _sub_panel_html(section, div_id):
+    data_uri, _ = _encode_csv(section["df"], f"{section['filename']}.csv")
+    pdf_uri, pdf_filename = _encode_pdf(section["fig"], f"{section['filename']}.pdf")
+    pdf_button = (
+        f'<a class="btn btn-pdf" href="{pdf_uri}" download="{pdf_filename}">PDF</a>'
+        if pdf_uri
+        else '<button class="btn btn-pdf" disabled title="PDF export unavailable">PDF</button>'
+    )
+    return SUB_PANEL_TEMPLATE.substitute(
+        title=section["title"],
+        div_id=div_id,
+        filename=section["filename"],
+        pdf_button=pdf_button,
+        data_uri=data_uri,
+        description=section["description"],
+    )
+
+
 def render(sections):
     plotly_js = plotly.offline.get_plotlyjs()
 
     tab_html = []
     panel_html = []
+    plot_sections = []
+    subplot_map = {}
     for section in sections:
         div_id = f"fig-{section['id']}"
+        tab_html.append(TAB_TEMPLATE.substitute(div_id=div_id, title=section["title"]))
+
+        if section.get("kind") == "multi":
+            sub_ids = []
+            sub_panel_html = []
+            for sub in section["subsections"]:
+                sub_div_id = f"fig-{sub['id']}"
+                sub_ids.append(sub_div_id)
+                plot_sections.append(sub)
+                sub_panel_html.append(_sub_panel_html(sub, sub_div_id))
+            subplot_map[div_id] = sub_ids
+            panel_html.append(
+                MULTI_PANEL_TEMPLATE.substitute(
+                    div_id=div_id, sub_panels="\n".join(sub_panel_html)
+                )
+            )
+            continue
+
+        plot_sections.append(section)
         data_uri, _ = _encode_csv(section["df"], f"{section['filename']}.csv")
         pdf_uri, pdf_filename = _encode_pdf(
             section["fig"], f"{section['filename']}.pdf"
@@ -223,7 +304,6 @@ def render(sections):
             if pdf_uri
             else '<button class="btn btn-pdf" disabled title="PDF export unavailable">PDF</button>'
         )
-        tab_html.append(TAB_TEMPLATE.substitute(div_id=div_id, title=section["title"]))
         panel_html.append(
             PANEL_TEMPLATE.substitute(
                 title=section["title"],
@@ -237,7 +317,7 @@ def render(sections):
 
     figs_json = (
         "{"
-        + ", ".join(f'"fig-{s["id"]}": {s["fig"].to_json()}' for s in sections)
+        + ", ".join(f'"fig-{s["id"]}": {s["fig"].to_json()}' for s in plot_sections)
         + "}"
     )
 
@@ -246,4 +326,5 @@ def render(sections):
         panels="\n".join(panel_html),
         plotly_js=plotly_js,
         figs_json=figs_json,
+        subplot_map_json=json.dumps(subplot_map),
     )
