@@ -70,15 +70,19 @@ rule qc_report:
         logs=expand("logs/count/{sample}.log", sample=SAMPLES),
         counts="results/count/counts-aggregated.tsv",
         crisprcleanr_roc=expand(
-            "results/crisprcleanr/roc_{comparison}.pdf",
+            "results/crisprcleanr/roc_{comparison}.csv",
             comparison=crisprcleanr_comparisons(),
         ),
         crisprcleanr_pr=expand(
-            "results/crisprcleanr/pr_{comparison}.pdf",
+            "results/crisprcleanr/pr_{comparison}.csv",
             comparison=crisprcleanr_comparisons(),
         ),
-        crisprcleanr_drnk=expand(
-            "results/crisprcleanr/depletion_rank_{comparison}.pdf",
+        crisprcleanr_drnk_genes=expand(
+            "results/crisprcleanr/depletion_rank_{comparison}_genes.csv",
+            comparison=crisprcleanr_comparisons(),
+        ),
+        crisprcleanr_drnk_signatures=expand(
+            "results/crisprcleanr/depletion_rank_{comparison}_signatures.csv",
             comparison=crisprcleanr_comparisons(),
         ),
     output:

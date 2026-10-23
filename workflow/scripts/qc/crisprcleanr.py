@@ -1,47 +1,340 @@
-"""Embeds the CRISPRcleanR ROC / precision-recall / depletion-rank
-diagnostic PDFs (produced per comparison by workflow/scripts/crisprcleaner.R,
-via the CRISPRcleanR R/Bioconductor package) as a QC report section,
-browsable per comparison.
+"""CRISPRcleanR QC diagnostics (ROC, precision-recall, depletion-rank), one
+comparison switchable via an in-figure dropdown per plot, same as every
+other QC section — built from the curve/rank data crisprcleaner.R exports
+per comparison, not pre-rendered PDFs (see workflow/scripts/crisprcleaner.R;
+the statistics themselves — ROC/PR curves, the 5% FDR rank threshold — are
+computed there by the CRISPRcleanR/pROC packages, not re-derived here).
 
-Unlike the other QC sections, these aren't Plotly figures built from raw
-counts here — they're the plots CRISPRcleanR itself generates, embedded
-as-is (base64 PDF data URIs) so the report stays a single self-contained
-file. Only built when the crisprcleanr rule actually ran for at least one
-comparison (see general_functions.smk's crisprcleanr_comparisons())."""
+Three sections are returned, only when the crisprcleanr rule actually ran
+for at least one comparison (see general_functions.smk's
+crisprcleanr_comparisons())."""
 
-import base64
 import logging
 
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
-def _encode_pdf(path):
-    with open(path, "rb") as fh:
-        payload = base64.b64encode(fh.read()).decode()
-    return f"data:application/pdf;base64,{payload}"
+from .common import style_fig
+
+GENE_COLOR = "#6366f1"  # indigo-500
+SGRNA_COLOR = "#f59e0b"  # amber-500
+DIAGONAL_COLOR = "#94a3b8"  # slate-400
+MAIN_COLOR = "#334155"  # slate-700
+HIT_COLOR = "#2563eb"  # blue-600
+MISS_COLOR = "#cbd5e1"  # slate-300
+THRESHOLD_COLOR = "#dc2626"  # red-600
+
+SIGNATURE_ORDER = [
+    "Ribosomal_Proteins",
+    "DNA_Replication",
+    "RNA_polymerase",
+    "Proteasome",
+    "Spliceosome",
+    "Common_essential",
+    "Non_essential",
+]
+
+CITATION = "Iorio et al. 2018, Genome Biology, doi:10.1186/s13059-018-1459-6"
 
 
-def build(comparisons, roc_pdfs, pr_pdfs, drnk_pdfs):
-    logging.info(f"Embedding CRISPRcleanR plots for {len(comparisons)} comparison(s)")
-    pdfs = {}
-    for comparison, roc, pr, drnk in zip(comparisons, roc_pdfs, pr_pdfs, drnk_pdfs):
-        pdfs[comparison] = {
-            "roc": _encode_pdf(roc),
-            "roc_filename": f"crisprcleanr_roc_{comparison}.pdf",
-            "pr": _encode_pdf(pr),
-            "pr_filename": f"crisprcleanr_pr_{comparison}.pdf",
-            "drnk": _encode_pdf(drnk),
-            "drnk_filename": f"crisprcleanr_depletion_rank_{comparison}.pdf",
-        }
+def _comparison_dropdown(comparisons, n_traces_per_comparison):
+    """A dropdown (Plotly updatemenu) toggling trace visibility between
+    comparisons — every comparison's traces are pre-built and all but the
+    first are hidden; switching just restyles "visible", no server
+    round-trip."""
+    total = len(comparisons) * n_traces_per_comparison
+    buttons = []
+    for i, comparison in enumerate(comparisons):
+        visible = [False] * total
+        start = i * n_traces_per_comparison
+        for j in range(start, start + n_traces_per_comparison):
+            visible[j] = True
+        buttons.append(
+            dict(label=comparison, method="restyle", args=[{"visible": visible}])
+        )
+    return dict(
+        type="dropdown",
+        direction="down",
+        buttons=buttons,
+        x=0,
+        xanchor="left",
+        y=1.15,
+        yanchor="top",
+        showactive=True,
+        bgcolor="#ffffff",
+        bordercolor="#cbd5e1",
+        font=dict(size=13),
+    )
+
+
+def _build_curve_fig(comparisons, dfs, x_col, y_col, x_title, y_title, show_diagonal):
+    """Shared by ROC (x=1-specificity, y=sensitivity) and PR (x=recall,
+    y=precision): two lines per comparison (gene- and sgRNA-level), with a
+    dropdown to switch comparisons when there's more than one."""
+    traces = []
+    for comparison, df in zip(comparisons, dfs):
+        is_first = comparison == comparisons[0]
+        for cls, color in (("gene", GENE_COLOR), ("sgRNA", SGRNA_COLOR)):
+            sub = df[df["class"] == cls].sort_values(x_col)
+            auc = sub["auc"].iloc[0] if len(sub) else float("nan")
+            traces.append(
+                go.Scatter(
+                    x=sub[x_col],
+                    y=sub[y_col],
+                    mode="lines",
+                    name=f"{cls} (AUC={auc:.3f})",
+                    line=dict(color=color, width=2),
+                    visible=is_first,
+                    hovertemplate=(
+                        f"<b>{cls}</b><br>{x_title}: "
+                        "%{x:.3f}<br>"
+                        f"{y_title}: "
+                        "%{y:.3f}<extra></extra>"
+                    ),
+                )
+            )
+
+    fig = go.Figure(data=traces)
+    if show_diagonal:
+        fig.add_trace(
+            go.Scatter(
+                x=[0, 1],
+                y=[0, 1],
+                mode="lines",
+                line=dict(color=DIAGONAL_COLOR, width=1, dash="dash"),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
+
+    updatemenus = []
+    if len(comparisons) > 1:
+        # 2 traces per comparison + the always-visible diagonal (if any),
+        # which _comparison_dropdown's flat indexing doesn't know about —
+        # pad every button's visible array with one more True for it.
+        menu = _comparison_dropdown(comparisons, 2)
+        if show_diagonal:
+            for button in menu["buttons"]:
+                button["args"][0]["visible"].append(True)
+        updatemenus = [menu]
+
+    fig.update_xaxes(title=x_title, range=[0, 1])
+    fig.update_yaxes(title=y_title, range=[0, 1])
+    style_fig(
+        fig,
+        height=550,
+        showlegend=True,
+        updatemenus=updatemenus,
+        margin=dict(t=90 if updatemenus else 60, b=80, l=70, r=30),
+    )
+    return fig, pd.concat(dfs, ignore_index=True)
+
+
+def build_roc(comparisons, csv_paths):
+    logging.info(f"Building CRISPRcleanR ROC plot for {len(comparisons)} comparison(s)")
+    dfs = []
+    for comparison, path in zip(comparisons, csv_paths):
+        df = pd.read_csv(path)
+        # The exported "specificity" column is the true specificity; the
+        # plot wants false-positive rate (1 - specificity) on x.
+        df["fpr"] = 1 - df["specificity"]
+        df["comparison"] = comparison
+        dfs.append(df)
+    fig, df = _build_curve_fig(
+        comparisons,
+        dfs,
+        x_col="fpr",
+        y_col="sensitivity",
+        x_title="1 - Specificity",
+        y_title="Sensitivity (Recall)",
+        show_diagonal=True,
+    )
+    df = df.drop(columns="fpr")
+    return dict(
+        id="crisprcleanr-roc",
+        title="CRISPRcleanR ROC",
+        description=(
+            "ROC curve (gene- and sgRNA-level) for separating essential from "
+            "non-essential genes by corrected log fold-change, from "
+            f"CRISPRcleanR's copy-number correction step ({CITATION})."
+        ),
+        fig=fig,
+        df=df,
+        filename="crisprcleanr-roc",
+    )
+
+
+def build_pr(comparisons, csv_paths):
+    logging.info(f"Building CRISPRcleanR PR plot for {len(comparisons)} comparison(s)")
+    dfs = []
+    for comparison, path in zip(comparisons, csv_paths):
+        df = pd.read_csv(path)
+        df["comparison"] = comparison
+        dfs.append(df)
+    fig, df = _build_curve_fig(
+        comparisons,
+        dfs,
+        x_col="recall",
+        y_col="precision",
+        x_title="Recall",
+        y_title="Precision",
+        show_diagonal=False,
+    )
+    return dict(
+        id="crisprcleanr-pr",
+        title="CRISPRcleanR PR",
+        description=(
+            "Precision-recall curve (gene- and sgRNA-level) for separating "
+            "essential from non-essential genes by corrected log "
+            f"fold-change, from CRISPRcleanR's copy-number correction step "
+            f"({CITATION})."
+        ),
+        fig=fig,
+        df=df,
+        filename="crisprcleanr-pr",
+    )
+
+
+def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
+    logging.info(
+        f"Building CRISPRcleanR depletion-rank plot for {len(comparisons)} comparison(s)"
+    )
+    n_cols = 1 + len(SIGNATURE_ORDER)
+    fig = make_subplots(
+        rows=1,
+        cols=n_cols,
+        shared_yaxes=True,
+        column_widths=[0.5] + [0.5 / len(SIGNATURE_ORDER)] * len(SIGNATURE_ORDER),
+        horizontal_spacing=0.008,
+        subplot_titles=["Depletion profile"]
+        + [s.replace("_", " ") for s in SIGNATURE_ORDER],
+    )
+    base_annotations = [a.to_plotly_json() for a in fig.layout.annotations]
+    # The narrow signature columns can't fit a horizontal title without
+    # overlapping their neighbours — angle them like the original R plot's
+    # rotated column labels (srt=80 in ccr.VisDepAndSig).
+    for annotation in base_annotations[1:]:
+        annotation.update(
+            textangle=-60, xanchor="left", yanchor="bottom", font=dict(size=11)
+        )
+
+    traces_per_comparison = None
+    comparison_annotations = []
+    all_gene_dfs = []
+    for comparison, gpath, spath in zip(
+        comparisons, gene_csv_paths, signature_csv_paths
+    ):
+        genes = pd.read_csv(gpath).sort_values("fc").reset_index(drop=True)
+        genes["rank"] = genes.index + 1
+        genes["comparison"] = comparison
+        all_gene_dfs.append(genes)
+        fdr_rank = genes["fdr5perc_rank"].iloc[0]
+        rank_by_gene = dict(zip(genes["gene"], genes["rank"]))
+        sigs = pd.read_csv(spath)
+
+        is_first = comparison == comparisons[0]
+        start = len(fig.data)
+
+        fig.add_trace(
+            go.Scattergl(
+                x=genes["fc"],
+                y=genes["rank"],
+                mode="markers",
+                marker=dict(size=4, color=MAIN_COLOR),
+                showlegend=False,
+                visible=is_first,
+                customdata=genes["gene"],
+                hovertemplate=(
+                    "<b>%{customdata}</b><br>LFC: %{x:.3f}<br>Rank: %{y}<extra></extra>"
+                ),
+            ),
+            row=1,
+            col=1,
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[genes["fc"].min(), genes["fc"].max()],
+                y=[fdr_rank, fdr_rank],
+                mode="lines",
+                line=dict(color=THRESHOLD_COLOR, width=2, dash="dash"),
+                showlegend=False,
+                visible=is_first,
+                hovertemplate=f"5% FDR rank: {fdr_rank}<extra></extra>",
+            ),
+            row=1,
+            col=1,
+        )
+
+        comparison_annotations.append([dict(a) for a in base_annotations])
+        for j, sig in enumerate(SIGNATURE_ORDER):
+            col = j + 2
+            sig_genes = sigs.loc[sigs["signature"] == sig, "gene"]
+            ranks = sorted(rank_by_gene[g] for g in sig_genes if g in rank_by_gene)
+            hits = [r for r in ranks if r <= fdr_rank]
+            misses = [r for r in ranks if r > fdr_rank]
+            for group, color in ((hits, HIT_COLOR), (misses, MISS_COLOR)):
+                xs, ys = [], []
+                for r in group:
+                    xs += [0, 1, None]
+                    ys += [r, r, None]
+                fig.add_trace(
+                    go.Scatter(
+                        x=xs,
+                        y=ys,
+                        mode="lines",
+                        line=dict(color=color, width=1.5),
+                        showlegend=False,
+                        visible=is_first,
+                        hoverinfo="skip",
+                    ),
+                    row=1,
+                    col=col,
+                )
+            pct = round(100 * len(hits) / len(ranks)) if ranks else 0
+            comparison_annotations[-1][j + 1][
+                "text"
+            ] = f"{sig.replace('_', ' ')} ({pct}%)"
+
+        end = len(fig.data)
+        if traces_per_comparison is None:
+            traces_per_comparison = end - start
+
+    fig.update_yaxes(type="log", autorange="reversed", title="Depletion rank", col=1)
+    fig.update_yaxes(type="log", autorange="reversed", showticklabels=False, col=2)
+    for col in range(2, n_cols + 1):
+        fig.update_xaxes(visible=False, range=[0, 1], col=col)
+    fig.update_xaxes(title="Log2(Fold change)", col=1)
+
+    updatemenus = []
+    if len(comparisons) > 1:
+        menu = _comparison_dropdown(comparisons, traces_per_comparison)
+        for button, annotations in zip(menu["buttons"], comparison_annotations):
+            button["method"] = "update"
+            button["args"] = [button["args"][0], {"annotations": annotations}]
+        updatemenus = [menu]
+    else:
+        fig.layout.annotations = comparison_annotations[0]
+
+    style_fig(
+        fig,
+        height=600,
+        showlegend=False,
+        updatemenus=updatemenus,
+        margin=dict(t=220 if updatemenus else 190, b=80, l=70, r=20),
+    )
 
     return dict(
-        id="crisprcleanr",
-        title="CRISPRcleanR",
-        kind="crisprcleanr",
+        id="crisprcleanr-depletion-rank",
+        title="CRISPRcleanR depletion rank",
         description=(
-            "ROC, precision-recall and depletion-rank diagnostics from "
-            "CRISPRcleanR's copy-number correction step, per comparison "
-            "(Iorio et al. 2018, Genome Biology, "
-            "doi:10.1186/s13059-018-1459-6)."
+            "Gene-level depletion rank (by corrected log fold-change) against "
+            "known essential gene-set signatures. Blue ticks mark genes within "
+            "the 5% FDR threshold (dashed red line); the percentage per "
+            "signature is the share of that signature's genes meeting it "
+            f"({CITATION})."
         ),
-        comparisons=comparisons,
-        pdfs=pdfs,
+        fig=fig,
+        df=pd.concat(all_gene_dfs, ignore_index=True),
+        filename="crisprcleanr-depletion-rank",
     )

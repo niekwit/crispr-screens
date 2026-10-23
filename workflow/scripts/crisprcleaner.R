@@ -4,7 +4,6 @@ sink(log, type = "output")
 sink(log, type = "message")
 
 library(tidyverse)
-library(cowplot)
 library(CRISPRcleanR)
 
 # Load Snakemake variable
@@ -301,6 +300,11 @@ bagel_non_essential_sgrnas <- ccr.genes2sgRNAs(
   bagel_non_essential
 )
 
+# These feed the QC report's interactive plots (workflow/scripts/qc/crisprcleanr.py)
+# as plain data, not pre-rendered PDFs — Plotly draws them client-side the
+# same way every other QC section does, so only the underlying curve/rank
+# data needs exporting here, not a finished plot.
+
 ### ROC curves
 # Calculate ROC curve data for gene and sgRNA level
 sgrna_level_roc <- ccr.ROC_Curve(
@@ -310,7 +314,7 @@ sgrna_level_roc <- ccr.ROC_Curve(
   display = FALSE
 )
 df_sgrna <- as.data.frame(sgrna_level_roc$curve) |>
-  mutate(class = "sgRNA")
+  mutate(class = "sgRNA", auc = sgrna_level_roc$AUC)
 
 gene_fcs <- ccr.geneMeanFCs(fcs, full_annotations)
 gene_level_roc <- ccr.ROC_Curve(
@@ -321,39 +325,14 @@ gene_level_roc <- ccr.ROC_Curve(
   display = FALSE
 )
 df_gene <- as.data.frame(gene_level_roc$curve) |>
-  mutate(class = "gene")
+  mutate(class = "gene", auc = gene_level_roc$AUC)
 
-# Combine data for gene and sgRNA level ROC curves to plot
-df <- rbind(df_sgrna, df_gene)
-
-roc_plot <- ggplot(
-  df,
-  aes(x = 1 - specificity, y = sensitivity, color = class)
-) +
-  geom_line(linewidth = 1) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
-  labs(
-    title = paste0("ROC curve: gene and sgRNA level\n(", comparison, ")"),
-    x = "TNR",
-    y = "Recall"
-  ) +
-  theme_cowplot(18) +
-  annotate(
-    "text",
-    x = 0.5,
-    y = 0.05,
-    size = 6,
-    label = paste(
-      "AUC = ",
-      round(gene_level_roc$AUC, 3),
-      " (gene), ",
-      round(sgrna_level_roc$AUC, 3),
-      " (sgRNA)"
-    )
-  ) +
-  theme(legend.position = c(0.85, 0.1), legend.title = element_blank())
-
-ggsave(filename = snakemake@output[["roc"]], roc_plot, width = 8, height = 6)
+print("Saving ROC curve data...")
+write.csv(
+  rbind(df_sgrna, df_gene),
+  snakemake@output[["roc"]],
+  row.names = FALSE
+)
 
 ### PR curves
 # Calculate PR curve data for gene and sgRNA level
@@ -364,7 +343,7 @@ sgrna_level_pr <- ccr.PrRc_Curve(
   display = FALSE
 )
 df_sgrna <- as.data.frame(sgrna_level_pr$curve) |>
-  mutate(class = "sgRNA")
+  mutate(class = "sgRNA", auc = sgrna_level_pr$AUC)
 
 gene_level_pr <- ccr.PrRc_Curve(
   gene_fcs,
@@ -374,35 +353,10 @@ gene_level_pr <- ccr.PrRc_Curve(
   FDRth = 0.05
 )
 df_gene <- as.data.frame(gene_level_pr$curve) |>
-  mutate(class = "gene")
+  mutate(class = "gene", auc = gene_level_pr$AUC)
 
-# Combine data for gene and sgRNA level PR curves to plot
-df <- rbind(df_sgrna, df_gene)
-
-pr_plot <- ggplot(df, aes(x = recall, y = precision, color = class)) +
-  geom_line(linewidth = 1) +
-  labs(
-    title = paste0("PR curve: gene and sgRNA level\n(", comparison, ")"),
-    x = "Recall",
-    y = "Precision"
-  ) +
-  theme_cowplot(18) +
-  annotate(
-    "text",
-    x = 0.35,
-    y = 0.25,
-    size = 6,
-    label = paste(
-      "AUC = ",
-      round(gene_level_pr$AUC, 3),
-      " (gene), ",
-      round(sgrna_level_pr$AUC, 3),
-      " (sgRNA)"
-    )
-  ) +
-  theme(legend.position = c(0.025, 0.15), legend.title = element_blank())
-
-ggsave(snakemake@output[["pr"]], pr_plot, width = 8, height = 6)
+print("Saving PR curve data...")
+write.csv(rbind(df_sgrna, df_gene), snakemake@output[["pr"]], row.names = FALSE)
 
 ### Depletion profile of gene signatures
 # Load gene sets
@@ -422,15 +376,36 @@ signatures <- list(
   Non_essential = bagel_non_essential
 )
 
-pdf(snakemake@output[["drnk"]])
-recall_scores <- ccr.VisDepAndSig(
+# The rank at which gene-level FDR crosses 5% — ccr.VisDepAndSig computes
+# this internally (via the same unexported helper) purely to draw its
+# threshold line; call it directly rather than re-deriving it in Python; the
+# gene/signature data is otherwise plain enough to re-plot client-side.
+fdr5perc <- CRISPRcleanR:::ccr.fixedFDRthreshold(
   FCsprofile = gene_fcs,
-  SIGNATURES = signatures,
-  TITLE = comparison,
-  pIs = 6,
-  nIs = 7
+  TruePositives = bagel_essential,
+  TrueNegatives = bagel_non_essential,
+  th = 0.05
 )
-dev.off()
+
+print("Saving depletion rank gene data...")
+write.csv(
+  data.frame(
+    gene = names(gene_fcs),
+    fc = as.numeric(gene_fcs),
+    fdr5perc_rank = fdr5perc$RANK
+  ),
+  snakemake@output[["drnk_genes"]],
+  row.names = FALSE
+)
+
+print("Saving depletion rank signature membership...")
+write.csv(
+  bind_rows(lapply(names(signatures), function(name) {
+    data.frame(signature = name, gene = signatures[[name]])
+  })),
+  snakemake@output[["drnk_signatures"]],
+  row.names = FALSE
+)
 
 # Close redirection of output/messages
 sink(log, type = "output")

@@ -117,10 +117,12 @@ if (
             corr_counts="results/crisprcleanr/corrected_counts_{comparison}.tsv",
             # Input for BAGEL2
             corr_lfc="results/crisprcleanr/corrected_lfc_{comparison}.foldchange",
-            # QC plots
-            roc="results/crisprcleanr/roc_{comparison}.pdf",
-            pr="results/crisprcleanr/pr_{comparison}.pdf",
-            drnk="results/crisprcleanr/depletion_rank_{comparison}.pdf",
+            # QC report data (plotted client-side by qc/crisprcleanr.py, not
+            # pre-rendered here)
+            roc="results/crisprcleanr/roc_{comparison}.csv",
+            pr="results/crisprcleanr/pr_{comparison}.csv",
+            drnk_genes="results/crisprcleanr/depletion_rank_{comparison}_genes.csv",
+            drnk_signatures="results/crisprcleanr/depletion_rank_{comparison}_signatures.csv",
             # CRISPRcleanR's own intermediate .RData (normalised counts,
             # fold changes, corrected counts)
             norm_counts_rdata="results/crisprcleanr/rdata/{comparison}_normCounts.Rdata",

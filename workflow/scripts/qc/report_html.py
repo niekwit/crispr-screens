@@ -6,7 +6,6 @@ report shows one figure at a time, selected via tabs along the top.
 """
 
 import base64
-import json
 import logging
 from string import Template
 
@@ -43,42 +42,6 @@ PANEL_TEMPLATE = Template(
   <div id="$div_id" class="plot"></div>
 </section>
 """
-)
-
-# CRISPRcleanR's ROC/PR/depletion-rank PDFs embedded as-is (see qc/crisprcleanr.py)
-# rather than rendered through Plotly, with a comparison picker when there's
-# more than one.
-CRISPRCLEANR_PANEL_TEMPLATE = Template(
-    """
-<section class="panel card" id="panel-$div_id">
-  <div class="card-head">
-    <h2>$title</h2>
-    $comparison_select
-  </div>
-  <p class="desc">$description</p>
-  <div class="cc-grid" id="$div_id-grid">
-    <div class="cc-plot">
-      <h3>ROC curve</h3>
-      <embed class="cc-embed" data-kind="roc" type="application/pdf" src="$roc_uri">
-      <a class="btn btn-pdf cc-dl" data-kind="roc" href="$roc_uri" download="$roc_filename">Download PDF</a>
-    </div>
-    <div class="cc-plot">
-      <h3>Precision-recall curve</h3>
-      <embed class="cc-embed" data-kind="pr" type="application/pdf" src="$pr_uri">
-      <a class="btn btn-pdf cc-dl" data-kind="pr" href="$pr_uri" download="$pr_filename">Download PDF</a>
-    </div>
-    <div class="cc-plot">
-      <h3>Depletion rank</h3>
-      <embed class="cc-embed" data-kind="drnk" type="application/pdf" src="$drnk_uri">
-      <a class="btn btn-pdf cc-dl" data-kind="drnk" href="$drnk_uri" download="$drnk_filename">Download PDF</a>
-    </div>
-  </div>
-</section>
-"""
-)
-
-COMPARISON_OPTION_TEMPLATE = Template(
-    '<option value="$comparison">$comparison</option>'
 )
 
 HTML_TEMPLATE = Template(
@@ -135,14 +98,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px; }
 .btn[disabled] { background: #cbd5e1; cursor: not-allowed; }
 .desc { font-size: 15px; color: #475569; margin: 10px 0 16px; max-width: 900px; line-height: 1.6; }
 .plot { width: 100%; }
-.cc-select {
-  padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px;
-  font-size: 13px; background: #fff; color: #0f172a;
-}
-.cc-grid { display: flex; flex-direction: column; gap: 24px; }
-.cc-plot h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #334155; }
-.cc-embed { width: 100%; height: 600px; border: 1px solid #e2e8f0; border-radius: 6px; }
-.cc-dl { margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -164,7 +119,6 @@ const FIGS = $figs_json;
 const rendered = new Set();
 
 function renderPanel(id) {
-  if (!FIGS[id]) return;  // non-Plotly panel (e.g. CRISPRcleanR's embedded PDFs)
   if (rendered.has(id)) {
     Plotly.Plots.resize(id);
     return;
@@ -200,21 +154,6 @@ document.querySelectorAll(".btn-png").forEach(btn => {
     if (hasMenu) await Plotly.relayout(div, { "updatemenus[0].visible": false });
     await Plotly.downloadImage(div, { format: "png", filename: btn.dataset.filename, scale: 2 });
     if (hasMenu) await Plotly.relayout(div, { "updatemenus[0].visible": true });
-  });
-});
-
-const CC_DATA = $cc_data_json;
-document.querySelectorAll(".cc-select").forEach(sel => {
-  sel.addEventListener("change", () => {
-    const data = CC_DATA[sel.dataset.panel][sel.value];
-    const grid = document.getElementById(sel.dataset.panel + "-grid");
-    grid.querySelectorAll(".cc-embed").forEach(embed => {
-      embed.src = data[embed.dataset.kind];
-    });
-    grid.querySelectorAll(".cc-dl").forEach(a => {
-      a.href = data[a.dataset.kind];
-      a.download = data[a.dataset.kind + "_filename"];
-    });
   });
 });
 </script>
@@ -268,48 +207,13 @@ def _encode_pdf(fig, filename):
     return f"data:application/pdf;base64,{payload}", filename
 
 
-def _render_crisprcleanr_panel(section, div_id):
-    comparisons = section["comparisons"]
-    comparison_select = ""
-    if len(comparisons) > 1:
-        options = "\n".join(
-            COMPARISON_OPTION_TEMPLATE.substitute(comparison=c) for c in comparisons
-        )
-        comparison_select = (
-            f'<select class="cc-select" data-panel="{div_id}">{options}</select>'
-        )
-    first = section["pdfs"][comparisons[0]]
-    return CRISPRCLEANR_PANEL_TEMPLATE.substitute(
-        title=section["title"],
-        div_id=div_id,
-        description=section["description"],
-        comparison_select=comparison_select,
-        roc_uri=first["roc"],
-        roc_filename=first["roc_filename"],
-        pr_uri=first["pr"],
-        pr_filename=first["pr_filename"],
-        drnk_uri=first["drnk"],
-        drnk_filename=first["drnk_filename"],
-    )
-
-
 def render(sections):
     plotly_js = plotly.offline.get_plotlyjs()
 
     tab_html = []
     panel_html = []
-    plot_sections = []
-    cc_data = {}
     for section in sections:
         div_id = f"fig-{section['id']}"
-        tab_html.append(TAB_TEMPLATE.substitute(div_id=div_id, title=section["title"]))
-
-        if section.get("kind") == "crisprcleanr":
-            cc_data[div_id] = section["pdfs"]
-            panel_html.append(_render_crisprcleanr_panel(section, div_id))
-            continue
-
-        plot_sections.append(section)
         data_uri, _ = _encode_csv(section["df"], f"{section['filename']}.csv")
         pdf_uri, pdf_filename = _encode_pdf(
             section["fig"], f"{section['filename']}.pdf"
@@ -319,6 +223,7 @@ def render(sections):
             if pdf_uri
             else '<button class="btn btn-pdf" disabled title="PDF export unavailable">PDF</button>'
         )
+        tab_html.append(TAB_TEMPLATE.substitute(div_id=div_id, title=section["title"]))
         panel_html.append(
             PANEL_TEMPLATE.substitute(
                 title=section["title"],
@@ -332,7 +237,7 @@ def render(sections):
 
     figs_json = (
         "{"
-        + ", ".join(f'"fig-{s["id"]}": {s["fig"].to_json()}' for s in plot_sections)
+        + ", ".join(f'"fig-{s["id"]}": {s["fig"].to_json()}' for s in sections)
         + "}"
     )
 
@@ -341,5 +246,4 @@ def render(sections):
         panels="\n".join(panel_html),
         plotly_js=plotly_js,
         figs_json=figs_json,
-        cc_data_json=json.dumps(cc_data),
     )

@@ -95,11 +95,20 @@ sections = [
 crisprcleanr_comparisons = snakemake.params["crisprcleanr_comparisons"]
 if crisprcleanr_comparisons:
     sections.append(
-        crisprcleanr.build(
+        crisprcleanr.build_roc(
+            crisprcleanr_comparisons, snakemake.input["crisprcleanr_roc"]
+        )
+    )
+    sections.append(
+        crisprcleanr.build_pr(
+            crisprcleanr_comparisons, snakemake.input["crisprcleanr_pr"]
+        )
+    )
+    sections.append(
+        crisprcleanr.build_depletion_rank(
             crisprcleanr_comparisons,
-            snakemake.input["crisprcleanr_roc"],
-            snakemake.input["crisprcleanr_pr"],
-            snakemake.input["crisprcleanr_drnk"],
+            snakemake.input["crisprcleanr_drnk_genes"],
+            snakemake.input["crisprcleanr_drnk_signatures"],
         )
     )
 
