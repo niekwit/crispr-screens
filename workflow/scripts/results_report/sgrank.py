@@ -1,13 +1,19 @@
-"""sgRNA-rank view per MAGeCK comparison: for the top N enriched/depleted
-genes (by MAGeCK gene-level rank), shows each gene's individual sgRNA log
-fold changes against the overall sgRNA LFC distribution.
+"""sgRNA-rank view per MAGeCK comparison: for a chosen set of genes (the
+top N enriched/depleted by MAGeCK gene-level rank, initially), shows each
+gene's individual sgRNA log fold changes against the overall sgRNA LFC
+distribution.
 
 Ported from workflow/scripts/plot_sgrank.R (itself inspired by
 MAGeCKFlute::sgRankView and https://www.jci.org/articles/view/201639
 Figure 1D) as an interactive Plotly version. Unlike the enriched/depleted
-scatter plots, this one has no STRING-db panel or gene search — it's a
-fixed top-N-genes view, not a searchable scatter of every gene — so it's
-built as a "simple" plot (see common.build_simple_plot).
+scatter plots, this one has no STRING-db panel or gene search in the usual
+sense — it's a fixed-genes view, not a searchable scatter of every gene —
+so it's built as a "simple" plot (see common.build_simple_plot), with the
+gene list itself editable client-side (see rank_data/default_genes below
+and the rebuildSgRank() JS in report_html.py): the figure only renders the
+genes typed into the "Genes to show" box above it, not a fixed top N, so
+the data for every gene has to be available for the client to redraw from,
+not just the N shown by default.
 """
 
 import logging
@@ -20,7 +26,7 @@ from scipy.stats import gaussian_kde
 
 from . import common
 
-TOP_N = 5  # number of top genes to show for enriched/depleted
+DEFAULT_TOP_N = 5  # number of top genes shown initially, for enriched/depleted
 # A gene's rank can disagree with some of its own individual sgRNAs — ticks
 # are coloured by each sgRNA's own LFC sign, not by which direction
 # (enriched/depleted) the surrounding plot is for.
@@ -49,14 +55,8 @@ def _tick_trace(df_subset, row_of, color, name):
     )
 
 
-def _rank_plot(df_all, df_top, genes, title):
+def _rank_plot(grid, density, x_range, df_top, genes, title):
     n_genes = len(genes)
-    x_min, x_max = df_all["LFC"].min(), df_all["LFC"].max()
-    pad = (x_max - x_min) * 0.02
-    x_range = [x_min - pad, x_max + pad]
-    grid = np.linspace(x_range[0], x_range[1], 300)
-    density = gaussian_kde(df_all["LFC"].dropna().values)(grid)
-
     row_of = {gene: i + 1 for i, gene in enumerate(genes)}  # 1-indexed, bottom-up
 
     fig = make_subplots(
@@ -168,6 +168,35 @@ def _rank_plot(df_all, df_top, genes, title):
     return fig
 
 
+def _build_rank_data(data):
+    """The payload rebuildSgRank() (report_html.py) needs to redraw this
+    plot client-side for an arbitrary gene list: the reference density
+    curve (identical for every gene, computed once here rather than
+    per-direction) and every gene's individual sgRNA LFCs, as a flat row
+    list for compact JSON — not just the default top N, since the whole
+    point is letting the gene selection change after the report is built."""
+    x_min, x_max = data["LFC"].min(), data["LFC"].max()
+    pad = (x_max - x_min) * 0.02
+    x_range = [float(x_min - pad), float(x_max + pad)]
+    grid = np.linspace(x_range[0], x_range[1], 300)
+    density = gaussian_kde(data["LFC"].dropna().values)(grid)
+    rows = data.dropna(subset=["LFC"])
+    return {
+        "grid": [round(float(v), 4) for v in grid],
+        "density": [round(float(v), 6) for v in density],
+        "xRange": x_range,
+        "rows": [
+            {
+                "gene": str(r["Gene"]),
+                "sgrna": str(r["sgrna"]),
+                "lfc": round(float(r["LFC"]), 4),
+            }
+            for _, r in rows.iterrows()
+        ],
+        "genes": sorted(data["Gene"].dropna().unique().tolist()),
+    }
+
+
 def build_plots(gene_txt, sgrna_txt, key, comparison, cnv):
     """Returns a list of 0-2 "simple" plot dicts (enriched/depleted) to
     append to the MAGeCK entry for this (comparison, cnv)."""
@@ -179,20 +208,29 @@ def build_plots(gene_txt, sgrna_txt, key, comparison, cnv):
     sg_df = pd.read_csv(sgrna_txt, sep="\t")
     data = sg_df.merge(gene_df, on="Gene", how="left")
 
-    df_enriched = data[data["pos_rank"] <= TOP_N].sort_values("pos_rank")
-    df_depleted = data[data["neg_rank"] <= TOP_N].sort_values("neg_rank")
+    rank_data = _build_rank_data(data)
+    grid = np.array(rank_data["grid"])
+    density = np.array(rank_data["density"])
+    x_range = rank_data["xRange"]
 
-    # R's rev(unique(...)): rank order (best first), then reversed so the
-    # best-ranked gene ends up in the last (topmost, highest y) row.
-    genes_enriched = list(dict.fromkeys(df_enriched["Gene"]))[::-1]
-    genes_depleted = list(dict.fromkeys(df_depleted["Gene"]))[::-1]
+    df_enriched = data[data["pos_rank"] <= DEFAULT_TOP_N].sort_values("pos_rank")
+    df_depleted = data[data["neg_rank"] <= DEFAULT_TOP_N].sort_values("neg_rank")
+
+    # Natural rank order (best first) — shown as-typed in the "Genes to
+    # show" box, and in that order reversed internally so the best-ranked
+    # gene ends up in the last (topmost, highest y) row, matching R's
+    # rev(unique(...)).
+    default_enriched = list(dict.fromkeys(df_enriched["Gene"]))
+    default_depleted = list(dict.fromkeys(df_depleted["Gene"]))
 
     plots = []
-    if genes_enriched:
+    if default_enriched:
         fig = _rank_plot(
-            data,
+            grid,
+            density,
+            x_range,
             df_enriched,
-            genes_enriched,
+            default_enriched[::-1],
             f"sgRNA rank — enriched genes — {comparison} ({cnv})",
         )
         plots.append(
@@ -201,13 +239,17 @@ def build_plots(gene_txt, sgrna_txt, key, comparison, cnv):
                 title="sgRNA rank (enriched)",
                 fig=fig,
                 direction="enriched",
+                rank_data=rank_data,
+                default_genes=default_enriched,
             )
         )
-    if genes_depleted:
+    if default_depleted:
         fig = _rank_plot(
-            data,
+            grid,
+            density,
+            x_range,
             df_depleted,
-            genes_depleted,
+            default_depleted[::-1],
             f"sgRNA rank — depleted genes — {comparison} ({cnv})",
         )
         plots.append(
@@ -216,6 +258,8 @@ def build_plots(gene_txt, sgrna_txt, key, comparison, cnv):
                 title="sgRNA rank (depleted)",
                 fig=fig,
                 direction="depleted",
+                rank_data=rank_data,
+                default_genes=default_depleted,
             )
         )
     return plots

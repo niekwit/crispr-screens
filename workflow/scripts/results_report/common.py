@@ -218,16 +218,26 @@ def build_plot(
     }
 
 
-def build_simple_plot(div_id, title, fig, direction):
+def build_simple_plot(
+    div_id, title, fig, direction, rank_data=None, default_genes=None
+):
     """A plain zoomable/pannable Plotly chart with no STRING-db panel and
-    no gene-search wiring (e.g. a fixed top-N-genes view rather than a
-    searchable scatter of every gene)."""
+    no gene-search wiring (e.g. a fixed-genes view rather than a
+    searchable scatter of every gene).
+
+    rank_data/default_genes: optional — only the sgRNA-rank plot
+    (results_report/sgrank.py) uses these, to let the gene selection be
+    edited client-side after the report is built (see rebuildSgRank() in
+    report_html.py). rank_data is the full per-gene sgRNA dataset (not
+    just default_genes, the initially-shown subset)."""
     return {
         "div_id": div_id,
         "panel_title": title,
         "simple": True,
         "fig": fig,
         "direction": direction,
+        "rank_data": rank_data,
+        "default_genes": default_genes,
     }
 
 

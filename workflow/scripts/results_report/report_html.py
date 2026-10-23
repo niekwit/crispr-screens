@@ -51,6 +51,28 @@ SIMPLE_PLOT_ROW_TEMPLATE = Template(
 """
 )
 
+# Same as SIMPLE_PLOT_ROW_TEMPLATE, plus a "Genes to show" control — only
+# the sgRNA-rank plot uses this (see sgrank.py/rebuildSgRank() below),
+# since it's the only "simple" plot whose shown genes aren't fixed.
+SGRANK_PLOT_ROW_TEMPLATE = Template(
+    """
+<div class="plot-row">
+  <div class="plot-wrap plot-wrap-full">
+    <div class="sgrank-controls">
+      <label for="$div_id-genes-input">Genes to show:</label>
+      <input type="text" id="$div_id-genes-input" class="sgrank-genes-input"
+             value="$default_genes_csv" autocomplete="off">
+      <button type="button" class="btn btn-primary sgrank-update-btn" data-div="$div_id">Update</button>
+      <button type="button" class="btn btn-secondary sgrank-reset-btn" data-div="$div_id"
+              data-default="$default_genes_csv">Reset to top $default_n</button>
+      <span class="sgrank-status" id="$div_id-genes-status"></span>
+    </div>
+    <div id="$div_id" class="plot"></div>
+  </div>
+</div>
+"""
+)
+
 # A STRING-db network SVG — not a Plotly figure, just embedded markup.
 # data-stats-div points at the sibling scatter plot whose per-gene hover
 # stats (PLOT_META[...].hover_by_gene) are shown when hovering a node.
@@ -213,6 +235,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   font-size: 12px; color: #555; padding-bottom: 8px; cursor: pointer;
 }
 .isolated-toggle input { cursor: pointer; }
+.sgrank-controls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  max-width: 1000px; margin: 0 auto; padding: 8px 4px 12px;
+  font-size: 13px; color: #555;
+}
+.sgrank-genes-input {
+  flex: 1; min-width: 220px; padding: 6px 9px;
+  border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;
+}
+.sgrank-status { font-size: 12px; color: #e67e22; }
 .edge-legend {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px;
   padding: 10px 0 2px; max-width: 1000px; margin: 0 auto;
@@ -753,6 +785,117 @@ document.querySelectorAll(".isolated-toggle-checkbox").forEach(checkbox => {
   });
 });
 
+/* ── sgRank "Genes to show" — rebuild the plot for an arbitrary gene list,
+   not just the default top N (see sgrank.py's rank_data/_build_rank_data,
+   which carries every gene's sgRNA data for exactly this). ─────────────── */
+function rebuildSgRank(divId) {
+  getOrInitPlot(divId);  // no-op if already initialised
+  const info = PLOT_META[divId] && PLOT_META[divId].rank_data;
+  const div = document.getElementById(divId);
+  const input = document.getElementById(divId + "-genes-input");
+  const status = document.getElementById(divId + "-genes-status");
+  if (!info || !div || !input) return;
+
+  const geneByLower = new Map(info.genes.map(g => [g.toLowerCase(), g]));
+  const seen = new Set();
+  const selected = [];
+  const missing = [];
+  input.value.split(",").map(s => s.trim()).filter(Boolean).forEach(name => {
+    const g = geneByLower.get(name.toLowerCase());
+    if (!g) { missing.push(name); return; }
+    if (seen.has(g)) return;
+    seen.add(g);
+    selected.push(g);
+  });
+
+  if (!selected.length) {
+    status.textContent = missing.length ? "Not found: " + missing.join(", ") : "Enter at least one gene";
+    status.style.color = "#e74c3c";
+    return;
+  }
+  status.textContent = missing.length ? "Not found: " + missing.join(", ") : "";
+  status.style.color = "#e67e22";
+
+  // First-typed gene ends up topmost, same convention as the server-built
+  // default (rank-1 gene last in the row_of list = top row).
+  const genes = selected.slice().reverse();
+  const rowOf = {};
+  genes.forEach((g, i) => { rowOf[g] = i + 1; });
+  const nGenes = genes.length;
+
+  const rows = info.rows.filter(r => rowOf[r.gene] !== undefined);
+  const posRows = rows.filter(r => r.lfc >= 0);
+  const negRows = rows.filter(r => r.lfc < 0);
+
+  function tickTrace(subset, color, name) {
+    const xs = [], ys = [];
+    subset.forEach(r => {
+      xs.push(r.lfc, r.lfc, null);
+      ys.push(rowOf[r.gene] - 0.4, rowOf[r.gene] + 0.4, null);
+    });
+    return {
+      x: xs, y: ys, type: "scatter", mode: "lines",
+      line: { color: color, width: 1.5 }, name: name,
+      hoverinfo: "skip", showlegend: true, xaxis: "x2", yaxis: "y2",
+    };
+  }
+
+  const traces = [
+    {
+      x: info.grid, y: info.density, type: "scatter", mode: "lines",
+      fill: "tozeroy", line: { color: "#888888", width: 1 },
+      fillcolor: "rgba(224, 224, 224, 0.6)", hoverinfo: "skip",
+      showlegend: false, xaxis: "x", yaxis: "y",
+    },
+    {
+      x: info.grid, y: genes.map(g => rowOf[g]), z: genes.map(() => info.density),
+      type: "heatmap", colorscale: [[0, "white"], [1, "black"]],
+      showscale: false, hoverinfo: "skip", ygap: 4, xaxis: "x2", yaxis: "y2",
+    },
+  ];
+  if (posRows.length) traces.push(tickTrace(posRows, "#e41a1c", "sgRNA LFC > 0"));
+  if (negRows.length) traces.push(tickTrace(negRows, "#377eb8", "sgRNA LFC < 0"));
+  traces.push({
+    x: rows.map(r => r.lfc),
+    y: rows.map(r => rowOf[r.gene]),
+    type: "scatter", mode: "markers",
+    marker: { size: 10, opacity: 0 },
+    hovertext: rows.map(r => r.sgrna + " (" + r.gene + ")<br>LFC: " + r.lfc.toFixed(3)),
+    hoverinfo: "text", showlegend: false, xaxis: "x2", yaxis: "y2",
+  });
+
+  const shapes = genes.map(g => ({
+    type: "rect", xref: "x2", yref: "y2",
+    x0: info.xRange[0], x1: info.xRange[1],
+    y0: rowOf[g] - 0.4, y1: rowOf[g] + 0.4,
+    line: { color: "#444444", width: 1 }, fillcolor: "rgba(0,0,0,0)",
+  }));
+
+  const layout = JSON.parse(JSON.stringify(div.layout));
+  layout.height = 180 + 45 * nGenes;
+  layout.shapes = shapes;
+  layout.yaxis2.tickvals = genes.map(g => rowOf[g]);
+  layout.yaxis2.ticktext = genes;
+  layout.yaxis2.range = [0.5, nGenes + 0.5];
+
+  Plotly.react(divId, traces, layout);
+}
+
+document.querySelectorAll(".sgrank-update-btn").forEach(btn => {
+  btn.addEventListener("click", () => rebuildSgRank(btn.dataset.div));
+});
+document.querySelectorAll(".sgrank-reset-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.getElementById(btn.dataset.div + "-genes-input").value = btn.dataset.default;
+    rebuildSgRank(btn.dataset.div);
+  });
+});
+document.querySelectorAll(".sgrank-genes-input").forEach(input => {
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") rebuildSgRank(input.id.replace("-genes-input", ""));
+  });
+});
+
 /* ── "Color by" dropdown: switch which stat governs marker fill ──────── */
 document.querySelectorAll(".color-select").forEach(sel => {
   sel.addEventListener("change", () => {
@@ -804,6 +947,17 @@ def _render_plot_row(plot, figs, plot_meta):
         )
     figs[div_id] = plot["fig"].to_json()
     if plot.get("simple"):
+        if plot.get("rank_data"):
+            default_genes = plot["default_genes"]
+            plot_meta[div_id] = {
+                "simple": True,
+                "rank_data": plot["rank_data"],
+            }
+            return SGRANK_PLOT_ROW_TEMPLATE.substitute(
+                div_id=div_id,
+                default_genes_csv=", ".join(default_genes),
+                default_n=len(default_genes),
+            )
         plot_meta[div_id] = {"simple": True}
         return SIMPLE_PLOT_ROW_TEMPLATE.substitute(div_id=div_id)
     plot_meta[div_id] = {
