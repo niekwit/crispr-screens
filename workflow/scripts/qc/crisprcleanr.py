@@ -336,9 +336,13 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
                 {"annotations": annotations, "shapes": shapes},
             ]
         updatemenus = [menu]
-    else:
-        fig.layout.annotations = comparison_annotations[0]
-        fig.layout.shapes = comparison_shapes[0]
+    # The dropdown buttons' "update" args only apply on click — the figure's
+    # own initial state (matching the first comparison's traces, the ones
+    # left visible above) needs the same annotations/shapes set directly,
+    # or the default view renders with make_subplots' unrotated titles and
+    # no threshold line until a comparison is explicitly picked.
+    fig.layout.annotations = comparison_annotations[0]
+    fig.layout.shapes = comparison_shapes[0]
 
     style_fig(
         fig,
