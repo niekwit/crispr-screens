@@ -7,7 +7,7 @@ per-tool comparison dropdown.
 import logging
 import os
 
-from results_report import bagel2, drugz, mageck, report_html, sgrank
+from results_report import bagel2, common, drugz, mageck, report_html, sgrank
 
 log = snakemake.log[0]
 logging.basicConfig(
@@ -22,6 +22,7 @@ output_html = snakemake.output["html"]
 mageck_pairs = snakemake.params["mageck_pairs"]
 drugz_comparisons = snakemake.params["drugz_comparisons"]
 bagel2_comparisons = snakemake.params["bagel2_comparisons"]
+taxon_id = common.taxon_id_for(snakemake.params["species"])
 
 mageck_entries = (
     mageck.build_entries(
@@ -33,6 +34,7 @@ mageck_entries = (
         snakemake.input["mageck_string_enriched_id_mapping"],
         snakemake.input["mageck_string_depleted_id_mapping"],
         mageck_pairs,
+        taxon_id,
     )
     if mageck_pairs
     else []
@@ -60,6 +62,7 @@ drugz_entries = (
         snakemake.input["drugz_string_enriched_id_mapping"],
         snakemake.input["drugz_string_depleted_id_mapping"],
         drugz_comparisons,
+        taxon_id,
     )
     if drugz_comparisons
     else []
@@ -73,6 +76,7 @@ bagel2_entries = (
         snakemake.input["bagel2_string_depleted_svg"],
         snakemake.input["bagel2_string_depleted_id_mapping"],
         bagel2_comparisons,
+        taxon_id,
     )
     if bagel2_comparisons
     else []

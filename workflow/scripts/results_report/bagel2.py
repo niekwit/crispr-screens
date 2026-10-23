@@ -29,6 +29,7 @@ def build_entries(
     string_depleted_svg_files,
     string_depleted_id_mapping_files,
     comparisons,
+    taxon_id=None,
 ):
     entries = []
     for i, comparison in enumerate(comparisons):
@@ -79,6 +80,7 @@ def build_entries(
             ),
             direction="depleted",
             stats_div_id=f"{key}-depleted",
+            taxon_id=taxon_id,
         )
         plots = [p for p in [plot, svg_panel] if p is not None]
 

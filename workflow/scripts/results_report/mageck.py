@@ -31,6 +31,7 @@ def build_entries(
     string_enriched_id_mapping_files,
     string_depleted_id_mapping_files,
     pairs,
+    taxon_id=None,
 ):
     """pairs: list of (comparison, cnv) tuples, positionally matching
     txt_files / string_enriched_files / string_depleted_files (the latter
@@ -120,6 +121,7 @@ def build_entries(
                 ),
                 direction="enriched",
                 stats_div_id=f"{key}-enriched",
+                taxon_id=taxon_id,
             ),
             common.build_plot(
                 div_id=f"{key}-depleted",
@@ -145,6 +147,7 @@ def build_entries(
                 ),
                 direction="depleted",
                 stats_div_id=f"{key}-depleted",
+                taxon_id=taxon_id,
             ),
         ]
         plots = [p for p in plots if p is not None]

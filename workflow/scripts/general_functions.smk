@@ -294,6 +294,7 @@ def interactive_results_report_params():
         "mageck_pairs": mageck_pairs,
         "drugz_comparisons": drugz_comparisons,
         "bagel2_comparisons": bagel2_comparisons,
+        "species": config["lib_info"]["species"],
     }
 
 

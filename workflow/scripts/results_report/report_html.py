@@ -54,12 +54,17 @@ SIMPLE_PLOT_ROW_TEMPLATE = Template(
 # A STRING-db network SVG — not a Plotly figure, just embedded markup.
 # data-stats-div points at the sibling scatter plot whose per-gene hover
 # stats (PLOT_META[...].hover_by_gene) are shown when hovering a node.
+# data-taxon-id drives the gene-info popup (see showGenePanel() JS below):
+# clicking a node queries STRING-db's own REST API live, in the viewer's
+# browser, for that gene's description/identifiers — not pre-fetched, so
+# this one feature needs internet access when the report is viewed, unlike
+# the rest of the self-contained report.
 SVG_PANEL_TEMPLATE = Template(
     """
 <div class="plot-row">
   <div class="plot-wrap plot-wrap-full svg-wrap">
     <div class="svg-panel-title">$panel_title</div>
-    <div class="svg-embed" data-stats-div="$stats_div_id">$svg_content</div>
+    <div class="svg-embed" data-stats-div="$stats_div_id" data-taxon-id="$taxon_id">$svg_content</div>
   </div>
 </div>
 """
@@ -207,6 +212,39 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   font-size: 12px; line-height: 1.5; pointer-events: none; max-width: 260px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
+#gene-panel-backdrop {
+  position: fixed; inset: 0; display: none; z-index: 1100;
+  background: rgba(15, 23, 42, 0.35);
+}
+#gene-panel {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  display: none; z-index: 1101; width: 360px; max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px); overflow-y: auto;
+  background: #fff; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+}
+#gene-panel .gp-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid #eef0f2;
+}
+#gene-panel .gp-title { font-size: 17px; font-weight: 700; color: #1e293b; }
+#gene-panel .gp-close {
+  border: none; background: none; cursor: pointer; font-size: 20px;
+  line-height: 1; color: #94a3b8; padding: 2px 6px;
+}
+#gene-panel .gp-close:hover { color: #1e293b; }
+#gene-panel .gp-body { padding: 16px; font-size: 13px; color: #334155; line-height: 1.6; }
+#gene-panel .gp-row { margin-bottom: 10px; }
+#gene-panel .gp-label {
+  font-size: 10.5px; font-weight: 700; color: #94a3b8;
+  letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 2px;
+}
+#gene-panel .gp-links a {
+  display: inline-block; margin: 4px 6px 0 0; padding: 4px 9px;
+  border-radius: 5px; background: #eef2ff; color: #4338ca;
+  font-size: 11.5px; font-weight: 600; text-decoration: none;
+}
+#gene-panel .gp-links a:hover { background: #e0e7ff; }
+#gene-panel .gp-status { color: #94a3b8; font-style: italic; }
 
 .string-panel {
   display: flex; flex-direction: column;
@@ -248,6 +286,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 <body>
 
 <div id="svg-tooltip"></div>
+
+<div id="gene-panel-backdrop"></div>
+<div id="gene-panel">
+  <div class="gp-head">
+    <div class="gp-title" id="gp-title"></div>
+    <button type="button" class="gp-close" id="gp-close" aria-label="Close">&times;</button>
+  </div>
+  <div class="gp-body" id="gp-body"></div>
+</div>
 
 <div id="topbar">
   <h1>Results report</h1>
@@ -574,6 +621,85 @@ document.querySelectorAll(".svg-embed[data-stats-div]").forEach(container => {
   });
 });
 
+/* ── STRING-db gene info popup (click a node) ─────────────────────────
+   Live call to STRING-db's own REST API from the viewer's browser — not
+   pre-fetched at report-build time, so (unlike the rest of this
+   self-contained report) this one feature needs internet access when the
+   report is viewed. */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+const genePanel = document.getElementById("gene-panel");
+const genePanelBackdrop = document.getElementById("gene-panel-backdrop");
+const gpTitle = document.getElementById("gp-title");
+const gpBody = document.getElementById("gp-body");
+const geneInfoCache = new Map();
+
+function closeGenePanel() {
+  genePanel.style.display = "none";
+  genePanelBackdrop.style.display = "none";
+}
+document.getElementById("gp-close").addEventListener("click", closeGenePanel);
+genePanelBackdrop.addEventListener("click", closeGenePanel);
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeGenePanel();
+});
+
+async function showGenePanel(gene, taxonId) {
+  gpTitle.textContent = gene;
+  genePanelBackdrop.style.display = "block";
+  genePanel.style.display = "block";
+
+  const cacheKey = gene + ":" + taxonId;
+  if (geneInfoCache.has(cacheKey)) {
+    gpBody.innerHTML = geneInfoCache.get(cacheKey);
+    return;
+  }
+  gpBody.innerHTML = '<p class="gp-status">Loading from STRING-db&hellip;</p>';
+  try {
+    const url = "https://string-db.org/api/json/get_string_ids?identifiers="
+      + encodeURIComponent(gene) + "&species=" + encodeURIComponent(taxonId);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (!data.length) {
+      gpBody.innerHTML = '<p class="gp-status">No STRING-db entry found for '
+        + escapeHtml(gene) + ".</p>";
+      return;
+    }
+    const info = data[0];
+    const preferredName = info.preferredName || gene;
+    const html =
+      '<div class="gp-row"><div class="gp-label">Description</div>' + escapeHtml(info.annotation || "—") + "</div>"
+      + '<div class="gp-row"><div class="gp-label">Organism</div>' + escapeHtml(info.taxonName || "—") + "</div>"
+      + '<div class="gp-row"><div class="gp-label">STRING identifier</div>' + escapeHtml(info.stringId || "—") + "</div>"
+      + '<div class="gp-row gp-links">'
+      + '<a href="https://string-db.org/network/' + encodeURIComponent(info.stringId || "") + '" target="_blank" rel="noopener noreferrer">STRING-db</a>'
+      + '<a href="https://www.genecards.org/cgi-bin/carddisp.pl?gene=' + encodeURIComponent(preferredName) + '" target="_blank" rel="noopener noreferrer">GeneCards</a>'
+      + '<a href="https://www.ncbi.nlm.nih.gov/gene/?term=' + encodeURIComponent(preferredName) + '" target="_blank" rel="noopener noreferrer">NCBI Gene</a>'
+      + "</div>";
+    geneInfoCache.set(cacheKey, html);
+    gpBody.innerHTML = html;
+  } catch (err) {
+    gpBody.innerHTML = '<p class="gp-status">Could not reach STRING-db ('
+      + escapeHtml(err.message) + "). This popup needs internet access.</p>";
+  }
+}
+
+document.querySelectorAll(".svg-embed[data-taxon-id]").forEach(container => {
+  const taxonId = container.dataset.taxonId;
+  if (!taxonId) return;
+  container.addEventListener("click", e => {
+    const node = e.target.closest(".nwnodecontainer");
+    const gene = node && node.getAttribute("data-safe_div_label");
+    if (!gene) return;
+    showGenePanel(gene, taxonId);
+  });
+});
+
 /* ── "Color by" dropdown: switch which stat governs marker fill ──────── */
 document.querySelectorAll(".color-select").forEach(sel => {
   sel.addEventListener("change", () => {
@@ -606,6 +732,7 @@ def _render_plot_row(plot, figs, plot_meta):
             panel_title=plot["panel_title"],
             svg_content=plot["svg"],
             stats_div_id=plot.get("stats_div_id") or "",
+            taxon_id=plot.get("taxon_id") or "",
         )
     figs[div_id] = plot["fig"].to_json()
     if plot.get("simple"):

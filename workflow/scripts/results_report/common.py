@@ -29,6 +29,15 @@ def slugify(text):
     return re.sub(r"[^A-Za-z0-9_-]", "-", str(text))
 
 
+# NCBI taxon IDs for the species this workflow supports — same mapping used
+# by workflow/scripts/string_db.py when it originally fetched the network.
+TAXON_IDS = {"human": 9606, "mouse": 10090}
+
+
+def taxon_id_for(species):
+    return TAXON_IDS.get(species)
+
+
 def load_string_terms(path):
     if not path or not os.path.exists(path):
         return []
@@ -182,7 +191,9 @@ def build_simple_plot(div_id, title, fig, direction):
     }
 
 
-def build_svg_panel(div_id, title, svg_path, direction, stats_div_id=None):
+def build_svg_panel(
+    div_id, title, svg_path, direction, stats_div_id=None, taxon_id=None
+):
     """An inline-embedded STRING-db network SVG — not a Plotly figure, so
     it's rendered as raw markup rather than via Plotly.newPlot.
 
@@ -190,6 +201,13 @@ def build_svg_panel(div_id, title, svg_path, direction, stats_div_id=None):
     whose per-gene hover stats should be shown when hovering a network
     node — STRING tags each node with the gene's name
     (data-safe_div_label), matched against that plot's hover_by_gene map.
+
+    taxon_id: NCBI taxon ID (see taxon_id_for), used to query STRING-db's
+    own API live, client-side, for a gene info popup when a node is
+    clicked — not pre-fetched/embedded, so it needs internet access when
+    the report is viewed (unlike everything else in it), but keeps the
+    report from having to carry per-gene description text for every gene
+    in every network up front.
     """
     if not svg_path or not os.path.exists(svg_path):
         return None
@@ -206,4 +224,5 @@ def build_svg_panel(div_id, title, svg_path, direction, stats_div_id=None):
         "svg": svg,
         "direction": direction,
         "stats_div_id": stats_div_id,
+        "taxon_id": taxon_id,
     }
