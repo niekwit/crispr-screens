@@ -39,6 +39,10 @@ def build_entries(
         data["x"] = np.random.RandomState(42).permutation(len(data))
         data["_bf_str"] = data["BF"].round(3).astype(str)
         data["_fdr_str"] = data["FDR"].round(6).astype(str)
+        # BAGEL2's .pr has no rank column — higher BF means more confidently
+        # essential/depleted, so rank 1 is the highest BF.
+        data["rank"] = data["BF"].rank(ascending=False, method="min").astype(int)
+        data["_rank_str"] = data["rank"].astype(str)
 
         logging.info(f"Loaded {len(data)} genes")
 
@@ -64,13 +68,15 @@ def build_entries(
             y_title="Bayes Factor (BF)",
             color_options=_color_options(data),
             id_col="Gene",
-            customdata_cols=["Gene", "_bf_str", "_fdr_str"],
+            customdata_cols=["Gene", "_bf_str", "_fdr_str", "_rank_str"],
             hovertemplate=(
-                "<b>%{customdata[0]}</b><br>BF: %{customdata[1]}<br>FDR: %{customdata[2]}"
+                "<b>%{customdata[0]}</b><br>BF: %{customdata[1]}<br>"
+                "FDR: %{customdata[2]}<br>Rank: %{customdata[3]}"
             ),
             terms=terms,
             direction="depleted",
             id_mapping=id_mapping,
+            rank_col="rank",
         )
         svg_panel = common.build_svg_panel(
             div_id=f"{key}-depleted-svg",
@@ -81,6 +87,7 @@ def build_entries(
             direction="depleted",
             stats_div_id=f"{key}-depleted",
             taxon_id=taxon_id,
+            rank_by_gene=plot["rank_by_gene"],
         )
         plots = [p for p in [plot, svg_panel] if p is not None]
 

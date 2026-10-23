@@ -49,6 +49,7 @@ def build_entries(
             (-np.log10(depleted["fdr_synth"].clip(lower=1e-300))).round(3).astype(str)
         )
         depleted["_numobs_str"] = depleted["numObs"].astype(str)
+        depleted["_rank_str"] = depleted["rank_synth"].astype(str)
 
         enriched = data[data["normZ"] > 0].copy()
         enriched["x"] = np.random.RandomState(42).permutation(len(enriched))
@@ -57,6 +58,7 @@ def build_entries(
             (-np.log10(enriched["fdr_supp"].clip(lower=1e-300))).round(3).astype(str)
         )
         enriched["_numobs_str"] = enriched["numObs"].astype(str)
+        enriched["_rank_str"] = enriched["rank_supp"].astype(str)
 
         logging.info(
             f"Depleted: {len(depleted)} genes, Enriched: {len(enriched)} genes"
@@ -88,27 +90,53 @@ def build_entries(
             "<b>%{customdata[0]}</b><br>"
             "normZ: %{customdata[1]}<br>"
             "-log10(FDR): %{customdata[2]}<br>"
-            "numObs: %{customdata[3]}"
+            "numObs: %{customdata[3]}<br>"
+            "Rank: %{customdata[4]}"
         )
-        customdata_cols = ["GENE", "_normz_str", "_logfdr_str", "_numobs_str"]
+        customdata_cols = [
+            "GENE",
+            "_normz_str",
+            "_logfdr_str",
+            "_numobs_str",
+            "_rank_str",
+        ]
 
+        depleted_plot = common.build_plot(
+            div_id=f"{key}-depleted",
+            title=f"Depleted (synthetic-lethal) genes — {comparison}",
+            term_panel_title="STRING-db depleted terms",
+            term_list_id=f"{key}-depleted-terms",
+            df=depleted,
+            y_col="normZ",
+            y_title="normZ",
+            color_options=_color_options(depleted, "synth"),
+            id_col="GENE",
+            customdata_cols=customdata_cols,
+            hovertemplate=hovertemplate,
+            terms=depleted_terms,
+            direction="depleted",
+            id_mapping=depleted_id_mapping,
+            rank_col="rank_synth",
+        )
+        enriched_plot = common.build_plot(
+            div_id=f"{key}-enriched",
+            title=f"Enriched (suppressor) genes — {comparison}",
+            term_panel_title="STRING-db enriched terms",
+            term_list_id=f"{key}-enriched-terms",
+            df=enriched,
+            y_col="normZ",
+            y_title="normZ",
+            color_options=_color_options(enriched, "supp"),
+            id_col="GENE",
+            customdata_cols=customdata_cols,
+            hovertemplate=hovertemplate,
+            terms=enriched_terms,
+            direction="enriched",
+            id_mapping=enriched_id_mapping,
+            rank_col="rank_supp",
+        )
         plots = [
-            common.build_plot(
-                div_id=f"{key}-depleted",
-                title=f"Depleted (synthetic-lethal) genes — {comparison}",
-                term_panel_title="STRING-db depleted terms",
-                term_list_id=f"{key}-depleted-terms",
-                df=depleted,
-                y_col="normZ",
-                y_title="normZ",
-                color_options=_color_options(depleted, "synth"),
-                id_col="GENE",
-                customdata_cols=customdata_cols,
-                hovertemplate=hovertemplate,
-                terms=depleted_terms,
-                direction="depleted",
-                id_mapping=depleted_id_mapping,
-            ),
+            depleted_plot,
             common.build_svg_panel(
                 div_id=f"{key}-depleted-svg",
                 title="STRING-db depleted network",
@@ -118,23 +146,9 @@ def build_entries(
                 direction="depleted",
                 stats_div_id=f"{key}-depleted",
                 taxon_id=taxon_id,
+                rank_by_gene=depleted_plot["rank_by_gene"],
             ),
-            common.build_plot(
-                div_id=f"{key}-enriched",
-                title=f"Enriched (suppressor) genes — {comparison}",
-                term_panel_title="STRING-db enriched terms",
-                term_list_id=f"{key}-enriched-terms",
-                df=enriched,
-                y_col="normZ",
-                y_title="normZ",
-                color_options=_color_options(enriched, "supp"),
-                id_col="GENE",
-                customdata_cols=customdata_cols,
-                hovertemplate=hovertemplate,
-                terms=enriched_terms,
-                direction="enriched",
-                id_mapping=enriched_id_mapping,
-            ),
+            enriched_plot,
             common.build_svg_panel(
                 div_id=f"{key}-enriched-svg",
                 title="STRING-db enriched network",
@@ -144,6 +158,7 @@ def build_entries(
                 direction="enriched",
                 stats_div_id=f"{key}-enriched",
                 taxon_id=taxon_id,
+                rank_by_gene=enriched_plot["rank_by_gene"],
             ),
         ]
         plots = [p for p in plots if p is not None]

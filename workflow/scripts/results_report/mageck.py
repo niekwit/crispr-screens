@@ -52,6 +52,7 @@ def build_entries(
             (-np.log10(enriched["pos|p-value"].clip(lower=1e-300))).round(3).astype(str)
         )
         enriched["_fdr_str"] = enriched["pos|fdr"].round(6).astype(str)
+        enriched["_rank_str"] = enriched["pos|rank"].astype(str)
 
         depleted = data[data["neg|lfc"] < 0].copy()
         depleted["x"] = np.random.permutation(len(depleted))
@@ -61,6 +62,7 @@ def build_entries(
             (-np.log10(depleted["neg|p-value"].clip(lower=1e-300))).round(3).astype(str)
         )
         depleted["_fdr_str"] = depleted["neg|fdr"].round(6).astype(str)
+        depleted["_rank_str"] = depleted["neg|rank"].astype(str)
 
         logging.info(
             f"Enriched: {len(enriched)} genes, Depleted: {len(depleted)} genes"
@@ -92,27 +94,47 @@ def build_entries(
             "<b>%{customdata[0]}</b><br>"
             "LFC: %{customdata[1]}<br>"
             "-log10(p-value): %{customdata[2]}<br>"
-            "FDR: %{customdata[3]}"
+            "FDR: %{customdata[3]}<br>"
+            "Rank: %{customdata[4]}"
         )
-        customdata_cols = ["id", "_lfc_str", "_logpval_str", "_fdr_str"]
+        customdata_cols = ["id", "_lfc_str", "_logpval_str", "_fdr_str", "_rank_str"]
 
+        enriched_plot = common.build_plot(
+            div_id=f"{key}-enriched",
+            title=f"Enriched genes — {comparison} ({cnv})",
+            term_panel_title="STRING-db enriched terms",
+            term_list_id=f"{key}-enriched-terms",
+            df=enriched,
+            y_col="lfc",
+            y_title="Log₂ Fold Change",
+            color_options=_color_options(enriched, "pos"),
+            id_col="id",
+            customdata_cols=customdata_cols,
+            hovertemplate=hovertemplate,
+            terms=enriched_terms,
+            direction="enriched",
+            id_mapping=enriched_id_mapping,
+            rank_col="pos|rank",
+        )
+        depleted_plot = common.build_plot(
+            div_id=f"{key}-depleted",
+            title=f"Depleted genes — {comparison} ({cnv})",
+            term_panel_title="STRING-db depleted terms",
+            term_list_id=f"{key}-depleted-terms",
+            df=depleted,
+            y_col="lfc",
+            y_title="Log₂ Fold Change",
+            color_options=_color_options(depleted, "neg"),
+            id_col="id",
+            customdata_cols=customdata_cols,
+            hovertemplate=hovertemplate,
+            terms=depleted_terms,
+            direction="depleted",
+            id_mapping=depleted_id_mapping,
+            rank_col="neg|rank",
+        )
         plots = [
-            common.build_plot(
-                div_id=f"{key}-enriched",
-                title=f"Enriched genes — {comparison} ({cnv})",
-                term_panel_title="STRING-db enriched terms",
-                term_list_id=f"{key}-enriched-terms",
-                df=enriched,
-                y_col="lfc",
-                y_title="Log₂ Fold Change",
-                color_options=_color_options(enriched, "pos"),
-                id_col="id",
-                customdata_cols=customdata_cols,
-                hovertemplate=hovertemplate,
-                terms=enriched_terms,
-                direction="enriched",
-                id_mapping=enriched_id_mapping,
-            ),
+            enriched_plot,
             common.build_svg_panel(
                 div_id=f"{key}-enriched-svg",
                 title="STRING-db enriched network",
@@ -122,23 +144,9 @@ def build_entries(
                 direction="enriched",
                 stats_div_id=f"{key}-enriched",
                 taxon_id=taxon_id,
+                rank_by_gene=enriched_plot["rank_by_gene"],
             ),
-            common.build_plot(
-                div_id=f"{key}-depleted",
-                title=f"Depleted genes — {comparison} ({cnv})",
-                term_panel_title="STRING-db depleted terms",
-                term_list_id=f"{key}-depleted-terms",
-                df=depleted,
-                y_col="lfc",
-                y_title="Log₂ Fold Change",
-                color_options=_color_options(depleted, "neg"),
-                id_col="id",
-                customdata_cols=customdata_cols,
-                hovertemplate=hovertemplate,
-                terms=depleted_terms,
-                direction="depleted",
-                id_mapping=depleted_id_mapping,
-            ),
+            depleted_plot,
             common.build_svg_panel(
                 div_id=f"{key}-depleted-svg",
                 title="STRING-db depleted network",
@@ -148,6 +156,7 @@ def build_entries(
                 direction="depleted",
                 stats_div_id=f"{key}-depleted",
                 taxon_id=taxon_id,
+                rank_by_gene=depleted_plot["rank_by_gene"],
             ),
         ]
         plots = [p for p in plots if p is not None]

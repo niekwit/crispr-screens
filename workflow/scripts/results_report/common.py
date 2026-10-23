@@ -5,9 +5,35 @@
 import logging
 import os
 import re
+import xml.etree.ElementTree as ET
 
 import pandas as pd
 import plotly.graph_objects as go
+
+SVG_NS = "http://www.w3.org/2000/svg"
+ET.register_namespace("", SVG_NS)
+ET.register_namespace("xlink", "http://www.w3.org/1999/xlink")
+
+# STRING-db's node radius is always 20 in the SVGs it serves (confirmed
+# across every network this workflow has generated) — the baseline for
+# _resize_nodes_by_rank's scale factor.
+DEFAULT_NODE_RADIUS = 20
+MIN_NODE_RADIUS = 12
+MAX_NODE_RADIUS = 32
+
+# STRING-db's edge evidence-channel colours, verified against the live
+# legend on a real string-db.org network page (/network/<id>, "Edges"
+# section) rather than guessed — the exact same colours the /api/svg/network
+# endpoint this workflow calls renders with.
+EDGE_COLOR_LEGEND = [
+    ("rgb(31,120,180)", "Databases"),
+    ("rgb(166,206,227)", "Textmining"),
+    ("rgb(227,26,28)", "Experiments"),
+    ("rgb(254,178,76)", "Co-expression"),
+    ("rgb(28,140,30)", "Gene neighborhood"),
+    ("rgb(118,201,98)", "Gene co-occurrence"),
+    ("rgb(178,223,138)", "Gene fusions"),
+]
 
 # Palette used for STRING-db term highlighting, shared across all three tools
 # (identical to what each standalone report used before).
@@ -104,10 +130,16 @@ def build_plot(
     terms,
     direction,
     id_mapping=None,
+    rank_col=None,
 ):
     """One Scattergl figure + the JS payload needed to drive it (gene
     search, click-to-label, STRING-db term highlighting, and switching
     which column governs marker fill colour).
+
+    rank_col: optional column holding this gene's rank (lower = more
+    significant) — if given, a gene-name-keyed rank_by_gene dict is
+    returned alongside hover_by_gene, for the paired STRING network panel
+    to size nodes by (see build_svg_panel).
 
     color_options: ordered list of (key, label, series) tuples — series is
     a column of df, same length/order. The first option is the initial
@@ -154,6 +186,13 @@ def build_plot(
         if query_gene in hover_by_gene and preferred_name not in hover_by_gene:
             hover_by_gene[preferred_name] = hover_by_gene[query_gene]
 
+    rank_by_gene = {}
+    if rank_col:
+        rank_by_gene = {str(r[id_col]): int(r[rank_col]) for _, r in df.iterrows()}
+        for query_gene, preferred_name in (id_mapping or {}).items():
+            if query_gene in rank_by_gene and preferred_name not in rank_by_gene:
+                rank_by_gene[preferred_name] = rank_by_gene[query_gene]
+
     color_values_by_option = {
         key: [round(float(v), 4) for v in series.tolist()]
         for key, _, series in color_options
@@ -175,6 +214,7 @@ def build_plot(
         "terms": terms,
         "direction": direction,
         "hover_by_gene": hover_by_gene,
+        "rank_by_gene": rank_by_gene,
     }
 
 
@@ -191,8 +231,69 @@ def build_simple_plot(div_id, title, fig, direction):
     }
 
 
+def _resize_nodes_by_rank(svg_text, rank_by_gene):
+    """Scale each node's circle, and its label's offset (so the text stays
+    flush against the new edge), by that gene's rank — lower rank (more
+    significant) draws bigger. Scaled relative to the best/worst rank
+    actually present among the nodes drawn in THIS network, not rank's
+    absolute scale (which can run into the thousands for genes that aren't
+    shown here), so the size spread is always visually meaningful."""
+    if not rank_by_gene:
+        return svg_text
+    try:
+        root = ET.fromstring(svg_text)
+    except ET.ParseError as exc:  # pragma: no cover - defensive
+        logging.warning(f"Could not parse STRING-db SVG for node resizing: {exc}")
+        return svg_text
+    ns = {"svg": SVG_NS}
+    nodes = root.findall(".//svg:g[@class='nwnodecontainer']", ns)
+    ranks_present = [
+        rank_by_gene[g.get("data-safe_div_label")]
+        for g in nodes
+        if g.get("data-safe_div_label") in rank_by_gene
+    ]
+    if not ranks_present:
+        return svg_text
+    min_rank, max_rank = min(ranks_present), max(ranks_present)
+
+    for g in nodes:
+        rank = rank_by_gene.get(g.get("data-safe_div_label"))
+        if rank is None:
+            continue
+        norm = (
+            1.0 if max_rank == min_rank else (max_rank - rank) / (max_rank - min_rank)
+        )
+        new_r = MIN_NODE_RADIUS + norm * (MAX_NODE_RADIUS - MIN_NODE_RADIUS)
+        scale = new_r / DEFAULT_NODE_RADIUS
+        cx = cy = None
+        for circle in g.findall("svg:circle", ns):
+            cx, cy = float(circle.get("cx")), float(circle.get("cy"))
+            circle.set("r", f"{new_r:.2f}")
+        if cx is None:
+            continue
+        for text in g.findall("svg:text", ns):
+            x, y = float(text.get("x")), float(text.get("y"))
+            text.set("x", f"{cx + (x - cx) * scale:.2f}")
+            text.set("y", f"{cy + (y - cy) * scale:.2f}")
+
+    return ET.tostring(root, encoding="unicode")
+
+
+def _edge_legend(svg_text):
+    """Which of STRING-db's edge evidence-channel colours actually appear
+    in this network, in EDGE_COLOR_LEGEND's order — only those get shown,
+    since most networks don't use all seven channels."""
+    return [(color, label) for color, label in EDGE_COLOR_LEGEND if color in svg_text]
+
+
 def build_svg_panel(
-    div_id, title, svg_path, direction, stats_div_id=None, taxon_id=None
+    div_id,
+    title,
+    svg_path,
+    direction,
+    stats_div_id=None,
+    taxon_id=None,
+    rank_by_gene=None,
 ):
     """An inline-embedded STRING-db network SVG — not a Plotly figure, so
     it's rendered as raw markup rather than via Plotly.newPlot.
@@ -208,6 +309,9 @@ def build_svg_panel(
     the report is viewed (unlike everything else in it), but keeps the
     report from having to carry per-gene description text for every gene
     in every network up front.
+
+    rank_by_gene: the paired scatter plot's rank_by_gene (see build_plot),
+    used to size each node by its rank among the genes shown here.
     """
     if not svg_path or not os.path.exists(svg_path):
         return None
@@ -217,6 +321,7 @@ def build_svg_panel(
     except OSError as exc:  # pragma: no cover - defensive
         logging.warning(f"Could not read STRING-db SVG {svg_path}: {exc}")
         return None
+    svg = _resize_nodes_by_rank(svg, rank_by_gene or {})
     return {
         "div_id": div_id,
         "panel_title": title,
@@ -225,4 +330,5 @@ def build_svg_panel(
         "direction": direction,
         "stats_div_id": stats_div_id,
         "taxon_id": taxon_id,
+        "edge_legend": _edge_legend(svg),
     }
