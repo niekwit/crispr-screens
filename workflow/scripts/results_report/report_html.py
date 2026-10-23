@@ -396,6 +396,7 @@ function initPlot(cfg) {
       text: gene, showarrow: true, arrowhead: 2, arrowsize: 0.8, arrowwidth: 1,
       font: { size: 11, color: "#444" },
       bgcolor: "white", bordercolor: "#444", borderpad: 3, borderwidth: 1,
+      captureevents: !!cfg.taxonId,
     }));
     searchLabeled.forEach((pos, gene) => {
       if (labeled.has(gene)) return;  // already shown (gray) above
@@ -405,6 +406,7 @@ function initPlot(cfg) {
         showarrow: true, arrowhead: 2, arrowsize: 0.8,
         font: { size: 12, color: "#c0392b" },
         bgcolor: "#fff5f5", bordercolor: "#c0392b", borderpad: 3, borderwidth: 1,
+        captureevents: !!cfg.taxonId,
       });
     });
     return anns;
@@ -418,6 +420,13 @@ function initPlot(cfg) {
     labeled.has(gene) ? labeled.delete(gene) : labeled.set(gene, { x: pt.x, y: pt.y });
     refreshAnns();
   });
+
+  if (cfg.taxonId) {
+    DIV.on("plotly_clickannotation", evt => {
+      const gene = evt.annotation.text.replace(/<\/?b>/g, "");
+      showGenePanel(gene, cfg.taxonId);
+    });
+  }
 
   async function updateColors() {
     if (DIV.data.length > 1) {
@@ -540,6 +549,7 @@ function getOrInitPlot(divId) {
     geneData:            meta.gene_data,
     terms:               meta.terms,
     termListId:          meta.term_list_id,
+    taxonId:             meta.taxon_id,
   });
   plotApis.set(divId, api);
   return api;
@@ -968,6 +978,7 @@ def _render_plot_row(plot, figs, plot_meta):
         "terms": plot["terms"],
         "term_list_id": plot["term_list_id"],
         "hover_by_gene": plot["hover_by_gene"],
+        "taxon_id": plot.get("taxon_id"),
     }
     color_option_html = "\n".join(
         OPTION_TEMPLATE.substitute(key=key, label=label)

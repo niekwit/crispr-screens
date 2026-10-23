@@ -131,6 +131,7 @@ def build_plot(
     direction,
     id_mapping=None,
     rank_col=None,
+    taxon_id=None,
 ):
     """One Scattergl figure + the JS payload needed to drive it (gene
     search, click-to-label, STRING-db term highlighting, and switching
@@ -215,6 +216,7 @@ def build_plot(
         "direction": direction,
         "hover_by_gene": hover_by_gene,
         "rank_by_gene": rank_by_gene,
+        "taxon_id": taxon_id,
     }
 
 

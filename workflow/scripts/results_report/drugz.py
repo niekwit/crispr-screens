@@ -117,6 +117,7 @@ def build_entries(
             direction="depleted",
             id_mapping=depleted_id_mapping,
             rank_col="rank_synth",
+            taxon_id=taxon_id,
         )
         enriched_plot = common.build_plot(
             div_id=f"{key}-enriched",
@@ -134,6 +135,7 @@ def build_entries(
             direction="enriched",
             id_mapping=enriched_id_mapping,
             rank_col="rank_supp",
+            taxon_id=taxon_id,
         )
         plots = [
             depleted_plot,

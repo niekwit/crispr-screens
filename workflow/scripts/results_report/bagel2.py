@@ -77,6 +77,7 @@ def build_entries(
             direction="depleted",
             id_mapping=id_mapping,
             rank_col="rank",
+            taxon_id=taxon_id,
         )
         svg_panel = common.build_svg_panel(
             div_id=f"{key}-depleted-svg",
