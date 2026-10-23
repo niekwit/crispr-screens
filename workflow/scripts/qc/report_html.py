@@ -10,8 +10,10 @@ import json
 import logging
 from string import Template
 
+import kaleido
 import plotly.graph_objects as go
 import plotly.offline
+from choreographer.errors import ChromeNotFoundError
 
 # kaleido's chromium management (choreographer) logs noisily at DEBUG/INFO,
 # including from background threads and __del__ finalizers. Left alone,
@@ -237,9 +239,31 @@ def _encode_pdf(fig, filename):
         export_fig.update_layout(margin=dict(t=60, b=80, l=60, r=30))
     try:
         pdf_bytes = export_fig.to_image(format="pdf")
-    except Exception as exc:  # pragma: no cover - depends on kaleido install
-        logging.warning(f"Could not render PDF for {filename}: {exc}")
-        return None, filename
+    except Exception as exc:
+        # kaleido v1+ no longer bundles Chrome and only looks at a fixed list
+        # of typical system install paths (plotly re-raises the underlying
+        # ChromeNotFoundError as a plain RuntimeError, so check the chained
+        # cause rather than the exception type). On a host with neither a
+        # system install nor a previously-downloaded copy — e.g. the
+        # Docker/Singularity image, which has no browser baked in — fall
+        # back to kaleido's own managed download (cached under
+        # ~/.local/share/choreographer, picked up automatically on future
+        # runs) and retry once before giving up.
+        if isinstance(exc.__context__, ChromeNotFoundError) or isinstance(
+            exc, ChromeNotFoundError
+        ):
+            try:
+                kaleido.get_chrome_sync()
+                pdf_bytes = export_fig.to_image(format="pdf")
+            except Exception as exc2:  # pragma: no cover - needs network access
+                logging.warning(
+                    f"Could not render PDF for {filename}: no Chrome install "
+                    f"found and the fallback download failed: {exc2}"
+                )
+                return None, filename
+        else:  # pragma: no cover - depends on kaleido install
+            logging.warning(f"Could not render PDF for {filename}: {exc}")
+            return None, filename
     payload = base64.b64encode(pdf_bytes).decode()
     return f"data:application/pdf;base64,{payload}", filename
 
