@@ -431,7 +431,7 @@ def comparisons():
 
 
 def crisprcleanr_comparisons():
-    """Comparisons the crisprcleanr rule actually runs for: the union of
+    """The union of comparisons the crisprcleanr rule actually runs for —
     whichever downstream tool consumes its corrected counts/logFCs (see
     mageck_input/drugz_input and the bagel2bf rule's "fc" input, which
     always depends on it unconditionally when BAGEL2 is run)."""
