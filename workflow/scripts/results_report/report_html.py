@@ -377,6 +377,15 @@ const FIGS = $figs_json;
 const PLOT_META = $plot_meta_json;
 const COLORS = $colors_json;
 
+// "Download as PNG" target size — a fixed, presentation-friendly size
+// rather than whatever width the on-screen responsive plot happens to be.
+// scale multiplies both dimensions at export time, so the PNG comes out at
+// PNG_EXPORT_WIDTH*PNG_EXPORT_SCALE x height*PNG_EXPORT_SCALE pixels (e.g.
+// 1000x600 @ scale 3 => 3000x1800px, sharp enough for a slide at ~300 DPI).
+const PNG_EXPORT_WIDTH = 1000;
+const PNG_EXPORT_HEIGHT = 600;
+const PNG_EXPORT_SCALE = 3;
+
 /* ── Per-plot factory (click-to-label, STRING term highlighting, search) ── */
 function initPlot(cfg) {
   const DIV           = document.getElementById(cfg.divId);
@@ -535,6 +544,17 @@ function getOrInitPlot(divId) {
     responsive: true,
     displaylogo: false,
     modeBarButtonsToRemove: ["lasso2d", "select2d"],
+    // The on-screen plot stretches to fill its (often very wide) container —
+    // fine for interacting with it, but a bad default for a PNG meant for a
+    // slide. Export at a fixed, presentation-friendly size instead, at a
+    // scale factor high enough to stay sharp once placed in a deck.
+    toImageButtonOptions: {
+      format: "png",
+      filename: divId,
+      width: PNG_EXPORT_WIDTH,
+      height: fig.layout.height || PNG_EXPORT_HEIGHT,
+      scale: PNG_EXPORT_SCALE,
+    },
   });
   if (meta.simple) {
     const api = { search: () => ({ hits: [], misses: [] }), clear: () => {} };
