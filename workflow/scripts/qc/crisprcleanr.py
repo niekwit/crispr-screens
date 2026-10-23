@@ -69,14 +69,44 @@ def _comparison_dropdown(comparisons, n_traces_per_comparison):
     )
 
 
+def _hex_to_rgb(hex_color):
+    hex_color = hex_color.lstrip("#")
+    return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+
+
+def _gradient(base_hex, n):
+    """n shades of base_hex from light to full colour, one per comparison
+    (comparisons are usually successive timepoints) — lets every curve be
+    plotted on one axis at once instead of behind a dropdown, so an
+    improving/worsening AUC across timepoints reads directly off the
+    colour progression."""
+    if n == 1:
+        return [base_hex]
+    r, g, b = _hex_to_rgb(base_hex)
+    colors = []
+    for i in range(n):
+        t = i / (n - 1)  # 0 = lightest (first comparison), 1 = full colour (last)
+        frac_white = 0.75 * (1 - t)
+        rr = round(r + (255 - r) * frac_white)
+        gg = round(g + (255 - g) * frac_white)
+        bb = round(b + (255 - b) * frac_white)
+        colors.append(f"#{rr:02x}{gg:02x}{bb:02x}")
+    return colors
+
+
 def _build_curve_fig(comparisons, dfs, x_col, y_col, x_title, y_title, show_diagonal):
     """Shared by ROC (x=1-specificity, y=sensitivity) and PR (x=recall,
-    y=precision): two lines per comparison (gene- and sgRNA-level), with a
-    dropdown to switch comparisons when there's more than one."""
+    y=precision): two lines per comparison (gene- and sgRNA-level), all
+    plotted together — gene lines shaded light-to-dark indigo and sgRNA
+    lines light-to-dark amber, in comparison order, so multiple comparisons
+    (e.g. timepoints) are directly comparable on one axis rather than
+    switched between."""
+    gene_colors = _gradient(GENE_COLOR, len(comparisons))
+    sgrna_colors = _gradient(SGRNA_COLOR, len(comparisons))
+
     traces = []
-    for comparison, df in zip(comparisons, dfs):
-        is_first = comparison == comparisons[0]
-        for cls, color in (("gene", GENE_COLOR), ("sgRNA", SGRNA_COLOR)):
+    for i, (comparison, df) in enumerate(zip(comparisons, dfs)):
+        for cls, color in (("gene", gene_colors[i]), ("sgRNA", sgrna_colors[i])):
             sub = df[df["class"] == cls].sort_values(x_col)
             auc = sub["auc"].iloc[0] if len(sub) else float("nan")
             traces.append(
@@ -84,11 +114,10 @@ def _build_curve_fig(comparisons, dfs, x_col, y_col, x_title, y_title, show_diag
                     x=sub[x_col],
                     y=sub[y_col],
                     mode="lines",
-                    name=f"{cls} (AUC={auc:.3f})",
+                    name=f"{comparison} — {cls} (AUC={auc:.3f})",
                     line=dict(color=color, width=2),
-                    visible=is_first,
                     hovertemplate=(
-                        f"<b>{cls}</b><br>{x_title}: "
+                        f"<b>{comparison} — {cls}</b><br>{x_title}: "
                         "%{x:.3f}<br>"
                         f"{y_title}: "
                         "%{y:.3f}<extra></extra>"
@@ -109,25 +138,13 @@ def _build_curve_fig(comparisons, dfs, x_col, y_col, x_title, y_title, show_diag
             )
         )
 
-    updatemenus = []
-    if len(comparisons) > 1:
-        # 2 traces per comparison + the always-visible diagonal (if any),
-        # which _comparison_dropdown's flat indexing doesn't know about —
-        # pad every button's visible array with one more True for it.
-        menu = _comparison_dropdown(comparisons, 2)
-        if show_diagonal:
-            for button in menu["buttons"]:
-                button["args"][0]["visible"].append(True)
-        updatemenus = [menu]
-
     fig.update_xaxes(title=x_title, range=[0, 1])
     fig.update_yaxes(title=y_title, range=[0, 1])
     style_fig(
         fig,
         height=550,
         showlegend=True,
-        updatemenus=updatemenus,
-        margin=dict(t=90 if updatemenus else 60, b=80, l=70, r=30),
+        margin=dict(t=60, b=80, l=70, r=30),
     )
     return fig, pd.concat(dfs, ignore_index=True)
 
