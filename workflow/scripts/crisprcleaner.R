@@ -26,6 +26,17 @@ print("Creating output directory...")
 out_dir <- dirname(corrected_fc_file)
 dir.create(out_dir, showWarnings = FALSE)
 
+# ccr.NormfoldChanges()/ccr.correctCounts() build their .RData paths via
+# paste0(outdir, EXPname, "_suffix.RData") — no path separator inserted —
+# so outdir must end in "/" or the filename gets mashed into out_dir's own
+# name (e.g. "results/crisprcleanrL15_vs_plasmid_..." instead of landing
+# inside out_dir). Point them at their own subdirectory instead of
+# out_dir itself, both to satisfy that trailing-slash requirement and to
+# keep these package side-effect files out of out_dir's "real" outputs.
+rdata_dir <- file.path(out_dir, "rdata")
+dir.create(rdata_dir, showWarnings = FALSE)
+rdata_outdir <- paste0(rdata_dir, "/")
+
 # Remove duplicated rows in counts (this can cause BAGEL2 to fail)
 counts <- counts |> distinct()
 
@@ -196,7 +207,7 @@ norm_and_fcs <- ccr.NormfoldChanges(
   libraryAnnotation = full_annotations,
   display = FALSE,
   ncontrols = ncontrols,
-  outdir = out_dir
+  outdir = rdata_outdir
 )
 
 # Check if norm_and_fcs is empty
@@ -232,7 +243,7 @@ corrected_counts <- ccr.correctCounts(
   corrected_fcs,
   full_annotations,
   minTargetedGenes = 3,
-  OutDir = out_dir
+  OutDir = rdata_outdir
 )
 
 # Count table already in MAGeCK/DrugZ format

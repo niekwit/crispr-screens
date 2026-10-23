@@ -121,6 +121,11 @@ if (
             roc="results/crisprcleanr/roc_{comparison}.pdf",
             pr="results/crisprcleanr/pr_{comparison}.pdf",
             drnk="results/crisprcleanr/depletion_rank_{comparison}.pdf",
+            # CRISPRcleanR's own intermediate .RData (normalised counts,
+            # fold changes, corrected counts)
+            norm_counts_rdata="results/crisprcleanr/rdata/{comparison}_normCounts.Rdata",
+            fold_changes_rdata="results/crisprcleanr/rdata/{comparison}_foldChanges.Rdata",
+            corrected_counts_rdata="results/crisprcleanr/rdata/{comparison}_correctedCounts.RData",
         log:
             "logs/crisprcleanr/{comparison}.log",
         conda:
