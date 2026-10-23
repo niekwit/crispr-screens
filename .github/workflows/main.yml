@@ -26,7 +26,7 @@ jobs:
       - name: Lint workflow
         uses: snakemake/snakemake-github-action@v2
         with:
-          directory: .test_mageck_test
+          directory: .test_bagel2
           snakefile: workflow/Snakefile
           snakemake-version: 8.25.5
           args: "--lint"
@@ -39,10 +39,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Test workflow MAGeCK test
+      - name: Test workflow MAGeCK test + DrugZ + BAGEL2
         uses: snakemake/snakemake-github-action@v2
         with:
-          directory: .test_mageck_test
+          directory: .test_bagel2
           snakefile: workflow/Snakefile
           snakemake-version: 8.25.5
           args: "--use-conda --show-failed-logs --cores 3 --conda-cleanup-pkgs cache"
@@ -50,7 +50,7 @@ jobs:
       - name: Test report
         uses: snakemake/snakemake-github-action@v2
         with:
-          directory: .test_mageck_test
+          directory: .test_bagel2
           snakefile: workflow/Snakefile
           snakemake-version: 8.25.5
           args: "--report report.zip"
@@ -59,14 +59,6 @@ jobs:
         uses: snakemake/snakemake-github-action@v2
         with:
           directory: .test_mageck_mle
-          snakefile: workflow/Snakefile
-          snakemake-version: 8.25.5
-          args: "--use-conda --show-failed-logs --cores 3 --conda-cleanup-pkgs cache"
-
-      - name: Test workflow BAGEL2
-        uses: snakemake/snakemake-github-action@v2
-        with:
-          directory: .test_bagel2
           snakefile: workflow/Snakefile
           snakemake-version: 8.25.5
           args: "--use-conda --show-failed-logs --cores 3 --conda-cleanup-pkgs cache"
