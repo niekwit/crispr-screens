@@ -146,12 +146,12 @@ def targets():
                         ),
                     ]
                 )
-    if has_interactive_results():
+    if any(interactive_results_keys()):
         TARGETS.append("results/interactive_report.html")
     return TARGETS
 
 
-def _interactive_results_keys():
+def interactive_results_keys():
     """(mageck_pairs, drugz_comparisons, bagel2_comparisons) feeding the
     combined interactive_results_report rule, each empty when that tool
     isn't run (or, for MAGeCK, not in "test" mode)."""
@@ -168,10 +168,6 @@ def _interactive_results_keys():
     bagel2_comparisons = list(COMPARISONS_BAGEL2) if bagel2_on else []
 
     return mageck_pairs, drugz_comparisons, bagel2_comparisons
-
-
-def has_interactive_results():
-    return any(_interactive_results_keys())
 
 
 def interactive_results_report_input():
