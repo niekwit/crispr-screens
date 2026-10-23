@@ -185,14 +185,14 @@ def _build_rank_data(data):
         "grid": [round(float(v), 4) for v in grid],
         "density": [round(float(v), 6) for v in density],
         "xRange": x_range,
-        "rows": [
-            {
-                "gene": str(r["Gene"]),
-                "sgrna": str(r["sgrna"]),
-                "lfc": round(float(r["LFC"]), 4),
-            }
-            for _, r in rows.iterrows()
-        ],
+        # Parallel arrays rather than a list of {gene, sgrna, lfc} dicts —
+        # one gene/sgrna/lfc triple per sgRNA across the WHOLE library (not
+        # just the default top N, see module docstring), so repeating the
+        # three key names per row would otherwise double report size on a
+        # genome-wide screen.
+        "rowGenes": [str(g) for g in rows["Gene"]],
+        "rowSgrnas": [str(s) for s in rows["sgrna"]],
+        "rowLfcs": [round(float(v), 4) for v in rows["LFC"]],
         "genes": sorted(data["Gene"].dropna().unique().tolist()),
     }
 

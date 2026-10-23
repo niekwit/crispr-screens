@@ -833,7 +833,12 @@ function rebuildSgRank(divId) {
   genes.forEach((g, i) => { rowOf[g] = i + 1; });
   const nGenes = genes.length;
 
-  const rows = info.rows.filter(r => rowOf[r.gene] !== undefined);
+  const rows = [];
+  for (let i = 0; i < info.rowGenes.length; i++) {
+    const gene = info.rowGenes[i];
+    if (rowOf[gene] === undefined) continue;
+    rows.push({ gene, sgrna: info.rowSgrnas[i], lfc: info.rowLfcs[i] });
+  }
   const posRows = rows.filter(r => r.lfc >= 0);
   const negRows = rows.filter(r => r.lfc < 0);
 
