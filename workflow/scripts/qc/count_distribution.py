@@ -18,7 +18,7 @@ LOW_FRACTION = 0.1  # sgRNAs below this fraction of the sample mean are "low"
 FLAG_THRESHOLD = 0.1  # samples with more low sgRNAs than this are flagged
 
 
-def build(counts, sample_cols, samples, output_csv):
+def build(counts, sample_cols, samples, output_csv, sorted_samples=frozenset()):
     dist_rows = []
     log_counts = {}
     for col, sample in zip(sample_cols, samples):
@@ -33,11 +33,17 @@ def build(counts, sample_cols, samples, output_csv):
                 "median_over_mean": median / mean if mean else float("nan"),
                 "fraction_low": float((values < LOW_FRACTION * mean).mean()),
                 "fraction_zero": float((values == 0).mean()),
+                "sorted_sample": sample in sorted_samples,
             }
         )
         log_counts[sample] = np.log10(values + 1)
     df = pd.DataFrame(dist_rows)
-    df["flagged"] = df["fraction_low"] > FLAG_THRESHOLD
+    # A FACS-sorted sample is expected to have a bottlenecked sgRNA
+    # distribution from the sort itself, not from a technical problem, so
+    # it's exempted from the dropout flag (see sorted_samples() in
+    # general_functions.smk) even if its fraction_low would otherwise
+    # cross FLAG_THRESHOLD.
+    df["flagged"] = (df["fraction_low"] > FLAG_THRESHOLD) & ~df["sorted_sample"]
     df.to_csv(output_csv, index=False)
 
     ncol_facet = min(4, len(samples))
@@ -46,8 +52,9 @@ def build(counts, sample_cols, samples, output_csv):
         rows=nrow_facet,
         cols=ncol_facet,
         subplot_titles=[
-            f"<b>{row['sample']}</b><br>"
-            f"{100 * row['fraction_low']:.0f}% low<br>"
+            f"<b>{row['sample']}</b>"
+            + (" (sorted)" if row["sorted_sample"] else "")
+            + f"<br>{100 * row['fraction_low']:.0f}% low<br>"
             f"median/mean {row['median_over_mean']:.2f}"
             for _, row in df.iterrows()
         ],
@@ -111,7 +118,9 @@ def build(counts, sample_cols, samples, output_csv):
             "such samples MAGeCK gene-level LFCs can show discrete bands, because "
             "the median of the sgRNA LFCs depends mainly on how many sgRNAs per "
             "gene were lost by chance. Blue line: median. Dashed line: low-count "
-            "cut-off. Shaded panel: sample flagged for sgRNA dropout."
+            "cut-off. Shaded panel: sample flagged for sgRNA dropout. Samples "
+            "marked (sorted) in config/samples.csv are exempt from the flag, "
+            "since a bottlenecked distribution is expected from the sort itself."
         ),
         fig=fig,
         df=df,

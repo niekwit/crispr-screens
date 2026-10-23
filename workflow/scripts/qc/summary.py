@@ -23,7 +23,9 @@ def build(
     cov_df = coverage_section["df"]
     gini_df = gini_section["df"]
     missed_df = missed_section["df"]
-    dist_df = count_dist_section["df"][["sample", "fraction_low", "flagged"]].rename(
+    dist_df = count_dist_section["df"][
+        ["sample", "fraction_low", "flagged", "sorted_sample"]
+    ].rename(
         columns={"fraction_low": "fraction_low_sgrnas", "flagged": "sgrna_dropout"}
     )
 
@@ -48,6 +50,7 @@ def build(
 
     header = [
         "Sample",
+        "Sorted",
         "Mapping rate (%)",
         "Coverage (x)",
         "Gini index",
@@ -57,6 +60,7 @@ def build(
     ]
     cell_values = [
         summary["sample"],
+        summary["sorted_sample"].map({True: "Yes", False: ""}),
         summary["mapping_rate"].round(1),
         summary["coverage"].round(1),
         summary["gini_index"].round(3),
@@ -71,7 +75,7 @@ def build(
     fig = go.Figure(
         data=[
             go.Table(
-                columnwidth=[90, 110, 90, 80, 100, 130, 220],
+                columnwidth=[90, 70, 110, 90, 80, 100, 130, 220],
                 header=dict(
                     values=header,
                     fill_color=HEADER_COLOR,
@@ -98,7 +102,9 @@ def build(
             "Per-sample summary across all QC metrics. Rows highlighted in rose "
             f"are flagged for a low alignment rate (<{MIN_ALIGNMENT_RATE}%) or "
             f"sgRNA dropout (>{100 * FLAG_THRESHOLD:.0f}% of sgRNAs below "
-            f"{100 * LOW_FRACTION:.0f}% of the sample mean count)."
+            f"{100 * LOW_FRACTION:.0f}% of the sample mean count) — samples "
+            "marked sorted in config/samples.csv are exempt from the dropout "
+            "flag."
         ),
         fig=fig,
         df=summary.drop(columns=["flagged"]),

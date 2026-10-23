@@ -103,5 +103,6 @@ rule qc_report:
     params:
         fasta=fasta,
         crisprcleanr_comparisons=crisprcleanr_comparisons(),
+        sorted_samples=sorted_samples(),
     script:
         "../scripts/qc_report.py"

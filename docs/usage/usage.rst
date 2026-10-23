@@ -176,6 +176,18 @@ Experiment meta data is described in `config/config.yml`:
 
 See `workflow/schemas/config.schema.yaml` for the full, authoritative list of keys.
 
+An optional `config/samples.csv` file can describe per-sample metadata. Currently this supports a `sorted` column (`y`/blank) marking FACS-sorted samples:
+
+.. csv-table:: Example samples.csv file
+    :header: "sample", "sorted"
+
+    HT_1,y
+    HT_2,y
+    noHT_1,
+    noHT_2,
+
+A sample marked `sorted` is exempt from the QC report's sgRNA-dropout flag (see the Read count distribution and Overview tabs), since a bottlenecked sgRNA distribution is an expected consequence of sorting, not a technical problem. If `config/samples.csv` is absent, or has no `sorted` column, every sample is treated as unsorted as before.
+
 
 FASTQ trimming
 =================

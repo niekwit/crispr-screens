@@ -455,6 +455,23 @@ def crisprcleanr_comparisons():
     return sorted(comps)
 
 
+def sorted_samples():
+    """Sample names marked as FACS-sorted in the optional config/samples.csv
+    (a "sample" column plus a "sorted" column set to "y") — these have a
+    legitimate reduction in sgRNA diversity from the sort itself, so the QC
+    report's sgRNA-dropout flag (see qc/count_distribution.py) shouldn't
+    apply to them. Returns an empty set when the file doesn't exist or has
+    no "sorted" column, so it's entirely optional."""
+    path = "config/samples.csv"
+    if not os.path.exists(path):
+        return set()
+    df = pd.read_csv(path)
+    if "sorted" not in df.columns:
+        return set()
+    is_sorted = df["sorted"].astype(str).str.lower() == "y"
+    return set(df.loc[is_sorted, "sample"])
+
+
 def mageck_control():
     """
     Load control genes for MAGeCK

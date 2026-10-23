@@ -40,6 +40,7 @@ logging.basicConfig(
 log_files = snakemake.input["logs"]
 counts_file = snakemake.input["counts"]
 fasta_file = snakemake.params["fasta"]
+sorted_samples = set(snakemake.params["sorted_samples"])
 output_html = snakemake.output["html"]
 output_alignment_csv = snakemake.output["csv"]
 output_count_dist_csv = snakemake.output["count_csv"]
@@ -61,7 +62,7 @@ coverage_section = coverage.build(counts, sample_cols, samples, fasta_file)
 gini_section = gini.build(counts, sample_cols, samples)
 missed_section = missed_sgrnas.build(counts, sample_cols, samples)
 count_dist_section = count_distribution.build(
-    counts, sample_cols, samples, output_count_dist_csv
+    counts, sample_cols, samples, output_count_dist_csv, sorted_samples
 )
 logging.info(f"Written count distribution stats to {output_count_dist_csv}")
 abundance_section = abundance.build(counts, sample_cols, samples)
