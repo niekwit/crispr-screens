@@ -310,7 +310,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 
 <div id="topbar">
   <h1>Results report</h1>
-  <input id="search-input" type="text" placeholder="Search gene&hellip;" autocomplete="off">
+  <input id="search-input" type="text" placeholder="Search gene(s), comma-separated&hellip;" autocomplete="off">
   <button class="btn btn-primary"   id="search-btn">Search</button>
   <button class="btn btn-secondary" id="clear-btn">Clear all</button>
   <a class="btn btn-link" href="https://github.com/niekwit/crispr-screens" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -341,15 +341,14 @@ const COLORS = $colors_json;
 
 /* ── Per-plot factory (click-to-label, STRING term highlighting, search) ── */
 function initPlot(cfg) {
-  const DIV      = document.getElementById(cfg.divId);
-  const labeled  = new Map();
-  let   found    = null;
-  const selTerms = new Set();
+  const DIV           = document.getElementById(cfg.divId);
+  const labeled       = new Map();  // click-toggled, gray
+  const searchLabeled = new Map();  // search-accumulated, red — stays until "Clear all"
+  const selTerms      = new Set();
 
   function findGene(name) {
-    const q    = name.trim().toLowerCase();
-    const item = cfg.geneData.find(d => d.id.toLowerCase() === q);
-    return item ? { x: item.x, y: item.y } : null;
+    const q = name.trim().toLowerCase();
+    return cfg.geneData.find(d => d.id.toLowerCase() === q) || null;
   }
 
   function buildAnns() {
@@ -360,16 +359,16 @@ function initPlot(cfg) {
       font: { size: 11, color: "#444" },
       bgcolor: "white", bordercolor: "#444", borderpad: 3, borderwidth: 1,
     }));
-    if (found && !labeled.has(found)) {
-      const info = findGene(found);
-      if (info) anns.push({
-        x: info.x, y: info.y, xref: "x", yref: "y",
-        text: "<b>" + found + "</b>",
+    searchLabeled.forEach((pos, gene) => {
+      if (labeled.has(gene)) return;  // already shown (gray) above
+      anns.push({
+        x: pos.x, y: pos.y, xref: "x", yref: "y",
+        text: "<b>" + gene + "</b>",
         showarrow: true, arrowhead: 2, arrowsize: 0.8,
         font: { size: 12, color: "#c0392b" },
         bgcolor: "#fff5f5", bordercolor: "#c0392b", borderpad: 3, borderwidth: 1,
       });
-    }
+    });
     return anns;
   }
 
@@ -442,21 +441,29 @@ function initPlot(cfg) {
 
   return {
     search(query) {
-      found = null;
-      const q   = query ? query.trim().toLowerCase() : "";
-      let   hit = null;
-      if (q) {
-        const item = cfg.geneData.find(d => d.id.toLowerCase() === q);
-        if (item) { found = item.id; hit = item.id; }
-      }
-      const sizes = cfg.genes.map(g => hit && g.toLowerCase() === q ? 18 : 8);
+      // Comma-separated queries label several genes in one go; repeated
+      // calls accumulate into searchLabeled rather than replacing it, so
+      // labels can be built up one search at a time too.
+      const names = (query || "").split(",").map(s => s.trim()).filter(Boolean);
+      const hits = [];
+      const misses = [];
+      names.forEach(name => {
+        const item = findGene(name);
+        if (item) {
+          searchLabeled.set(item.id, { x: item.x, y: item.y });
+          hits.push(item.id);
+        } else {
+          misses.push(name);
+        }
+      });
+      const sizes = cfg.genes.map(g => searchLabeled.has(g) ? 18 : 8);
       Plotly.restyle(DIV, { "marker.size": [sizes] }, [0]);
       refreshAnns();
-      return !!hit;
+      return { hits, misses };
     },
     clear() {
-      found = null;
       labeled.clear();
+      searchLabeled.clear();
       selTerms.clear();
       document.querySelectorAll("#" + cfg.termListId + " input").forEach(cb => (cb.checked = false));
       Plotly.restyle(DIV, { "marker.size": [8] }, [0]);
@@ -483,7 +490,7 @@ function getOrInitPlot(divId) {
     modeBarButtonsToRemove: ["lasso2d", "select2d"],
   });
   if (meta.simple) {
-    const api = { search: () => false, clear: () => {} };
+    const api = { search: () => ({ hits: [], misses: [] }), clear: () => {} };
     plotApis.set(divId, api);
     return api;
   }
@@ -579,21 +586,38 @@ function activePlots() {
 }
 
 function doSearch() {
-  const q      = document.getElementById("search-input").value;
+  const input  = document.getElementById("search-input");
+  const q      = input.value;
   const status = document.getElementById("status");
   if (!q.trim()) {
-    activePlots().forEach(p => p.api.search(""));
     status.textContent = "";
     return;
   }
-  const hits = activePlots().filter(p => p.api.search(q));
-  if (hits.length) {
-    status.textContent = "Found in: " + hits.map(p => p.role).join(" & ");
-    status.style.color = "#2ecc71";
+  // Comma-separated queries label several genes at once; each call adds to
+  // the existing labels (across every plot in the active panel) rather
+  // than replacing them, so repeated searches build up one gene at a time.
+  const allHits = new Set();
+  const allMisses = new Set();
+  activePlots().forEach(p => {
+    const { hits, misses } = p.api.search(q);
+    hits.forEach(h => allHits.add(h));
+    misses.forEach(m => allMisses.add(m));
+  });
+  // A gene missing from one panel (e.g. enriched) but present in another
+  // (e.g. depleted) isn't a real miss.
+  const hitsLower = new Set([...allHits].map(h => h.toLowerCase()));
+  const trueMisses = [...allMisses].filter(m => !hitsLower.has(m.toLowerCase()));
+
+  if (allHits.size) {
+    status.textContent = trueMisses.length
+      ? "Labeled: " + [...allHits].join(", ") + " — not found: " + trueMisses.join(", ")
+      : "Labeled: " + [...allHits].join(", ");
+    status.style.color = trueMisses.length ? "#e67e22" : "#2ecc71";
   } else {
-    status.textContent = "Not found";
+    status.textContent = "Not found: " + [...allMisses].join(", ");
     status.style.color = "#e74c3c";
   }
+  input.value = "";
 }
 
 function clearAll() {
