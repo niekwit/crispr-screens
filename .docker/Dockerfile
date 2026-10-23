@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="bf953c0e7bbfc033ff3c54e84eb51d7cc3a749a26e64263e42e2cde37f42e8f0"
+LABEL io.github.snakemake.conda_env_hash="870b60c16c6a118786ea136eccb3ba70e01856bae5177a407816e2cdf95d630e"
 
 # Step 2: Retrieve conda environments
 
@@ -44,7 +44,7 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v9.18.0/bio/multiqc/envi
 
 # Conda environment:
 #   source: workflow/envs/stats.yaml
-#   prefix: /conda-envs/a3bd78ddd9e1f75c8117e1071683fcc2
+#   prefix: /conda-envs/2e2055326281268955f2572ee865118b
 #   name: stats
 #   channels:
 #     - conda-forge
@@ -55,8 +55,6 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v9.18.0/bio/multiqc/envi
 #     - r-cowplot=1.1.1
 #     - r-viridis=0.6.4
 #     - r-ggrepel=0.9.4
-#     - r-ineq=0.2_13
-#     - r-reshape2=1.4.4
 #     - bioconda::r-crisprcleanr=3.0.0
 #     - python=3.10.12
 #     - mageck=0.5.9
@@ -73,14 +71,15 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v9.18.0/bio/multiqc/envi
 #     - conda-forge::gzip=1.14
 #     - conda-forge::requests
 #     - conda-forge::plotly
+#     - conda-forge::python-kaleido
 #     - conda-forge::jq
-RUN mkdir -p /conda-envs/a3bd78ddd9e1f75c8117e1071683fcc2
-COPY workflow/envs/stats.yaml /conda-envs/a3bd78ddd9e1f75c8117e1071683fcc2/environment.yaml
+RUN mkdir -p /conda-envs/2e2055326281268955f2572ee865118b
+COPY workflow/envs/stats.yaml /conda-envs/2e2055326281268955f2572ee865118b/environment.yaml
 
 # Step 3: Generate conda environments
 
 RUN conda env create --prefix /conda-envs/24b8923f8e4abe077ffe95b01bfc1652 --file /conda-envs/24b8923f8e4abe077ffe95b01bfc1652/environment.yaml && \
     conda env create --prefix /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32 --file /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32/environment.yaml && \
     conda env create --prefix /conda-envs/43340c98ee16cbaa141fbba9b9dd2847 --file /conda-envs/43340c98ee16cbaa141fbba9b9dd2847/environment.yaml && \
-    conda env create --prefix /conda-envs/a3bd78ddd9e1f75c8117e1071683fcc2 --file /conda-envs/a3bd78ddd9e1f75c8117e1071683fcc2/environment.yaml && \
+    conda env create --prefix /conda-envs/2e2055326281268955f2572ee865118b --file /conda-envs/2e2055326281268955f2572ee865118b/environment.yaml && \
     conda clean --all -y
