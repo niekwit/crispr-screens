@@ -344,7 +344,7 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
                     x=col_centers[col],
                     xref="paper",
                     xanchor="center",
-                    y=-0.14,
+                    y=-0.04,
                     yref="paper",
                     yanchor="top",
                     showarrow=False,
@@ -394,7 +394,7 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
         height=850,
         showlegend=False,
         updatemenus=updatemenus,
-        margin=dict(t=220 if updatemenus else 190, b=130, l=70, r=20),
+        margin=dict(t=220 if updatemenus else 190, b=90, l=70, r=20),
     )
 
     return dict(
