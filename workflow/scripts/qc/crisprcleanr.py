@@ -173,9 +173,15 @@ def build_roc(comparisons, csv_paths):
         id="crisprcleanr-roc",
         title="CRISPRcleanR ROC",
         description=(
-            "ROC curve (gene- and sgRNA-level) for separating essential from "
-            "non-essential genes by corrected log fold-change, from "
-            f"CRISPRcleanR's copy-number correction step ({CITATION})."
+            "ROC (Receiver Operating Characteristic) curve: at every "
+            "possible corrected log fold-change cutoff, plots sensitivity "
+            "(the fraction of essential genes correctly called depleted) "
+            "against 1 - specificity (the fraction of non-essential genes "
+            "incorrectly called depleted). The closer the curve bows "
+            "toward the top-left (AUC near 1), the better essential and "
+            "non-essential genes are separated. Unlike the PR curve below, "
+            "ROC doesn't depend on how rare essential genes are among all "
+            f"genes screened ({CITATION})."
         ),
         fig=fig,
         df=df,
@@ -203,10 +209,15 @@ def build_pr(comparisons, csv_paths):
         id="crisprcleanr-pr",
         title="CRISPRcleanR PR",
         description=(
-            "Precision-recall curve (gene- and sgRNA-level) for separating "
-            "essential from non-essential genes by corrected log "
-            f"fold-change, from CRISPRcleanR's copy-number correction step "
-            f"({CITATION})."
+            "Precision-recall (PR) curve: at the same cutoffs as the ROC "
+            "curve above, plots precision (of the genes called depleted, "
+            "the fraction that are truly essential) against recall (the "
+            "fraction of all essential genes successfully called "
+            "depleted). Essential genes are a small minority of all genes "
+            "screened, and PR — unlike ROC — is sensitive to that "
+            "imbalance, so it penalises false positives more visibly and "
+            "tends to look less optimistic than ROC for the same "
+            f"classifier ({CITATION})."
         ),
         fig=fig,
         df=df,
