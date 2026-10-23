@@ -219,8 +219,15 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
     # own column instead of spilling into the next.
     for annotation in base_annotations[1:]:
         annotation.update(
-            textangle=-80, xanchor="left", yanchor="bottom", font=dict(size=10)
+            textangle=-80, xanchor="left", yanchor="bottom", font=dict(size=13)
         )
+    # Centre x (paper fraction) of each signature column, for the hit-%
+    # labels placed below the plot — make_subplots already fixed every
+    # column's domain via column_widths, so these don't change per
+    # comparison.
+    col_centers = {
+        col: sum(fig.layout[f"xaxis{col}"].domain) / 2 for col in range(2, n_cols + 1)
+    }
 
     traces_per_comparison = None
     comparison_annotations = []
@@ -303,9 +310,19 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
                     col=col,
                 )
             pct = round(100 * len(hits) / len(ranks)) if ranks else 0
-            comparison_annotations[-1][j + 1][
-                "text"
-            ] = f"{sig.replace('_', ' ')} ({pct}%)"
+            comparison_annotations[-1].append(
+                dict(
+                    text=f"{pct}%",
+                    x=col_centers[col],
+                    xref="paper",
+                    xanchor="center",
+                    y=-0.14,
+                    yref="paper",
+                    yanchor="top",
+                    showarrow=False,
+                    font=dict(size=13, color=HIT_COLOR),
+                )
+            )
 
         end = len(fig.data)
         if traces_per_comparison is None:
@@ -346,10 +363,10 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
 
     style_fig(
         fig,
-        height=600,
+        height=850,
         showlegend=False,
         updatemenus=updatemenus,
-        margin=dict(t=220 if updatemenus else 190, b=80, l=70, r=20),
+        margin=dict(t=220 if updatemenus else 190, b=130, l=70, r=20),
     )
 
     return dict(
