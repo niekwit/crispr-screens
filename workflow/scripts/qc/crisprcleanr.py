@@ -212,15 +212,18 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
     )
     base_annotations = [a.to_plotly_json() for a in fig.layout.annotations]
     # The narrow signature columns can't fit a horizontal title without
-    # overlapping their neighbours — angle them like the original R plot's
-    # rotated column labels (srt=80 in ccr.VisDepAndSig).
+    # overlapping their neighbours — angle them steeply (near-vertical, like
+    # the original R plot's srt=80 rotated column labels in
+    # ccr.VisDepAndSig) so each one's horizontal footprint stays within its
+    # own column instead of spilling into the next.
     for annotation in base_annotations[1:]:
         annotation.update(
-            textangle=-60, xanchor="left", yanchor="bottom", font=dict(size=11)
+            textangle=-80, xanchor="left", yanchor="bottom", font=dict(size=10)
         )
 
     traces_per_comparison = None
     comparison_annotations = []
+    comparison_shapes = []
     all_gene_dfs = []
     for comparison, gpath, spath in zip(
         comparisons, gene_csv_paths, signature_csv_paths
@@ -252,18 +255,25 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
             row=1,
             col=1,
         )
-        fig.add_trace(
-            go.Scatter(
-                x=[genes["fc"].min(), genes["fc"].max()],
-                y=[fdr_rank, fdr_rank],
-                mode="lines",
-                line=dict(color=THRESHOLD_COLOR, width=2, dash="dash"),
-                showlegend=False,
-                visible=is_first,
-                hovertemplate=f"5% FDR rank: {fdr_rank}<extra></extra>",
-            ),
-            row=1,
-            col=1,
+        # A layout shape (not a trace) spanning the full figure width via
+        # xref="paper", so the threshold line crosses every signature
+        # column too, not just the main depletion-profile panel — yref="y"
+        # still lines it up correctly everywhere since shared_yaxes=True
+        # (see make_subplots call above) matches every column's y-axis
+        # range/type to this one.
+        comparison_shapes.append(
+            [
+                dict(
+                    type="line",
+                    xref="paper",
+                    yref="y",
+                    x0=0,
+                    x1=1,
+                    y0=fdr_rank,
+                    y1=fdr_rank,
+                    line=dict(color=THRESHOLD_COLOR, width=2, dash="dash"),
+                )
+            ]
         )
 
         comparison_annotations.append([dict(a) for a in base_annotations])
@@ -301,20 +311,33 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
             traces_per_comparison = end - start
 
     fig.update_yaxes(type="log", autorange="reversed", title="Depletion rank", col=1)
-    fig.update_yaxes(type="log", autorange="reversed", showticklabels=False, col=2)
+    # shared_yaxes=True only syncs the numeric range across columns (via
+    # matches="y"), not type/autorange — every signature column needs its
+    # own type="log"/reversed, or its ticks render on a mismatched linear
+    # scale, visually misplacing which genes look "above" vs "below" the
+    # threshold line relative to the main panel.
     for col in range(2, n_cols + 1):
+        fig.update_yaxes(
+            type="log", autorange="reversed", showticklabels=False, col=col
+        )
         fig.update_xaxes(visible=False, range=[0, 1], col=col)
     fig.update_xaxes(title="Log2(Fold change)", col=1)
 
     updatemenus = []
     if len(comparisons) > 1:
         menu = _comparison_dropdown(comparisons, traces_per_comparison)
-        for button, annotations in zip(menu["buttons"], comparison_annotations):
+        for button, annotations, shapes in zip(
+            menu["buttons"], comparison_annotations, comparison_shapes
+        ):
             button["method"] = "update"
-            button["args"] = [button["args"][0], {"annotations": annotations}]
+            button["args"] = [
+                button["args"][0],
+                {"annotations": annotations, "shapes": shapes},
+            ]
         updatemenus = [menu]
     else:
         fig.layout.annotations = comparison_annotations[0]
+        fig.layout.shapes = comparison_shapes[0]
 
     style_fig(
         fig,
