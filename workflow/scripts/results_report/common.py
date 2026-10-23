@@ -279,6 +279,28 @@ def _resize_nodes_by_rank(svg_text, rank_by_gene):
     return ET.tostring(root, encoding="unicode")
 
 
+def _mark_connectivity(svg_text):
+    """Tag each node with data-connected="true"/"false" (has no edges at
+    all in this specific network) so the report can offer a toggle to hide
+    isolated nodes — STRING-db sometimes returns genes with no significant
+    interactions among the others shown, which can clutter the network."""
+    try:
+        root = ET.fromstring(svg_text)
+    except ET.ParseError as exc:  # pragma: no cover - defensive
+        logging.warning(f"Could not parse STRING-db SVG for connectivity: {exc}")
+        return svg_text
+    ns = {"svg": SVG_NS}
+    connected_ids = set()
+    for edge in root.findall(".//svg:g[@class='nwlinkwrapper']", ns):
+        m = re.match(r"edge\.(\d+)\.(\d+)", edge.get("id") or "")
+        if m:
+            connected_ids.update(m.groups())
+    for g in root.findall(".//svg:g[@class='nwnodecontainer']", ns):
+        node_id = (g.get("id") or "").removeprefix("node.")
+        g.set("data-connected", "true" if node_id in connected_ids else "false")
+    return ET.tostring(root, encoding="unicode")
+
+
 def _edge_legend(svg_text):
     """Which of STRING-db's edge evidence-channel colours actually appear
     in this network, in EDGE_COLOR_LEGEND's order — only those get shown,
@@ -322,6 +344,7 @@ def build_svg_panel(
         logging.warning(f"Could not read STRING-db SVG {svg_path}: {exc}")
         return None
     svg = _resize_nodes_by_rank(svg, rank_by_gene or {})
+    svg = _mark_connectivity(svg)
     return {
         "div_id": div_id,
         "panel_title": title,
@@ -331,4 +354,5 @@ def build_svg_panel(
         "stats_div_id": stats_div_id,
         "taxon_id": taxon_id,
         "edge_legend": _edge_legend(svg),
+        "has_isolated_nodes": 'data-connected="false"' in svg,
     }

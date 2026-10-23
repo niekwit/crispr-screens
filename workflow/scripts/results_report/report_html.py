@@ -64,6 +64,7 @@ SVG_PANEL_TEMPLATE = Template(
 <div class="plot-row">
   <div class="plot-wrap plot-wrap-full svg-wrap">
     <div class="svg-panel-title">$panel_title</div>
+    $isolated_toggle_html
     <div class="svg-embed" data-stats-div="$stats_div_id" data-taxon-id="$taxon_id">$svg_content</div>
     <div class="edge-legend">$edge_legend_html</div>
   </div>
@@ -207,6 +208,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   padding: 6px 0 10px; text-align: center;
 }
 .svg-embed svg { max-width: 100%; height: auto; }
+.isolated-toggle {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 12px; color: #555; padding-bottom: 8px; cursor: pointer;
+}
+.isolated-toggle input { cursor: pointer; }
 .edge-legend {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px;
   padding: 10px 0 2px; max-width: 1000px; margin: 0 auto;
@@ -736,6 +742,17 @@ document.querySelectorAll(".svg-embed[data-taxon-id]").forEach(container => {
   });
 });
 
+/* ── "Hide unconnected nodes" toggle (nodes with no edges in this network) */
+document.querySelectorAll(".isolated-toggle-checkbox").forEach(checkbox => {
+  const container = checkbox.closest(".svg-wrap")?.querySelector(".svg-embed");
+  if (!container) return;
+  checkbox.addEventListener("change", () => {
+    container.querySelectorAll('.nwnodecontainer[data-connected="false"]').forEach(node => {
+      node.style.display = checkbox.checked ? "none" : "";
+    });
+  });
+});
+
 /* ── "Color by" dropdown: switch which stat governs marker fill ──────── */
 document.querySelectorAll(".color-select").forEach(sel => {
   sel.addEventListener("change", () => {
@@ -770,12 +787,20 @@ def _render_plot_row(plot, figs, plot_meta):
             f"{label}</span>"
             for color, label in plot.get("edge_legend") or []
         )
+        isolated_toggle_html = (
+            '<label class="isolated-toggle">'
+            '<input type="checkbox" class="isolated-toggle-checkbox">'
+            "Hide unconnected nodes</label>"
+            if plot.get("has_isolated_nodes")
+            else ""
+        )
         return SVG_PANEL_TEMPLATE.substitute(
             panel_title=plot["panel_title"],
             svg_content=plot["svg"],
             stats_div_id=plot.get("stats_div_id") or "",
             taxon_id=plot.get("taxon_id") or "",
             edge_legend_html=edge_legend_html,
+            isolated_toggle_html=isolated_toggle_html,
         )
     figs[div_id] = plot["fig"].to_json()
     if plot.get("simple"):
