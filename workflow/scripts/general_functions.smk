@@ -171,7 +171,7 @@ def interactive_results_keys():
 
 
 def interactive_results_report_input():
-    mageck_pairs, drugz_comparisons, bagel2_comparisons = _interactive_results_keys()
+    mageck_pairs, drugz_comparisons, bagel2_comparisons = interactive_results_keys()
     string_db_on = config["stats"]["string_db"]["run"]
     string_db_data = config["stats"]["string_db"]["data"]
 
@@ -285,7 +285,7 @@ def interactive_results_report_input():
 
 
 def interactive_results_report_params():
-    mageck_pairs, drugz_comparisons, bagel2_comparisons = _interactive_results_keys()
+    mageck_pairs, drugz_comparisons, bagel2_comparisons = interactive_results_keys()
     return {
         "mageck_pairs": mageck_pairs,
         "drugz_comparisons": drugz_comparisons,
