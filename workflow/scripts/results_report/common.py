@@ -1,5 +1,6 @@
 """Shared helpers for building per-comparison interactive scatter plots
-(MAGeCK, DrugZ, BAGEL2) that get assembled into one combined results report.
+(MAGeCK, MAGeCK MLE, DrugZ, BAGEL2) that get assembled into one combined
+results report.
 """
 
 import logging

@@ -7,7 +7,15 @@ per-tool comparison dropdown.
 import logging
 import os
 
-from results_report import bagel2, common, drugz, mageck, report_html, sgrank
+from results_report import (
+    bagel2,
+    common,
+    drugz,
+    mageck,
+    mageck_mle,
+    report_html,
+    sgrank,
+)
 
 log = snakemake.log[0]
 logging.basicConfig(
@@ -20,6 +28,7 @@ logging.basicConfig(
 output_html = snakemake.output["html"]
 
 mageck_pairs = snakemake.params["mageck_pairs"]
+mageck_mle_pairs = snakemake.params["mageck_mle_pairs"]
 drugz_comparisons = snakemake.params["drugz_comparisons"]
 bagel2_comparisons = snakemake.params["bagel2_comparisons"]
 taxon_id = common.taxon_id_for(snakemake.params["species"])
@@ -51,6 +60,17 @@ for i, entry in enumerate(mageck_entries):
         comparison,
         cnv,
     )
+
+mageck_mle_entries = (
+    mageck_mle.build_entries(
+        snakemake.input["mageck_mle_txt"],
+        mageck_mle_pairs,
+        taxon_id,
+    )
+    if mageck_mle_pairs
+    else []
+)
+logging.info(f"Built {len(mageck_mle_entries)} MAGeCK MLE entries")
 
 drugz_entries = (
     drugz.build_entries(
@@ -86,6 +106,7 @@ logging.info(f"Built {len(bagel2_entries)} BAGEL2 comparison entries")
 html = report_html.render(
     [
         ("mageck", "MAGeCK", mageck_entries),
+        ("mageck_mle", "MAGeCK MLE", mageck_mle_entries),
         ("drugz", "DrugZ", drugz_entries),
         ("bagel2", "BAGEL2", bagel2_entries),
     ]

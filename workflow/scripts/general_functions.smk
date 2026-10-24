@@ -152,14 +152,22 @@ def targets():
 
 
 def interactive_results_keys():
-    """(mageck_pairs, drugz_comparisons, bagel2_comparisons) feeding the
-    combined interactive_results_report rule, each empty when that tool
-    isn't run (or, for MAGeCK, not in "test" mode)."""
+    """(mageck_pairs, mageck_mle_pairs, drugz_comparisons, bagel2_comparisons)
+    feeding the combined interactive_results_report rule, each empty when
+    that tool isn't run (or, for MAGeCK, not in the matching command mode)."""
     mageck_on = (
         config["stats"]["mageck"]["run"]
         and config["stats"]["mageck"]["command"] == "test"
     )
     mageck_pairs = [(c, v) for c in COMPARISONS for v in CNV] if mageck_on else []
+
+    mageck_mle_on = (
+        config["stats"]["mageck"]["run"]
+        and config["stats"]["mageck"]["command"] == "mle"
+    )
+    mageck_mle_pairs = (
+        [(m, v) for m in MATRIX_NAMES for v in CNV] if mageck_mle_on else []
+    )
 
     drugz_on = config["stats"]["drugz"]["run"] and bool(COMPARISONS)
     drugz_comparisons = list(COMPARISONS) if drugz_on else []
@@ -167,11 +175,13 @@ def interactive_results_keys():
     bagel2_on = config["stats"]["bagel2"]["run"] and bool(COMPARISONS_BAGEL2)
     bagel2_comparisons = list(COMPARISONS_BAGEL2) if bagel2_on else []
 
-    return mageck_pairs, drugz_comparisons, bagel2_comparisons
+    return mageck_pairs, mageck_mle_pairs, drugz_comparisons, bagel2_comparisons
 
 
 def interactive_results_report_input():
-    mageck_pairs, drugz_comparisons, bagel2_comparisons = interactive_results_keys()
+    mageck_pairs, mageck_mle_pairs, drugz_comparisons, bagel2_comparisons = (
+        interactive_results_keys()
+    )
     string_db_on = config["stats"]["string_db"]["run"]
     string_db_data = config["stats"]["string_db"]["data"]
 
@@ -210,6 +220,10 @@ def interactive_results_report_input():
     mageck_string_depleted_id_mapping = [
         p.replace("pathway_analysis.csv", "id_mapping.csv")
         for p in mageck_string_depleted
+    ]
+
+    mageck_mle_txt = [
+        f"results/mageck/mle/{v}/{m}.gene_summary.txt" for m, v in mageck_mle_pairs
     ]
 
     drugz_txt = [f"results/drugz/{c}.txt" for c in drugz_comparisons]
@@ -264,6 +278,7 @@ def interactive_results_report_input():
     return {
         "mageck_txt": mageck_txt,
         "mageck_sgrna_txt": mageck_sgrna_txt,
+        "mageck_mle_txt": mageck_mle_txt,
         "mageck_string_enriched": mageck_string_enriched,
         "mageck_string_depleted": mageck_string_depleted,
         "mageck_string_enriched_svg": mageck_string_enriched_svg,
@@ -285,9 +300,12 @@ def interactive_results_report_input():
 
 
 def interactive_results_report_params():
-    mageck_pairs, drugz_comparisons, bagel2_comparisons = interactive_results_keys()
+    mageck_pairs, mageck_mle_pairs, drugz_comparisons, bagel2_comparisons = (
+        interactive_results_keys()
+    )
     return {
         "mageck_pairs": mageck_pairs,
+        "mageck_mle_pairs": mageck_mle_pairs,
         "drugz_comparisons": drugz_comparisons,
         "bagel2_comparisons": bagel2_comparisons,
         "species": config["lib_info"]["species"],

@@ -1,10 +1,11 @@
 """Assemble one self-contained interactive HTML report combining every
-MAGeCK/DrugZ/BAGEL2 comparison. Navigation: a tool tab bar (MAGeCK / DrugZ /
-BAGEL2 — only tools with data get a tab), within each tool a dropdown to
-pick the comparison, and within each comparison an Enriched/Depleted
-sub-tab (when both directions exist) so the two don't sit on one long
-page. Plots are lazily initialised the first time their direction panel
-becomes visible.
+MAGeCK/MAGeCK MLE/DrugZ/BAGEL2 comparison. Navigation: a tool tab bar (only
+tools with data get a tab), within each tool a dropdown to pick the
+comparison, and within each comparison a sub-tab per "direction" —
+Enriched/Depleted for MAGeCK test/DrugZ/BAGEL2, one per design-matrix
+condition for MAGeCK MLE (see mageck_mle.py) — when more than one direction
+exists, so they don't all sit on one long page. Plots are lazily
+initialised the first time their direction panel becomes visible.
 """
 
 import json
@@ -1017,6 +1018,13 @@ def _render_plot_row(plot, figs, plot_meta):
     )
 
 
+def _direction_label(direction):
+    """Direction-tab label. "enriched"/"depleted" become "Enriched"/
+    "Depleted" as before; a MAGeCK MLE condition name (e.g. "noHT_vs_HT")
+    is left as-is rather than mangled by .capitalize()."""
+    return direction.capitalize() if direction.islower() else direction
+
+
 def render(tools):
     """tools: ordered list of (tool_id, tool_label, entries). Tools with no
     entries are skipped entirely (no tab)."""
@@ -1058,7 +1066,7 @@ def render(tools):
                     '<div class="direction-tabs">\n'
                     + "\n".join(
                         DIRECTION_TAB_TEMPLATE.substitute(
-                            direction=d, label=d.capitalize()
+                            direction=d, label=_direction_label(d)
                         )
                         for d in directions
                     )
