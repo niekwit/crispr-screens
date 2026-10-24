@@ -83,6 +83,20 @@ def targets():
                     ),
                 ]
             )
+            if config["stats"]["string_db"]["run"]:
+                triples = mageck_mle_condition_triples()
+                TARGETS.extend(
+                    [
+                        f"results/mageck/stringdb/mle/{v}/{m}/{c}/{pd_}/pathway_analysis.svg"
+                        for m, v, c in triples
+                        for pd_ in STRING_DB_DATA
+                    ]
+                    + [
+                        f"results/mageck/stringdb/mle/{v}/{m}/{c}/{pd_}/pathway_analysis.csv"
+                        for m, v, c in triples
+                        for pd_ in STRING_DB_DATA
+                    ]
+                )
     if config["stats"]["bagel2"]["run"]:
         if COMPARISONS_BAGEL2:
             # Extend targets with BAGEL2 files
@@ -149,6 +163,29 @@ def targets():
     if any(interactive_results_keys()):
         TARGETS.append("results/interactive_report.html")
     return TARGETS
+
+
+def mageck_mle_condition_triples():
+    """(matrix, cnv, condition) triples, one per design-matrix condition x
+    cnv variant — empty unless MAGeCK is run in mle mode. Condition names
+    are read directly from each design matrix's header (every column
+    after the sample-name and intercept/baseline columns), matching the
+    condition blocks MAGeCK MLE itself reports in gene_summary.txt (see
+    mageck_mle.py's module docstring)."""
+    mageck_mle_on = (
+        config["stats"]["mageck"]["run"]
+        and config["stats"]["mageck"]["command"] == "mle"
+    )
+    if not mageck_mle_on:
+        return []
+    matrices = config["stats"]["mageck"]["mle"]["design_matrix"]
+    triples = []
+    for name, path in zip(MATRIX_NAMES, matrices):
+        conditions = pd.read_csv(path, sep="\t", nrows=0).columns.tolist()[2:]
+        for v in CNV:
+            for c in conditions:
+                triples.append((name, v, c))
+    return triples
 
 
 def interactive_results_keys():
@@ -225,6 +262,41 @@ def interactive_results_report_input():
     mageck_mle_txt = [
         f"results/mageck/mle/{v}/{m}.gene_summary.txt" for m, v in mageck_mle_pairs
     ]
+    mageck_mle_triples = mageck_mle_condition_triples()
+    mageck_mle_string_enriched = (
+        [
+            f"results/mageck/stringdb/mle/{v}/{m}/{c}/enriched/pathway_analysis.csv"
+            for m, v, c in mageck_mle_triples
+        ]
+        if mageck_mle_triples
+        and string_db_on
+        and string_db_data in ("enriched", "both")
+        else []
+    )
+    mageck_mle_string_depleted = (
+        [
+            f"results/mageck/stringdb/mle/{v}/{m}/{c}/depleted/pathway_analysis.csv"
+            for m, v, c in mageck_mle_triples
+        ]
+        if mageck_mle_triples
+        and string_db_on
+        and string_db_data in ("depleted", "both")
+        else []
+    )
+    mageck_mle_string_enriched_svg = [
+        p.replace(".csv", ".svg") for p in mageck_mle_string_enriched
+    ]
+    mageck_mle_string_depleted_svg = [
+        p.replace(".csv", ".svg") for p in mageck_mle_string_depleted
+    ]
+    mageck_mle_string_enriched_id_mapping = [
+        p.replace("pathway_analysis.csv", "id_mapping.csv")
+        for p in mageck_mle_string_enriched
+    ]
+    mageck_mle_string_depleted_id_mapping = [
+        p.replace("pathway_analysis.csv", "id_mapping.csv")
+        for p in mageck_mle_string_depleted
+    ]
 
     drugz_txt = [f"results/drugz/{c}.txt" for c in drugz_comparisons]
     drugz_string_enriched = (
@@ -279,6 +351,12 @@ def interactive_results_report_input():
         "mageck_txt": mageck_txt,
         "mageck_sgrna_txt": mageck_sgrna_txt,
         "mageck_mle_txt": mageck_mle_txt,
+        "mageck_mle_string_enriched": mageck_mle_string_enriched,
+        "mageck_mle_string_depleted": mageck_mle_string_depleted,
+        "mageck_mle_string_enriched_svg": mageck_mle_string_enriched_svg,
+        "mageck_mle_string_depleted_svg": mageck_mle_string_depleted_svg,
+        "mageck_mle_string_enriched_id_mapping": mageck_mle_string_enriched_id_mapping,
+        "mageck_mle_string_depleted_id_mapping": mageck_mle_string_depleted_id_mapping,
         "mageck_string_enriched": mageck_string_enriched,
         "mageck_string_depleted": mageck_string_depleted,
         "mageck_string_enriched_svg": mageck_string_enriched_svg,
@@ -306,6 +384,7 @@ def interactive_results_report_params():
     return {
         "mageck_pairs": mageck_pairs,
         "mageck_mle_pairs": mageck_mle_pairs,
+        "mageck_mle_triples": mageck_mle_condition_triples(),
         "drugz_comparisons": drugz_comparisons,
         "bagel2_comparisons": bagel2_comparisons,
         "species": config["lib_info"]["species"],

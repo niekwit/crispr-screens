@@ -48,10 +48,19 @@ elif data_source == "bagel2":
         raise ValueError(message)
     id_column = "GENE"
     bf_cutoff = snakemake.config["stats"]["string_db"]["bf_cutoff"]
+elif data_source == "mageck_mle":
+    # MLE reports one beta/fdr block per design-matrix condition (no
+    # separate pos|/neg| columns like MAGeCK test), and beta can be
+    # either sign within that one column — enriched/depleted here means
+    # beta > 0 / beta < 0, not a pre-split column.
+    condition = snakemake.wildcards["condition"]
+    id_column = "Gene"
+    beta_column = f"{condition}|beta"
+    fdr_column = f"{condition}|fdr"
 else:
     message = (
         f"Unsupported data source: {data_source}. "
-        "Please use 'mageck', 'drugz', or 'bagel2'."
+        "Please use 'mageck', 'mageck_mle', 'drugz', or 'bagel2'."
     )
     logging.error(message)
     raise ValueError(message)
@@ -77,6 +86,18 @@ if data_source == "bagel2":
     else:
         logging.info(f"Filtering genes based on BF cutoff of {bf_cutoff}.")
         data = data[data["BF"] > bf_cutoff]
+elif data_source == "mageck_mle":
+    data = (
+        data[data[beta_column] > 0]
+        if pathway_data == "enriched"
+        else data[data[beta_column] < 0]
+    )
+    if top_genes > 0:
+        logging.info(f"Selecting top {top_genes} genes based on {pathway_data} FDR.")
+        data = data.sort_values(by=fdr_column, ascending=True).head(top_genes)
+    else:
+        logging.info(f"Filtering genes based on FDR threshold of {fdr_cutoff}.")
+        data = data[data[fdr_column] < fdr_cutoff]
 elif top_genes > 0:
     logging.info(f"Selecting top {top_genes} genes based on {pathway_data} ranking.")
     data = data.sort_values(by=rank_column, ascending=True).head(top_genes)

@@ -29,6 +29,7 @@ output_html = snakemake.output["html"]
 
 mageck_pairs = snakemake.params["mageck_pairs"]
 mageck_mle_pairs = snakemake.params["mageck_mle_pairs"]
+mageck_mle_triples = snakemake.params["mageck_mle_triples"]
 drugz_comparisons = snakemake.params["drugz_comparisons"]
 bagel2_comparisons = snakemake.params["bagel2_comparisons"]
 taxon_id = common.taxon_id_for(snakemake.params["species"])
@@ -65,6 +66,13 @@ mageck_mle_entries = (
     mageck_mle.build_entries(
         snakemake.input["mageck_mle_txt"],
         mageck_mle_pairs,
+        mageck_mle_triples,
+        snakemake.input["mageck_mle_string_enriched"],
+        snakemake.input["mageck_mle_string_depleted"],
+        snakemake.input["mageck_mle_string_enriched_svg"],
+        snakemake.input["mageck_mle_string_depleted_svg"],
+        snakemake.input["mageck_mle_string_enriched_id_mapping"],
+        snakemake.input["mageck_mle_string_depleted_id_mapping"],
         taxon_id,
     )
     if mageck_mle_pairs
