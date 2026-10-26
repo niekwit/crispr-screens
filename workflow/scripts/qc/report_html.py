@@ -281,11 +281,21 @@ def _json_for_script_tag(obj):
 def _encode_pdf(fig, filename, wide=False):
     # Interactive-only controls (e.g. the bar-sort dropdown) have no place
     # in a static export, so strip them from a copy before rendering, along
-    # with the extra top margin reserved for the dropdown.
+    # with the extra top margin reserved for the dropdown — EXCEPT for a
+    # wide=True section (CRISPRcleanR depletion rank): its dropdown picks
+    # which comparison to show, unrelated to the steeply-rotated
+    # gene-signature column headers that need real headroom of their own,
+    # so collapsing margin.t to the generic dropdown's leftover 60px here
+    # clipped those headers against the top of the page whenever more than
+    # one comparison (so a dropdown) was present.
     export_fig = go.Figure(fig)
     had_menu = bool(export_fig.layout.updatemenus)
     export_fig.layout.updatemenus = []  # update_layout(updatemenus=[]) is a no-op
-    if had_menu:
+    if wide:
+        # Enough headroom for a steeply-rotated column header regardless of
+        # whether a dropdown (now stripped above) was also present.
+        export_fig.layout.margin.t = 290
+    elif had_menu:
         export_fig.update_layout(margin=dict(t=60, b=80, l=60, r=30))
     # The figures that explicitly turn their legend on (abundance, gini,
     # CRISPRcleanR ROC/PR — a fixed-width sidebar) need the wider canvas;
