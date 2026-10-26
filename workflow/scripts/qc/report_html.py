@@ -40,7 +40,7 @@ TAB_TEMPLATE = Template(
 
 PANEL_TEMPLATE = Template(
     """
-<section class="panel card" id="panel-$div_id">
+<section class="panel card" id="panel-$div_id" $section_style>
   <div class="card-head">
     <h2>$title</h2>
     <div class="actions">
@@ -413,6 +413,19 @@ def render(sections):
             else '<button class="btn btn-pdf" disabled title="PDF export unavailable">PDF</button>'
         )
         plot_width = section.get("plot_width")
+        # A plot wider than <main>'s usual ~1150px content column (the
+        # Overview table) needs its whole card widened to match, not just
+        # scrollable within the normal card width — otherwise the extra
+        # columns are still hidden behind a scrollbar. width:100vw capped
+        # by max-width breaks the card out of <main> up to the plot's own
+        # size (plus its card padding), never wider than necessary, and
+        # never wider than the viewport either.
+        section_style = (
+            f'style="width:100vw;max-width:{plot_width + 50}px;'
+            f'margin-left:calc(50% - 50vw);box-sizing:border-box;"'
+            if plot_width
+            else ""
+        )
         panel_html.append(
             PANEL_TEMPLATE.substitute(
                 title=section["title"],
@@ -421,6 +434,7 @@ def render(sections):
                 pdf_button=pdf_button,
                 data_uri=data_uri,
                 description=section["description"],
+                section_style=section_style,
                 plot_style=(
                     f'style="width:{plot_width}px;max-width:none;"'
                     if plot_width
