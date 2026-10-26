@@ -84,23 +84,32 @@ def _rank_plot(grid, density, x_range, df_top, genes, title):
     )
 
     # Same reference density repeated as a background shade behind every
-    # gene row (white = low density, black = high density). Without ygap,
-    # Plotly sizes each cell to the full row-to-row spacing (ROW_GAP),
-    # which paints straight through the gap between adjacent rows' outline
-    # rectangles instead of stopping at each one's own border.
-    fig.add_trace(
-        go.Heatmap(
-            x=grid,
-            y=[row_of[g] for g in genes],
-            z=[density for _ in genes],
-            colorscale=[[0, "white"], [1, "black"]],
-            showscale=False,
-            hoverinfo="skip",
-            ygap=4,
-        ),
-        row=2,
-        col=1,
-    )
+    # gene row (white = low density, black = high density), one independent
+    # Heatmap trace per gene rather than one combined trace: a single trace
+    # spanning every row can only be gapped approximately (a pixel-based
+    # "ygap", which drifts out of sync with the row rectangles as the
+    # figure's rendered height changes with gene count/export scale). Each
+    # trace here instead gets 3 y-samples — [row-0.8, row, row+0.8], with
+    # the outer two holding NaN ("no fill") — which pins its one real cell's
+    # boundaries to exactly [row-0.4, row+0.4] via Plotly's own
+    # midpoint-between-samples cell-sizing rule, regardless of render size.
+    nan_row = [None] * len(density)
+    density_list = list(density)
+    for gene in genes:
+        r = row_of[gene]
+        fig.add_trace(
+            go.Heatmap(
+                x=grid,
+                y=[r - 0.8, r, r + 0.8],
+                z=[nan_row, density_list, nan_row],
+                colorscale=[[0, "white"], [1, "black"]],
+                showscale=False,
+                hoverinfo="skip",
+                showlegend=False,
+            ),
+            row=2,
+            col=1,
+        )
 
     # One sgRNA tick (vertical segment) per row, as two traced polylines
     # (None-separated breaks between segments) split by each sgRNA's own

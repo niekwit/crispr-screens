@@ -396,11 +396,20 @@ const PNG_EXPORT_WIDTH = 1000;
 const PNG_EXPORT_HEIGHT = 600;
 const PNG_EXPORT_SCALE = 3;
 
-// Shared Plotly config, parameterised by height since the sgRNA-rank plot's
-// height changes with its gene count (see rebuildSgRank) — re-used there
-// so a PNG exported after editing "Genes to show" targets the plot's
-// current height, not whatever it was at initial render.
-function plotConfig(divId, height) {
+// A fixed 1000px width works for the dot plots (always the same height),
+// but the sgRNA-rank plot's height varies a lot with its gene count — at
+// 1000px wide, a short few-gene export looks stretched/disproportionate.
+// Scale width with height instead, within sane bounds, for that plot only.
+function sgrankPngWidth(height) {
+  return Math.max(700, Math.min(1200, Math.round(height * 1.8)));
+}
+
+// Shared Plotly config, parameterised by height/width since the sgRNA-rank
+// plot's height (and, via sgrankPngWidth, width) changes with its gene
+// count (see rebuildSgRank) — re-used there so a PNG exported after
+// editing "Genes to show" targets the plot's current size, not whatever it
+// was at initial render.
+function plotConfig(divId, height, width) {
   return {
     responsive: true,
     displaylogo: false,
@@ -408,7 +417,7 @@ function plotConfig(divId, height) {
     toImageButtonOptions: {
       format: "png",
       filename: divId,
-      width: PNG_EXPORT_WIDTH,
+      width: width || PNG_EXPORT_WIDTH,
       height: height || PNG_EXPORT_HEIGHT,
       scale: PNG_EXPORT_SCALE,
     },
@@ -573,7 +582,8 @@ function getOrInitPlot(divId) {
   // fine for interacting with it, but a bad default for a PNG meant for a
   // slide. Export at a fixed, presentation-friendly size instead (see
   // plotConfig), at a scale factor high enough to stay sharp in a deck.
-  Plotly.newPlot(divId, fig.data, fig.layout, plotConfig(divId, fig.layout.height));
+  const pngWidth = meta.rank_data ? sgrankPngWidth(fig.layout.height) : undefined;
+  Plotly.newPlot(divId, fig.data, fig.layout, plotConfig(divId, fig.layout.height, pngWidth));
   if (meta.simple) {
     const api = { search: () => ({ hits: [], misses: [] }), clear: () => {} };
     plotApis.set(divId, api);
@@ -933,6 +943,12 @@ function rebuildSgRank(divId) {
     };
   }
 
+  // One independent Heatmap trace per gene (see sgrank.py's matching
+  // comment): 3 y-samples [row-0.8, row, row+0.8], NaN on the outer two,
+  // pins the real cell's boundaries to exactly [row-0.4, row+0.4] via
+  // Plotly's midpoint-between-samples cell sizing — exact regardless of
+  // render size, unlike a pixel-based "ygap" on one combined trace.
+  const nanRow = info.density.map(() => null);
   const traces = [
     {
       x: info.grid, y: info.density, type: "scatter", mode: "lines",
@@ -940,11 +956,13 @@ function rebuildSgRank(divId) {
       fillcolor: "rgba(224, 224, 224, 0.6)", hoverinfo: "skip",
       showlegend: false, xaxis: "x", yaxis: "y",
     },
-    {
-      x: info.grid, y: genes.map(g => rowOf[g]), z: genes.map(() => info.density),
+    ...genes.map(g => ({
+      x: info.grid, y: [rowOf[g] - 0.8, rowOf[g], rowOf[g] + 0.8],
+      z: [nanRow, info.density, nanRow],
       type: "heatmap", colorscale: [[0, "white"], [1, "black"]],
-      showscale: false, hoverinfo: "skip", ygap: 4, xaxis: "x2", yaxis: "y2",
-    },
+      showscale: false, hoverinfo: "skip", showlegend: false,
+      xaxis: "x2", yaxis: "y2",
+    })),
   ];
   if (posRows.length) traces.push(tickTrace(posRows, "#e41a1c", "sgRNA LFC > 0"));
   if (negRows.length) traces.push(tickTrace(negRows, "#377eb8", "sgRNA LFC < 0"));
@@ -972,11 +990,11 @@ function rebuildSgRank(divId) {
   layout.yaxis2.range = [0.5, nGenes + 0.5];
 
   // Re-pass config too (not just data/layout) so a PNG exported after
-  // changing "Genes to show" targets this new height, not the height the
-  // plot had at initial render — otherwise the export stays stuck at the
-  // old size and the image comes out squished/cropped relative to the
+  // changing "Genes to show" targets this new height/width, not whatever
+  // the plot had at initial render — otherwise the export stays stuck at
+  // the old size and the image comes out squished/cropped relative to the
   // now-visible plot.
-  Plotly.react(divId, traces, layout, plotConfig(divId, layout.height));
+  Plotly.react(divId, traces, layout, plotConfig(divId, layout.height, sgrankPngWidth(layout.height)));
 }
 
 document.querySelectorAll(".sgrank-update-btn").forEach(btn => {
