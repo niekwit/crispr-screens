@@ -278,7 +278,7 @@ def _json_for_script_tag(obj):
     return json.dumps(obj).replace("</script", "<\\/script")
 
 
-def _encode_pdf(fig, filename):
+def _encode_pdf(fig, filename, wide=False):
     # Interactive-only controls (e.g. the bar-sort dropdown) have no place
     # in a static export, so strip them from a copy before rendering, along
     # with the extra top margin reserved for the dropdown.
@@ -287,11 +287,14 @@ def _encode_pdf(fig, filename):
     export_fig.layout.updatemenus = []  # update_layout(updatemenus=[]) is a no-op
     if had_menu:
         export_fig.update_layout(margin=dict(t=60, b=80, l=60, r=30))
-    # Only the figures that explicitly turn their legend on (abundance,
-    # gini, CRISPRcleanR ROC/PR — a fixed-width sidebar) need the wider
-    # canvas; applying it to every export just made plots that were fine
-    # at kaleido's narrower default needlessly wide.
-    width = PDF_EXPORT_WIDTH if export_fig.layout.showlegend else None
+    # The figures that explicitly turn their legend on (abundance, gini,
+    # CRISPRcleanR ROC/PR — a fixed-width sidebar) need the wider canvas;
+    # applying it to every export just made plots that were fine at
+    # kaleido's narrower default needlessly wide. A section can also opt
+    # in explicitly via wide=True regardless of legend (e.g. CRISPRcleanR
+    # depletion rank: several extra gene-signature columns, each with a
+    # rotated header, that overlap/overflow at the narrow default width).
+    width = PDF_EXPORT_WIDTH if (export_fig.layout.showlegend or wide) else None
     try:
         pdf_bytes = export_fig.to_image(format="pdf", width=width)
     except Exception as exc:
@@ -325,7 +328,11 @@ def _encode_pdf(fig, filename):
 
 def _sub_panel_html(section, div_id):
     data_uri, _ = _encode_csv(section["df"], f"{section['filename']}.csv")
-    pdf_uri, pdf_filename = _encode_pdf(section["fig"], f"{section['filename']}.pdf")
+    pdf_uri, pdf_filename = _encode_pdf(
+        section["fig"],
+        f"{section['filename']}.pdf",
+        wide=section.get("wide_pdf", False),
+    )
     pdf_button = (
         f'<a class="btn btn-pdf" href="{pdf_uri}" download="{pdf_filename}">PDF</a>'
         if pdf_uri
@@ -379,7 +386,9 @@ def render(sections):
         plot_sections.append(section)
         data_uri, _ = _encode_csv(section["df"], f"{section['filename']}.csv")
         pdf_uri, pdf_filename = _encode_pdf(
-            section["fig"], f"{section['filename']}.pdf"
+            section["fig"],
+            f"{section['filename']}.pdf",
+            wide=section.get("wide_pdf", False),
         )
         pdf_button = (
             f'<a class="btn btn-pdf" href="{pdf_uri}" download="{pdf_filename}">PDF</a>'

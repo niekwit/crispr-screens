@@ -410,6 +410,10 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
         fig=fig,
         df=pd.concat(all_gene_dfs, ignore_index=True),
         filename="crisprcleanr-depletion-rank",
+        # No legend, but several extra gene-signature columns each with a
+        # rotated header — those overlap/overflow at kaleido's narrower
+        # default PDF export width (see report_html.py's _encode_pdf).
+        wide_pdf=True,
     )
 
 
