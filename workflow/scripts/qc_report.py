@@ -88,7 +88,11 @@ sections = [
     coverage_section,
     gini_section,
     missed_section,
-    count_dist_section,
+    # Read count distribution isn't shown as its own tab — sgRNA abundance
+    # covers much the same ground (per-sample read count spread) more
+    # clearly. count_dist_section itself is still computed above: summary
+    # section's "Low-count sgRNAs" flag column needs its data, and it still
+    # writes count-distribution.csv.
     abundance_section,
     correlation_section,
     pca_section,
