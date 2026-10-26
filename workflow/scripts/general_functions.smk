@@ -11,7 +11,7 @@ from snakemake.shell import shell
 def targets():
     TARGETS = [
         "results/qc/multiqc.html",
-        "results/qc/qc-report.html",
+        "results/qc-report.html",
         "results/qc/alignment-rates.csv",
     ]
     if config["stats"]["mageck"]["run"]:
