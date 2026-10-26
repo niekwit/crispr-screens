@@ -195,6 +195,10 @@ rule string_db:
         id_mapping="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/id_mapping.csv",
     log:
         "logs/stringdb/mageck/{cnv}/{comparison}_{pathway_data}.log",
+    # Without this, {cnv} can greedily swallow the "mle/..." prefix of
+    # string_db_mle's output path too, making the two rules ambiguous.
+    wildcard_constraints:
+        cnv="CNV-corrected|not-CNV-corrected",
     conda:
         "../envs/stats.yaml"
     threads: 1
@@ -202,10 +206,6 @@ rule string_db:
         runtime=10,
     params:
         data="mageck",
-    # Without this, {cnv} can greedily swallow the "mle/..." prefix of
-    # string_db_mle's output path too, making the two rules ambiguous.
-    wildcard_constraints:
-        cnv="CNV-corrected|not-CNV-corrected",
     script:
         "../scripts/string_db.py"
 
