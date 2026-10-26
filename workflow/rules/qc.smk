@@ -48,11 +48,7 @@ rule multiqc:
             stage=["raw", "trimmed"],
         ),
     output:
-        report(
-            "results/qc/multiqc.html",
-            caption="../report/multiqc.rst",
-            category="MultiQC",
-        ),
+        "results/qc/multiqc.html",
     log:
         "logs/multiqc/multiqc.log",
     threads: 2
@@ -90,11 +86,7 @@ rule qc_report:
             comparison=crisprcleanr_comparisons(),
         ),
     output:
-        html=report(
-            "results/qc-report.html",
-            caption="../report/qc-report.rst",
-            category="QC report",
-        ),
+        html="results/qc-report.html",
         csv="results/qc/alignment-rates.csv",
         count_csv="results/qc/count-distribution.csv",
     log:

@@ -16,13 +16,7 @@ rule drugz:
     input:
         unpack(drugz_input),
     output:
-        drugz=report(
-            "results/drugz/{comparison}.txt",
-            caption="../report/drugz.rst",
-            category="DrugZ",
-            subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "DrugZ output"},
-        ),
+        drugz="results/drugz/{comparison}.txt",
         fc="results/drugz/{comparison}.foldchange.txt",
     log:
         "logs/drugz/{comparison}.log",
@@ -49,13 +43,7 @@ rule plot_drugz_results:
     input:
         txt="results/drugz/{comparison}.txt",
     output:
-        pdf=report(
-            "results/drugz/dot_plot_{comparison}.pdf",
-            caption="../report/drugz.rst",
-            category="DrugZ plots",
-            subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "DrugZ output"},
-        ),
+        pdf="results/drugz/dot_plot_{comparison}.pdf",
     log:
         "logs/drugz_plots/{comparison}.log",
     conda:

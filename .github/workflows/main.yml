@@ -47,14 +47,6 @@ jobs:
           snakemake-version: 8.25.5
           args: "--use-conda --show-failed-logs --cores 3 --conda-cleanup-pkgs cache"
 
-      - name: Test report
-        uses: snakemake/snakemake-github-action@v2
-        with:
-          directory: .test_bagel2
-          snakefile: workflow/Snakefile
-          snakemake-version: 8.25.5
-          args: "--report report.zip"
-
       - name: Test workflow MAGeCK mle
         uses: snakemake/snakemake-github-action@v2
         with:

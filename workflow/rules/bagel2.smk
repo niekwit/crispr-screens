@@ -65,13 +65,7 @@ rule plot_bf:
     input:
         "results/bagel2/{comparison}/{comparison}.bf",
     output:
-        report(
-            "results/bagel2/{comparison}/{comparison}.bf.pdf",
-            caption="../report/bagel2_plots.rst",
-            category="BAGEL2 plots",
-            subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "BF plot"},
-        ),
+        "results/bagel2/{comparison}/{comparison}.bf.pdf",
     log:
         "logs/bagel2/plot/bf_{comparison}.log",
     conda:
@@ -87,13 +81,7 @@ rule plot_pr:
     input:
         "results/bagel2/{comparison}/{comparison}.pr",
     output:
-        report(
-            "results/bagel2/{comparison}/{comparison}.pr.pdf",
-            caption="../report/bagel2_plots.rst",
-            category="BAGEL2 plots",
-            subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "Precision-recall plot"},
-        ),
+        "results/bagel2/{comparison}/{comparison}.pr.pdf",
     log:
         "logs/bagel2/plot/pr_{comparison}.log",
     conda:

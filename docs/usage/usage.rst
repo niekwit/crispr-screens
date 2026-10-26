@@ -35,18 +35,6 @@ The final directory structure should look like this:
     └── workflow
         ├── envs
         │   └── stats.yaml
-        ├── report
-        │   ├── bagel2_plots.rst
-        │   ├── drugz.rst
-        │   ├── lfc_neg.rst
-        │   ├── lfc_pos.rst
-        │   ├── mageck.rst
-        │   ├── mle_beta.rst
-        │   ├── multiqc.rst
-        │   ├── qc-report.rst
-        │   ├── sgrank_neg.rst
-        │   ├── sgrank_pos.rst
-        │   └── workflow.rst
         ├── rules
         │   ├── bagel2.smk
         │   ├── count.smk
@@ -79,7 +67,7 @@ The final directory structure should look like this:
         │   └── string_db.py
         └── Snakefile
 
-    9 directories, 47 files
+    8 directories, 36 files
 
 
 Experiment meta data
@@ -450,8 +438,4 @@ To execute the workflow:
 Report of analysis
 ==================
 
-When the workflow has finished, a report of the results can be generated (HTML format):
-
-.. code-block:: console
-
-    $ snakemake --report report.html
+The workflow generates its own self-contained interactive HTML reports as part of a normal run — no separate report-generation step needed. ``results/qc-report.html`` covers sample QC (including the embedded MultiQC report), and ``results/interactive_report.html`` covers every MAGeCK/MAGeCK mle/DrugZ/BAGEL2 comparison, both described earlier in this page.

@@ -11,10 +11,6 @@ min_version("8.25.5")
 logger.info(f"Workflow version: {VERSION}")
 
 
-# Define report file
-report: "report/workflow.rst"
-
-
 # Define Docker container
 containerized: f"docker://niekwit/crispr-screens:{VERSION}"
 

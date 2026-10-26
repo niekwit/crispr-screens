@@ -1,1 +1,0 @@
-BAGEL2 Bayes factor and precision-recall plots

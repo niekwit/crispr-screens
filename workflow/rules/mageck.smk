@@ -38,11 +38,7 @@ rule mageck_test:
         unpack(mageck_input),
     output:
         rnw="results/mageck/{comparison}/{cnv}/{comparison}_summary.Rnw",
-        gs=report(
-            "results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
-            caption="../report/mageck.rst",
-            category="MAGeCK",
-        ),
+        gs="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
         ss="results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
     log:
         "logs/mageck/test/{comparison}_{cnv}.log",
@@ -103,13 +99,7 @@ rule mle_beta_plot:
     input:
         "results/mageck/mle/{cnv}/{matrix}.gene_summary.txt",
     output:
-        report(
-            "results/mageck/mle/{cnv}/{matrix}.beta_scores.pdf",
-            caption="../report/mle_beta.rst",
-            category="MAGeCK plots",
-            subcategory="{matrix}",
-            labels={"Design matrix": "{matrix}", "Figure": "beta score plot"},
-        ),
+        "results/mageck/mle/{cnv}/{matrix}.beta_scores.pdf",
     log:
         "logs/mageck_plots/mle_{matrix}_{cnv}.log",
     conda:
@@ -125,20 +115,8 @@ rule lfc_plots:
     input:
         "results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
     output:
-        pos=report(
-            "results/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf",
-            caption="../report/lfc_pos.rst",
-            category="MAGeCK plots",
-            subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "lfc plot enriched genes"},
-        ),
-        neg=report(
-            "results/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf",
-            caption="../report/lfc_neg.rst",
-            category="MAGeCK plots",
-            subcategory="{comparison}",
-            labels={"Comparison": "{comparison}", "Figure": "lfc plot depleted genes"},
-        ),
+        pos="results/mageck/{comparison}/{cnv}/{comparison}.lfc_pos.pdf",
+        neg="results/mageck/{comparison}/{cnv}/{comparison}.lfc_neg.pdf",
     log:
         "logs/mageck_plots/lfc_{comparison}_{cnv}.log",
     conda:
@@ -155,26 +133,8 @@ rule sg_rank_plot:
         sg="results/mageck/{comparison}/{cnv}/{comparison}.sgrna_summary.txt",
         gene="results/mageck/{comparison}/{cnv}/{comparison}.gene_summary.txt",
     output:
-        pos=report(
-            "results/mageck/{comparison}/{cnv}/{comparison}.sgrank_pos.pdf",
-            caption="../report/sgrank_pos.rst",
-            category="MAGeCK plots",
-            subcategory="{comparison}",
-            labels={
-                "Comparison": "{comparison}",
-                "Figure": "sgrank plot enriched genes",
-            },
-        ),
-        neg=report(
-            "results/mageck/{comparison}/{cnv}/{comparison}.sgrank_neg.pdf",
-            caption="../report/sgrank_neg.rst",
-            category="MAGeCK plots",
-            subcategory="{comparison}",
-            labels={
-                "Comparison": "{comparison}",
-                "Figure": "sgrank plot depleted genes",
-            },
-        ),
+        pos="results/mageck/{comparison}/{cnv}/{comparison}.sgrank_pos.pdf",
+        neg="results/mageck/{comparison}/{cnv}/{comparison}.sgrank_neg.pdf",
     log:
         "logs/mageck_plots/sgrank_{comparison}_{cnv}.log",
     conda:
