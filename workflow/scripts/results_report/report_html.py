@@ -396,6 +396,25 @@ const PNG_EXPORT_WIDTH = 1000;
 const PNG_EXPORT_HEIGHT = 600;
 const PNG_EXPORT_SCALE = 3;
 
+// Shared Plotly config, parameterised by height since the sgRNA-rank plot's
+// height changes with its gene count (see rebuildSgRank) — re-used there
+// so a PNG exported after editing "Genes to show" targets the plot's
+// current height, not whatever it was at initial render.
+function plotConfig(divId, height) {
+  return {
+    responsive: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ["lasso2d", "select2d"],
+    toImageButtonOptions: {
+      format: "png",
+      filename: divId,
+      width: PNG_EXPORT_WIDTH,
+      height: height || PNG_EXPORT_HEIGHT,
+      scale: PNG_EXPORT_SCALE,
+    },
+  };
+}
+
 /* ── Per-plot factory (click-to-label, STRING term highlighting, search) ── */
 function initPlot(cfg) {
   const DIV           = document.getElementById(cfg.divId);
@@ -550,22 +569,11 @@ function getOrInitPlot(divId) {
   if (plotApis.has(divId)) return plotApis.get(divId);
   const fig  = FIGS[divId];
   const meta = PLOT_META[divId];
-  Plotly.newPlot(divId, fig.data, fig.layout, {
-    responsive: true,
-    displaylogo: false,
-    modeBarButtonsToRemove: ["lasso2d", "select2d"],
-    // The on-screen plot stretches to fill its (often very wide) container —
-    // fine for interacting with it, but a bad default for a PNG meant for a
-    // slide. Export at a fixed, presentation-friendly size instead, at a
-    // scale factor high enough to stay sharp once placed in a deck.
-    toImageButtonOptions: {
-      format: "png",
-      filename: divId,
-      width: PNG_EXPORT_WIDTH,
-      height: fig.layout.height || PNG_EXPORT_HEIGHT,
-      scale: PNG_EXPORT_SCALE,
-    },
-  });
+  // The on-screen plot stretches to fill its (often very wide) container —
+  // fine for interacting with it, but a bad default for a PNG meant for a
+  // slide. Export at a fixed, presentation-friendly size instead (see
+  // plotConfig), at a scale factor high enough to stay sharp in a deck.
+  Plotly.newPlot(divId, fig.data, fig.layout, plotConfig(divId, fig.layout.height));
   if (meta.simple) {
     const api = { search: () => ({ hits: [], misses: [] }), clear: () => {} };
     plotApis.set(divId, api);
@@ -963,7 +971,12 @@ function rebuildSgRank(divId) {
   layout.yaxis2.ticktext = genes;
   layout.yaxis2.range = [0.5, nGenes + 0.5];
 
-  Plotly.react(divId, traces, layout);
+  // Re-pass config too (not just data/layout) so a PNG exported after
+  // changing "Genes to show" targets this new height, not the height the
+  // plot had at initial render — otherwise the export stays stuck at the
+  // old size and the image comes out squished/cropped relative to the
+  // now-visible plot.
+  Plotly.react(divId, traces, layout, plotConfig(divId, layout.height));
 }
 
 document.querySelectorAll(".sgrank-update-btn").forEach(btn => {
