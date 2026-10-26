@@ -87,8 +87,12 @@ SVG_PANEL_TEMPLATE = Template(
 <div class="plot-row">
   <div class="plot-wrap plot-wrap-full svg-wrap">
     <div class="svg-panel-title">$panel_title</div>
-    $isolated_toggle_html
-    <div class="svg-embed" data-stats-div="$stats_div_id" data-taxon-id="$taxon_id">$svg_content</div>
+    <div class="svg-controls">
+      $isolated_toggle_html
+      <button type="button" class="btn btn-secondary svg-download-btn"
+              data-div="$div_id" data-title="$panel_title">Download PNG</button>
+    </div>
+    <div class="svg-embed" id="$div_id" data-stats-div="$stats_div_id" data-taxon-id="$taxon_id">$svg_content</div>
     <div class="edge-legend">$edge_legend_html</div>
   </div>
 </div>
@@ -231,11 +235,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
   padding: 6px 0 10px; text-align: center;
 }
 .svg-embed svg { max-width: 100%; height: auto; }
+.svg-controls {
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  padding-bottom: 8px;
+}
 .isolated-toggle {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  font-size: 12px; color: #555; padding-bottom: 8px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #555; cursor: pointer;
 }
 .isolated-toggle input { cursor: pointer; }
+.svg-download-btn { font-size: 12px; padding: 4px 10px; }
 .sgrank-controls {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
   max-width: 1000px; margin: 0 auto; padding: 8px 4px 12px;
@@ -816,6 +825,46 @@ document.querySelectorAll(".isolated-toggle-checkbox").forEach(checkbox => {
   });
 });
 
+/* ── STRING-db network "Download PNG" — rasterizes the live SVG (so a
+   "Hide unconnected nodes" toggle currently checked is reflected in the
+   export), at the same PNG_EXPORT_SCALE used for the Plotly plots. ──── */
+function downloadSvgPng(divId, title) {
+  const container = document.getElementById(divId);
+  const svg = container && container.querySelector("svg");
+  if (!svg) return;
+  const width = svg.width.baseVal.value;
+  const height = svg.height.baseVal.value;
+  const serialized = new XMLSerializer().serializeToString(svg);
+  const svgBlob = new Blob([serialized], { type: "image/svg+xml;charset=utf-8" });
+  const svgUrl = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = width * PNG_EXPORT_SCALE;
+    canvas.height = height * PNG_EXPORT_SCALE;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(svgUrl);
+    canvas.toBlob(pngBlob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(pngBlob);
+      a.download = (title || divId).replace(/[^A-Za-z0-9_-]+/g, "_") + ".png";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }, "image/png");
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(svgUrl);
+    alert("Could not render this network to PNG.");
+  };
+  img.src = svgUrl;
+}
+document.querySelectorAll(".svg-download-btn").forEach(btn => {
+  btn.addEventListener("click", () => downloadSvgPng(btn.dataset.div, btn.dataset.title));
+});
+
 /* ── sgRank "Genes to show" — rebuild the plot for an arbitrary gene list,
    not just the default top N (see sgrank.py's rank_data/_build_rank_data,
    which carries every gene's sgRNA data for exactly this). ─────────────── */
@@ -974,6 +1023,7 @@ def _render_plot_row(plot, figs, plot_meta):
             else ""
         )
         return SVG_PANEL_TEMPLATE.substitute(
+            div_id=div_id,
             panel_title=plot["panel_title"],
             svg_content=plot["svg"],
             stats_div_id=plot.get("stats_div_id") or "",
