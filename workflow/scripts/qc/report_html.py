@@ -50,7 +50,9 @@ PANEL_TEMPLATE = Template(
     </div>
   </div>
   <p class="desc">$description</p>
-  <div id="$div_id" class="plot"></div>
+  <div class="plot-scroll">
+    <div id="$div_id" class="plot" $plot_style></div>
+  </div>
 </section>
 """
 )
@@ -158,6 +160,10 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px; }
 .btn[disabled] { background: #cbd5e1; cursor: not-allowed; }
 .desc { font-size: 15px; color: #475569; margin: 10px 0 16px; max-width: 900px; line-height: 1.6; }
 .plot { width: 100%; }
+/* A plot given an explicit pixel plot_style (e.g. the Overview table, sized
+   to fit its widened columns) scrolls horizontally instead of being
+   squeezed back down to the card's own width. */
+.plot-scroll { overflow-x: auto; }
 .sub-panel { margin-bottom: 20px; }
 .sub-panel:last-child { margin-bottom: 0; }
 /* Breaks the MultiQC panel out of <main>'s max-width so it spans the full
@@ -406,6 +412,7 @@ def render(sections):
             if pdf_uri
             else '<button class="btn btn-pdf" disabled title="PDF export unavailable">PDF</button>'
         )
+        plot_width = section.get("plot_width")
         panel_html.append(
             PANEL_TEMPLATE.substitute(
                 title=section["title"],
@@ -414,6 +421,11 @@ def render(sections):
                 pdf_button=pdf_button,
                 data_uri=data_uri,
                 description=section["description"],
+                plot_style=(
+                    f'style="width:{plot_width}px;max-width:none;"'
+                    if plot_width
+                    else ""
+                ),
             )
         )
 

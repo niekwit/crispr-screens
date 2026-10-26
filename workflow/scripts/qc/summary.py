@@ -76,8 +76,19 @@ def build(
     # truncated/clipped longer ones); the rest widened so each header title
     # fits on one line instead of wrapping (go.Table wraps header text that
     # doesn't fit the column's width, there's no "nowrap" option).
-    sample_col_width = max(90, 11 * summary["sample"].astype(str).str.len().max() + 30)
-    columnwidth = [sample_col_width, 70, 190, 140, 130, 150, 230, 220]
+    #
+    # go.Table's columnwidth values are *relative* weights, rescaled to
+    # fill whatever pixel width the table actually renders at — not
+    # absolute pixels. Since the live report's .plot div is responsive
+    # (width: 100% of its ~1100px card), just raising some columns'
+    # weights while leaving others unchanged redistributes the *same*
+    # total width, shrinking the untouched columns (e.g. "Sorted") instead
+    # of actually growing the ones that needed it. So this table also gets
+    # an explicit figure width (plot_width, below) equal to the sum of
+    # these, so the values below really do land as pixels.
+    sample_col_width = max(100, 10 * summary["sample"].astype(str).str.len().max() + 40)
+    columnwidth = [sample_col_width, 90, 210, 160, 140, 170, 250, 260]
+    table_width = sum(columnwidth)
 
     fig = go.Figure(
         data=[
@@ -100,11 +111,20 @@ def build(
             )
         ]
     )
-    style_fig(fig, height=110 + 38 * len(summary), margin=dict(t=20, b=20, l=20, r=20))
+    style_fig(
+        fig,
+        height=110 + 38 * len(summary),
+        margin=dict(t=20, b=20, l=20, r=20),
+        width=table_width,
+    )
 
     return dict(
         id="summary",
         title="Overview",
+        # Fixes the .plot div's on-screen width to table_width (scrolling
+        # horizontally if that's wider than its card) instead of 100% of
+        # the card — see the columnwidth comment above for why.
+        plot_width=table_width,
         description=(
             "Per-sample summary across all QC metrics. Rows highlighted in rose "
             f"are flagged for a low alignment rate (<{MIN_ALIGNMENT_RATE}%) or "
