@@ -424,6 +424,10 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
         # rotated header — those overlap/overflow at kaleido's narrower
         # default PDF export width (see report_html.py's _encode_pdf).
         wide_pdf=True,
+        # The rotated headers also need more vertical headroom than this
+        # plot's own on-screen margin (190/220) provides once rendered as a
+        # static, exactly-sized PDF page — see _encode_pdf's extra_top_margin.
+        pdf_top_margin=290,
     )
 
 

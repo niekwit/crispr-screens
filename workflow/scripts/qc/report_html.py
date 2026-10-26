@@ -278,23 +278,22 @@ def _json_for_script_tag(obj):
     return json.dumps(obj).replace("</script", "<\\/script")
 
 
-def _encode_pdf(fig, filename, wide=False):
+def _encode_pdf(fig, filename, wide=False, extra_top_margin=None):
     # Interactive-only controls (e.g. the bar-sort dropdown) have no place
     # in a static export, so strip them from a copy before rendering, along
-    # with the extra top margin reserved for the dropdown — EXCEPT for a
-    # wide=True section (CRISPRcleanR depletion rank): its dropdown picks
-    # which comparison to show, unrelated to the steeply-rotated
-    # gene-signature column headers that need real headroom of their own,
-    # so collapsing margin.t to the generic dropdown's leftover 60px here
-    # clipped those headers against the top of the page whenever more than
-    # one comparison (so a dropdown) was present.
+    # with the extra top margin reserved for the dropdown — EXCEPT when the
+    # section asks for a specific extra_top_margin of its own (CRISPRcleanR
+    # depletion rank: its dropdown picks which comparison to show, unrelated
+    # to the steeply-rotated gene-signature column headers that need real
+    # headroom of their own, so collapsing margin.t to the generic
+    # dropdown's leftover 60px here clipped those headers against the top
+    # of the page whenever more than one comparison — so a dropdown — was
+    # present).
     export_fig = go.Figure(fig)
     had_menu = bool(export_fig.layout.updatemenus)
     export_fig.layout.updatemenus = []  # update_layout(updatemenus=[]) is a no-op
-    if wide:
-        # Enough headroom for a steeply-rotated column header regardless of
-        # whether a dropdown (now stripped above) was also present.
-        export_fig.layout.margin.t = 290
+    if extra_top_margin is not None:
+        export_fig.layout.margin.t = extra_top_margin
     elif had_menu:
         export_fig.update_layout(margin=dict(t=60, b=80, l=60, r=30))
     # The figures that explicitly turn their legend on (abundance, gini,
@@ -302,8 +301,8 @@ def _encode_pdf(fig, filename, wide=False):
     # applying it to every export just made plots that were fine at
     # kaleido's narrower default needlessly wide. A section can also opt
     # in explicitly via wide=True regardless of legend (e.g. CRISPRcleanR
-    # depletion rank: several extra gene-signature columns, each with a
-    # rotated header, that overlap/overflow at the narrow default width).
+    # depletion rank's extra gene-signature columns, or the Overview
+    # table's widened columns — see summary.py).
     width = PDF_EXPORT_WIDTH if (export_fig.layout.showlegend or wide) else None
     try:
         pdf_bytes = export_fig.to_image(format="pdf", width=width)
@@ -342,6 +341,7 @@ def _sub_panel_html(section, div_id):
         section["fig"],
         f"{section['filename']}.pdf",
         wide=section.get("wide_pdf", False),
+        extra_top_margin=section.get("pdf_top_margin"),
     )
     pdf_button = (
         f'<a class="btn btn-pdf" href="{pdf_uri}" download="{pdf_filename}">PDF</a>'
@@ -399,6 +399,7 @@ def render(sections):
             section["fig"],
             f"{section['filename']}.pdf",
             wide=section.get("wide_pdf", False),
+            extra_top_margin=section.get("pdf_top_margin"),
         )
         pdf_button = (
             f'<a class="btn btn-pdf" href="{pdf_uri}" download="{pdf_filename}">PDF</a>'

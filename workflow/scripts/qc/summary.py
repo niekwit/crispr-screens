@@ -72,10 +72,17 @@ def build(
         FLAG_ROW_COLOR if flagged else OK_ROW_COLOR for flagged in summary["flagged"]
     ]
 
+    # Sample column sized to the longest actual sample name (a fixed 90
+    # truncated/clipped longer ones); the rest widened so each header title
+    # fits on one line instead of wrapping (go.Table wraps header text that
+    # doesn't fit the column's width, there's no "nowrap" option).
+    sample_col_width = max(90, 11 * summary["sample"].astype(str).str.len().max() + 30)
+    columnwidth = [sample_col_width, 70, 190, 140, 130, 150, 230, 220]
+
     fig = go.Figure(
         data=[
             go.Table(
-                columnwidth=[90, 70, 110, 90, 80, 100, 130, 220],
+                columnwidth=columnwidth,
                 header=dict(
                     values=header,
                     fill_color=HEADER_COLOR,
@@ -109,4 +116,7 @@ def build(
         fig=fig,
         df=summary.drop(columns=["flagged"]),
         filename="qc-summary",
+        # Wider columns (above) need the wider PDF canvas too, or the same
+        # header-wrapping this fixes on-screen just reappears in export.
+        wide_pdf=True,
     )
