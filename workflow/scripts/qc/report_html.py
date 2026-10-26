@@ -24,6 +24,16 @@ from choreographer.errors import ChromeNotFoundError
 logging.getLogger("choreographer").setLevel(logging.WARNING)
 logging.getLogger("kaleido").setLevel(logging.WARNING)
 
+# PDF export width, matching a card's actual on-screen content width
+# (<main> max-width 1200px, minus its own 24px side padding and a card's
+# 20px side padding: 1200 - 2*24 - 2*20). None of these figures set their
+# own layout.width (they rely on the responsive on-screen container width
+# instead), so without this kaleido falls back to Plotly's 700px default —
+# much narrower than the real card, which squashes the plot area for any
+# figure with a legend (a fixed-width sidebar that eats proportionally
+# more of a narrow canvas).
+PDF_EXPORT_WIDTH = 1112
+
 TAB_TEMPLATE = Template(
     """<button type="button" class="tab" data-target="$div_id">$title</button>"""
 )
@@ -278,7 +288,7 @@ def _encode_pdf(fig, filename):
     if had_menu:
         export_fig.update_layout(margin=dict(t=60, b=80, l=60, r=30))
     try:
-        pdf_bytes = export_fig.to_image(format="pdf")
+        pdf_bytes = export_fig.to_image(format="pdf", width=PDF_EXPORT_WIDTH)
     except Exception as exc:
         # kaleido v1+ no longer bundles Chrome and only looks at a fixed list
         # of typical system install paths (plotly re-raises the underlying
@@ -294,7 +304,7 @@ def _encode_pdf(fig, filename):
         ):
             try:
                 kaleido.get_chrome_sync()
-                pdf_bytes = export_fig.to_image(format="pdf")
+                pdf_bytes = export_fig.to_image(format="pdf", width=PDF_EXPORT_WIDTH)
             except Exception as exc2:  # pragma: no cover - needs network access
                 logging.warning(
                     f"Could not render PDF for {filename}: no Chrome install "
