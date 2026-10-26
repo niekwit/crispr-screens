@@ -404,7 +404,13 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
         height=850,
         showlegend=False,
         updatemenus=updatemenus,
-        margin=dict(t=220 if updatemenus else 190, b=90, l=70, r=20),
+        # t: the steeply-rotated (-80°) signature column headers need
+        # enough headroom above the plot area to not clip against the top
+        # of the page in a static export — a static PDF page is sized
+        # exactly to the figure, unlike the live HTML report, where any
+        # overflow just extends into the surrounding page whitespace
+        # instead of getting clipped.
+        margin=dict(t=320 if updatemenus else 290, b=90, l=70, r=20),
     )
 
     return dict(
