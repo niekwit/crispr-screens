@@ -22,6 +22,7 @@ from qc import (
     crisprcleanr,
     gini,
     missed_sgrnas,
+    multiqc,
     pca,
     read_counts,
     report_html,
@@ -44,6 +45,7 @@ sorted_samples = set(snakemake.params["sorted_samples"])
 output_html = snakemake.output["html"]
 output_alignment_csv = snakemake.output["csv"]
 output_count_dist_csv = snakemake.output["count_csv"]
+multiqc_html = snakemake.input["multiqc"]
 
 # ── Alignment rate (also written to alignment-rates.csv for ngs-tracker) ─────
 logging.info("Parsing Bowtie alignment logs")
@@ -76,9 +78,11 @@ summary_section = summary.build(
     missed_section,
     count_dist_section,
 )
+multiqc_section = multiqc.build(multiqc_html)
 
 sections = [
     summary_section,
+    multiqc_section,
     alignment_section,
     read_counts_section,
     coverage_section,

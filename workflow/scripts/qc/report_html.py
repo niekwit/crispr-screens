@@ -74,6 +74,19 @@ SUB_PANEL_TEMPLATE = Template(
 """
 )
 
+# A "html" section (see qc/multiqc.py's build()) embeds an already-rendered
+# standalone HTML report rather than a Plotly figure — isolated in an
+# iframe (srcdoc, not a data: URI "src": browsers block data: URL
+# navigation for iframes, which leaves the frame silently blank) so its
+# own CSS/JS doesn't collide with this report's.
+HTML_EMBED_TEMPLATE = Template(
+    """
+<section class="panel" id="panel-$div_id">
+  <iframe class="embed-frame" srcdoc="$srcdoc" title="$title"></iframe>
+</section>
+"""
+)
+
 HTML_TEMPLATE = Template(
     """<!DOCTYPE html>
 <html lang="en">
@@ -130,6 +143,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px; }
 .plot { width: 100%; }
 .sub-panel { margin-bottom: 20px; }
 .sub-panel:last-child { margin-bottom: 0; }
+.embed-frame { width: 100%; height: 85vh; border: none; border-radius: 10px; background: #fff; }
 </style>
 </head>
 <body>
@@ -168,7 +182,7 @@ function renderPanel(id) {
   const subIds = SUBPLOTS[id];
   if (subIds) {
     subIds.forEach(renderOne);
-  } else {
+  } else if (FIGS[id]) {
     renderOne(id);
   }
 }
@@ -207,6 +221,12 @@ document.querySelectorAll(".btn-png").forEach(btn => {
 def _encode_csv(df, filename):
     payload = base64.b64encode(df.to_csv(index=False).encode()).decode()
     return f"data:text/csv;base64,{payload}", filename
+
+
+def _escape_attr(html):
+    """Escapes HTML for safe embedding inside a double-quoted attribute
+    (here, an iframe's srcdoc) — only & and " need escaping for that."""
+    return html.replace("&", "&amp;").replace('"', "&quot;")
 
 
 def _encode_pdf(fig, filename):
@@ -290,6 +310,16 @@ def render(sections):
             panel_html.append(
                 MULTI_PANEL_TEMPLATE.substitute(
                     div_id=div_id, sub_panels="\n".join(sub_panel_html)
+                )
+            )
+            continue
+
+        if section.get("kind") == "html":
+            panel_html.append(
+                HTML_EMBED_TEMPLATE.substitute(
+                    div_id=div_id,
+                    srcdoc=_escape_attr(section["html"]),
+                    title=section["title"],
                 )
             )
             continue

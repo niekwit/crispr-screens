@@ -60,7 +60,10 @@ rule multiqc:
         runtime=30,
         mem_mb=2048,
     params:
-        extra="",  # Optional: extra parameters for multiqc
+        # MultiQC's current template defaults to dark mode; force light mode
+        # since this report also gets embedded (as-is, no runtime theme
+        # override) into qc-report.html, which is otherwise light-themed.
+        extra='--cl-config "template_dark_mode: false"',
     wrapper:
         "v9.18.0/bio/multiqc"
 
@@ -69,6 +72,7 @@ rule qc_report:
     input:
         logs=expand("logs/count/{sample}.log", sample=SAMPLES),
         counts="results/count/counts-aggregated.tsv",
+        multiqc="results/qc/multiqc.html",
         crisprcleanr_roc=expand(
             "results/crisprcleanr/roc_{comparison}.csv",
             comparison=crisprcleanr_comparisons(),
@@ -87,7 +91,7 @@ rule qc_report:
         ),
     output:
         html=report(
-            "results/qc/qc-report.html",
+            "results/qc-report.html",
             caption="../report/qc-report.rst",
             category="QC report",
         ),
