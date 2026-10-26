@@ -287,8 +287,13 @@ def _encode_pdf(fig, filename):
     export_fig.layout.updatemenus = []  # update_layout(updatemenus=[]) is a no-op
     if had_menu:
         export_fig.update_layout(margin=dict(t=60, b=80, l=60, r=30))
+    # Only the figures that explicitly turn their legend on (abundance,
+    # gini, CRISPRcleanR ROC/PR — a fixed-width sidebar) need the wider
+    # canvas; applying it to every export just made plots that were fine
+    # at kaleido's narrower default needlessly wide.
+    width = PDF_EXPORT_WIDTH if export_fig.layout.showlegend else None
     try:
-        pdf_bytes = export_fig.to_image(format="pdf", width=PDF_EXPORT_WIDTH)
+        pdf_bytes = export_fig.to_image(format="pdf", width=width)
     except Exception as exc:
         # kaleido v1+ no longer bundles Chrome and only looks at a fixed list
         # of typical system install paths (plotly re-raises the underlying
@@ -304,7 +309,7 @@ def _encode_pdf(fig, filename):
         ):
             try:
                 kaleido.get_chrome_sync()
-                pdf_bytes = export_fig.to_image(format="pdf", width=PDF_EXPORT_WIDTH)
+                pdf_bytes = export_fig.to_image(format="pdf", width=width)
             except Exception as exc2:  # pragma: no cover - needs network access
                 logging.warning(
                     f"Could not render PDF for {filename}: no Chrome install "
