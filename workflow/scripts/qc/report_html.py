@@ -78,11 +78,17 @@ SUB_PANEL_TEMPLATE = Template(
 # standalone HTML report rather than a Plotly figure — isolated in an
 # iframe (srcdoc, not a data: URI "src": browsers block data: URL
 # navigation for iframes, which leaves the frame silently blank) so its
-# own CSS/JS doesn't collide with this report's.
+# own CSS/JS doesn't collide with this report's. panel-wide breaks out of
+# <main>'s max-width so it's not cramped into the same ~1200px column as
+# this report's own narrower plot cards. The iframe's srcdoc is set lazily
+# by JS on first activation (see HTML_SECTIONS below), not here: MultiQC's
+# own charts size themselves off their container's dimensions at init
+# time, and a panel that starts display:none (every panel but the first)
+# has zero width/height, permanently squashing or blanking them.
 HTML_EMBED_TEMPLATE = Template(
     """
-<section class="panel" id="panel-$div_id">
-  <iframe class="embed-frame" srcdoc="$srcdoc" title="$title"></iframe>
+<section class="panel panel-wide" id="panel-$div_id">
+  <iframe class="embed-frame" id="$div_id" title="$title"></iframe>
 </section>
 """
 )
@@ -99,6 +105,7 @@ HTML_TEMPLATE = Template(
 body {
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #f8fafc; color: #0f172a;
+  overflow-x: hidden; /* safety net for .panel-wide's 100vw breakout */
 }
 #topbar {
   background: #0f172a; color: #fff;
@@ -143,7 +150,17 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px; }
 .plot { width: 100%; }
 .sub-panel { margin-bottom: 20px; }
 .sub-panel:last-child { margin-bottom: 0; }
-.embed-frame { width: 100%; height: 85vh; border: none; border-radius: 10px; background: #fff; }
+/* Breaks the MultiQC panel out of <main>'s max-width so it spans the full
+   viewport edge-to-edge (matching the #tabs bar's own width) instead of
+   being cramped into the same ~1200px column as this report's own cards. */
+.panel-wide {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+.embed-frame { width: 100%; height: 90vh; border: none; border-radius: 10px; background: #fff; }
 </style>
 </head>
 <body>
@@ -163,6 +180,7 @@ $plotly_js
 <script>
 const FIGS = $figs_json;
 const SUBPLOTS = $subplot_map_json;  // tab div_id -> [sub-panel div_ids], for "multi" sections
+const HTML_SECTIONS = $html_sections_json;  // iframe div_id -> embedded HTML, for "html" sections
 const rendered = new Set();
 
 function renderOne(id) {
@@ -178,12 +196,27 @@ function renderOne(id) {
   rendered.add(id);
 }
 
+// An embedded report's own charts (MultiQC's) size themselves off their
+// container's dimensions as soon as its srcdoc content loads — if that
+// happened while the panel was still display:none (true for every panel
+// but the one shown first), they'd permanently measure zero width/height
+// and render blank or squashed. Deferring srcdoc until the panel is
+// actually visible avoids that.
+function renderHtmlFrame(id) {
+  if (rendered.has(id)) return;
+  const iframe = document.getElementById(id);
+  iframe.srcdoc = HTML_SECTIONS[id];
+  rendered.add(id);
+}
+
 function renderPanel(id) {
   const subIds = SUBPLOTS[id];
   if (subIds) {
     subIds.forEach(renderOne);
   } else if (FIGS[id]) {
     renderOne(id);
+  } else if (HTML_SECTIONS[id]) {
+    renderHtmlFrame(id);
   }
 }
 
@@ -223,10 +256,16 @@ def _encode_csv(df, filename):
     return f"data:text/csv;base64,{payload}", filename
 
 
-def _escape_attr(html):
-    """Escapes HTML for safe embedding inside a double-quoted attribute
-    (here, an iframe's srcdoc) — only & and " need escaping for that."""
-    return html.replace("&", "&amp;").replace('"', "&quot;")
+def _json_for_script_tag(obj):
+    """json.dumps(), safe to embed inside a <script> element. The HTML
+    parser looks for a literal "</script" byte sequence anywhere in a
+    script element's text content — even inside a quoted JS/JSON string —
+    to find where the element ends, so an embedded MultiQC report's own
+    "</script>" tags would otherwise prematurely terminate ours and
+    corrupt the rest of the page. "<\\/script" is an equivalent escape
+    within a JS string (the backslash-escaped "/" decodes back to "/")
+    that doesn't contain that byte sequence."""
+    return json.dumps(obj).replace("</script", "<\\/script")
 
 
 def _encode_pdf(fig, filename):
@@ -294,6 +333,7 @@ def render(sections):
     panel_html = []
     plot_sections = []
     subplot_map = {}
+    html_sections = {}
     for section in sections:
         div_id = f"fig-{section['id']}"
         tab_html.append(TAB_TEMPLATE.substitute(div_id=div_id, title=section["title"]))
@@ -315,12 +355,9 @@ def render(sections):
             continue
 
         if section.get("kind") == "html":
+            html_sections[div_id] = section["html"]
             panel_html.append(
-                HTML_EMBED_TEMPLATE.substitute(
-                    div_id=div_id,
-                    srcdoc=_escape_attr(section["html"]),
-                    title=section["title"],
-                )
+                HTML_EMBED_TEMPLATE.substitute(div_id=div_id, title=section["title"])
             )
             continue
 
@@ -357,4 +394,5 @@ def render(sections):
         plotly_js=plotly_js,
         figs_json=figs_json,
         subplot_map_json=json.dumps(subplot_map),
+        html_sections_json=_json_for_script_tag(html_sections),
     )
