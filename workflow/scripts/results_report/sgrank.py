@@ -156,9 +156,19 @@ def _rank_plot(grid, density, x_range, df_top, genes, title):
             fillcolor="rgba(0,0,0,0)",
         )
 
-    fig.update_xaxes(range=x_range, row=1, col=1, showticklabels=False)
+    fig.update_xaxes(
+        range=x_range,
+        row=1,
+        col=1,
+        showticklabels=False,
+        showgrid=False,
+        zeroline=False,
+        ticks="outside",
+        tickcolor="black",
+        ticklen=5,
+    )
     fig.update_xaxes(title="Log2(Fold change)", range=x_range, row=2, col=1)
-    fig.update_yaxes(title="Density", row=1, col=1)
+    fig.update_yaxes(title="Density", showgrid=False, row=1, col=1)
     fig.update_yaxes(
         tickvals=[row_of[g] for g in genes],
         ticktext=genes,
