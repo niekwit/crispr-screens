@@ -356,7 +356,13 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
         if traces_per_comparison is None:
             traces_per_comparison = end - start
 
-    fig.update_yaxes(type="log", autorange="reversed", title="Depletion rank", col=1)
+    # dtick=1 limits ticks to one per power of ten (1, 10, 100, ...) — left
+    # at Plotly's auto default, a log axis spanning several decades picks
+    # "D2" spacing, repeating unlabelled-looking 2/5 sub-ticks within each
+    # decade (1, 2, 5, 10, 2, 5, 100, ...), which reads as a broken axis.
+    fig.update_yaxes(
+        type="log", autorange="reversed", dtick=1, title="Depletion rank", col=1
+    )
     # shared_yaxes=True only syncs the numeric range across columns (via
     # matches="y"), not type/autorange — every signature column needs its
     # own type="log"/reversed, or its ticks render on a mismatched linear
@@ -364,7 +370,11 @@ def build_depletion_rank(comparisons, gene_csv_paths, signature_csv_paths):
     # threshold line relative to the main panel.
     for col in range(2, n_cols + 1):
         fig.update_yaxes(
-            type="log", autorange="reversed", showticklabels=False, col=col
+            type="log",
+            autorange="reversed",
+            dtick=1,
+            showticklabels=False,
+            col=col,
         )
         fig.update_xaxes(visible=False, range=[0, 1], col=col)
     fig.update_xaxes(title="Log2(Fold change)", col=1)
