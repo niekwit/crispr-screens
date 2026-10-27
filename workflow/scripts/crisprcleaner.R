@@ -146,16 +146,19 @@ if (!all(full_annotations$CODE == counts$sgRNA)) {
   stop("sgRNA names in counts and annotations do not match.")
 }
 
-# Check if there are any rows with NA in STARTpos in full_annotations
-if (any(is.na(full_annotations))) {
-  print("NA values detected in annotation file for STARTpos, ENDpos, or BP.")
+# Check if there are any rows with NA in STARTpos/ENDpos in full_annotations
+# (only these columns: NAs elsewhere, e.g. the optional EXONE column, are fine)
+no_position <- is.na(full_annotations$STARTpos) |
+  is.na(full_annotations$ENDpos)
+if (any(no_position)) {
+  print("NA values detected in annotation file for STARTpos or ENDpos.")
   print(
     "These might be non-targeting sgRNAs with no chromosomal location assigned."
   )
   print("Assigning random locations...")
 
   # Get rows with NA values and add some values
-  na_rows <- full_annotations[is.na(full_annotations$STARTpos), ]
+  na_rows <- full_annotations[no_position, ]
   na_rows$STARTpos <- seq(from = 10, to = nrow(na_rows) * 10, by = 10)
   na_rows$ENDpos <- na_rows$STARTpos + 10
 
@@ -163,7 +166,7 @@ if (any(is.na(full_annotations))) {
   na_rows$GENES <- "CONTROL_GENE"
 
   # Remove rows with NA values from full_annotations
-  full_annotations <- full_annotations[!is.na(full_annotations$STARTpos), ]
+  full_annotations <- full_annotations[!no_position, ]
 
   # Combine the two data frames
   full_annotations <- rbind(full_annotations, na_rows)
@@ -408,5 +411,6 @@ write.csv(
 )
 
 # Close redirection of output/messages
-sink(log, type = "output")
-sink(log, type = "message")
+sink(type = "message")
+sink(type = "output")
+close(log)

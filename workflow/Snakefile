@@ -21,9 +21,11 @@ configfile: "config/config.yml"
 
 validate(config, "schemas/config.schema.yaml")
 
-# Load and validate stats.csv
-stats = pd.read_csv("config/stats.csv")
-validate(stats, "schemas/stats.schema.yaml")
+# Load and validate stats.csv (not needed if only MAGeCK mle is run,
+# comparisons() raises if it is missing but needed)
+if os.path.exists("config/stats.csv"):
+    stats = pd.read_csv("config/stats.csv")
+    validate(stats, "schemas/stats.schema.yaml")
 
 # Get wildcard values
 SAMPLES = sample_names()

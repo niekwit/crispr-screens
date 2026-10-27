@@ -34,7 +34,7 @@ rule drugz:
         "-i {input.counts} "
         "-c {params.control} "
         "-x {params.test} "
-        "-f {output.fc}"
+        "-f {output.fc} "
         "{params.extra} "
         "-o {output.drugz} 2> {log} "
 

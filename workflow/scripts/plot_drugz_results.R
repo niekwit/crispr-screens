@@ -15,7 +15,7 @@ fdr <- snakemake@params[["fdr"]]
 
 # Load data
 df <- read.delim(txt) |>
-  # if normZ is greater than 0, fdr is fdr_synthetic, else fdr_supp
+  # if normZ is less than 0, fdr is fdr_synth (synthetic lethal), else fdr_supp
   mutate(fdr = ifelse(normZ < 0, fdr_synth, fdr_supp))
 
 # Data for labels (top 10 genes of lowest and highest normZ)

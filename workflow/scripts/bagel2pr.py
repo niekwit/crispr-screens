@@ -21,18 +21,18 @@ logging.basicConfig(
     handlers=[logging.FileHandler(snakemake.log["command"])],
 )
 
-# Load gene sets
-if ceg == "none" and cneg == "none":
-    if species == "human":
-        eg = f"{b2dir}/CEGv2.txt"  # essential genes
-        neg = f"{b2dir}/NEGv1.txt"  # non-essential genes
-
-    elif species == "mouse":
-        eg = f"{b2dir}/CEG_mouse.txt"  # essential genes
-        neg = f"{b2dir}/NEG_mouse.txt"  # non-essential genes
-else:
-    eg = ceg
-    neg = cneg
+# Load gene sets: BAGEL2 default list per species, unless a custom list is set
+default_lists = {
+    "human": ("CEGv2.txt", "NEGv1.txt"),  # essential, non-essential genes
+    "mouse": ("CEG_mouse.txt", "NEG_mouse.txt"),
+}
+if "none" in (ceg, cneg) and species not in default_lists:
+    raise ValueError(
+        f"No BAGEL2 default gene lists for species {species!r}: "
+        "provide custom_gene_lists in config.yml"
+    )
+eg = f"{b2dir}/{default_lists[species][0]}" if ceg == "none" else ceg
+neg = f"{b2dir}/{default_lists[species][1]}" if cneg == "none" else cneg
 
 # Prepare command and log, and run
 command = f"python {b2dir}/BAGEL.py pr -i {bf} -o {pr} -e {eg} -n {neg} {extra} > {log_stdout} 2> {log_stderr}"

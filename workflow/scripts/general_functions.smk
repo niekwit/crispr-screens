@@ -422,9 +422,12 @@ def sample_names():
 
     sample_names = [os.path.basename(x).replace(ext, "") for x in files]
 
-    if not config["stats"]["mageck"]["command"] == "mle":
+    if stats_csv_needed():
         # Check if this matches the samples in stats.csv
-        # Check this now, otherwise it will fail later with MAGeCK
+        # Check this now, otherwise it will fail later with MAGeCK/DrugZ/BAGEL2
+        assert os.path.exists(
+            "config/stats.csv"
+        ), "config/stats.csv file does not exist"
         stats_csv = pd.read_csv("config/stats.csv")
         samples = stats_csv["test"].tolist()
         samples.extend(stats_csv["control"].tolist())
@@ -442,11 +445,10 @@ def sample_names():
                 "file(s) and update stats.csv (e.g. use _ instead of -)"
             )
 
-        not_found = []
-        for sample in samples:
-            if sample not in sample_names:
-                if not ";" in sample:
-                    not_found.append(sample)
+        # Check every replicate of a ;-separated entry individually
+        not_found = sorted(
+            {part for x in samples for part in x.split(";") if part not in sample_names}
+        )
         if not_found:
             raise ValueError(
                 f"Sample(s) {', '.join(not_found)} not found in reads directory"
@@ -494,26 +496,34 @@ def comparisons():
     for BAGEL2, everything else (n/blank/other) only for MAGeCK/DrugZ. This
     supports setups where BAGEL2 needs an entirely different comparison (eg.
     against a plasmid/reference sample) than MAGeCK/DrugZ.
+
+    Both are empty lists if no enabled tool needs stats.csv (i.e. only
+    MAGeCK mle is run).
     """
-    if config["stats"]["mageck"]["command"] == "test":
-        # Load comparisons from stats.csv
-        # Check if file exists
-        assert os.path.exists(
-            "config/stats.csv"
-        ), "config/stats.csv file does not exist"
-    else:
-        return None, None
+    if not stats_csv_needed():
+        return [], []
+    # Check if file exists
+    assert os.path.exists("config/stats.csv"), "config/stats.csv file does not exist"
     CSV = pd.read_csv("config/stats.csv")
 
     def build(df):
-        comps = df[["test", "control"]].agg("_vs_".join, axis=1).tolist()
+        if (
+            config["stats"]["mageck"]["command"] == "test"
+            and "--paired" in config["stats"]["mageck"]["extra_mageck_arguments"]
+        ):
+            # Remove comparisons with unequal number of test and control samples
+            equal = df["test"].str.count(";") == df["control"].str.count(";")
+            for _, row in df[~equal].iterrows():
+                logger.warning(
+                    f"Skipping comparison {row['test']} vs {row['control']}: "
+                    "--paired requires equal numbers of test and control samples"
+                )
+            df = df[equal]
+        # (also works if df is empty, e.g. every row is bagel2_only)
+        comps = (df["test"] + "_vs_" + df["control"]).tolist()
         comps = [
             x.replace(";", "-") for x in comps
         ]  # snakemake report does not support ; in filenames
-        if "--paired" in config["stats"]["mageck"]["extra_mageck_arguments"]:
-            # Remove comparisons with unequal number of test and control samples
-            # i.e. the number of - is not zero or an even number
-            comps = [x for x in comps if x.count("-") % 2 == 0]
         return comps
 
     if "bagel2_only" in CSV.columns:
@@ -522,9 +532,24 @@ def comparisons():
         COMPARISONS = build(CSV[~is_bagel2_only])
     else:
         COMPARISONS = build(CSV)
-        COMPARISONS_BAGEL2 = build(CSV)
+        COMPARISONS_BAGEL2 = list(COMPARISONS)
 
     return COMPARISONS, COMPARISONS_BAGEL2
+
+
+def stats_csv_needed():
+    """
+    True if any enabled tool takes its comparisons from config/stats.csv
+    (MAGeCK test, DrugZ, BAGEL2). MAGeCK mle uses design matrices instead.
+    """
+    return (
+        (
+            config["stats"]["mageck"]["run"]
+            and config["stats"]["mageck"]["command"] == "test"
+        )
+        or config["stats"]["drugz"]["run"]
+        or config["stats"]["bagel2"]["run"]
+    )
 
 
 def crisprcleanr_comparisons():
@@ -595,7 +620,7 @@ def extra_mageck_args():
         args += " --norm-method none "  # Disable MAGeCK normalisation
     else:
         if config["stats"]["mageck"]["command"] == "test":
-            args += "--normcounts-to-file "
+            args += " --normcounts-to-file "
     return args
 
 
@@ -740,7 +765,8 @@ def design_matrix_valid(m):
     # Check if the right separator is used
     if df.shape[1] < 3:
         logger.error(
-            "The design matrix must have at least two columns and be tab-delimited."
+            "The design matrix must be tab-delimited and have at least three "
+            "columns (sample names, baseline and at least one condition)."
         )
         return False
 
@@ -758,7 +784,7 @@ def design_matrix_valid(m):
     num_columns = numeric_matrix.shape[1]
 
     if num_columns == 0:
-        print("Error: The design matrix has no columns.")
+        logger.error("The design matrix has no columns.")
         return False
 
     # Calculate the rank of the matrix
