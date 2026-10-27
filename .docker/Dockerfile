@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="248a953507e43126b00f8b9c2c596fdf6852b090b147d49d298b73cd50955213"
+LABEL io.github.snakemake.conda_env_hash="09db491b6aad5562a3b5c3199d3c06b71835dccf4be2fb06cf50d594e02a5b60"
 
 # Step 2: Retrieve conda environments
 
@@ -44,7 +44,7 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v9.18.0/bio/multiqc/envi
 
 # Conda environment:
 #   source: workflow/envs/stats.yaml
-#   prefix: /conda-envs/27a21c7b701b2804d46dd89a8bbb9f95
+#   prefix: /conda-envs/34ba55272752c8e04b955ce7fcd8594a
 #   name: stats
 #   channels:
 #     - conda-forge
@@ -90,13 +90,16 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v9.18.0/bio/multiqc/envi
 #     - conda-forge::xorg-libxdamage
 #     - conda-forge::xorg-libxfixes
 #     - conda-forge::xorg-libxrandr
-RUN mkdir -p /conda-envs/27a21c7b701b2804d46dd89a8bbb9f95
-COPY workflow/envs/stats.yaml /conda-envs/27a21c7b701b2804d46dd89a8bbb9f95/environment.yaml
+#     # Font for that Chrome (containers have no system fonts); Roboto is in the
+#     # QC report's font list (Inter isn't on conda-forge)
+#     - conda-forge::font-ttf-roboto
+RUN mkdir -p /conda-envs/34ba55272752c8e04b955ce7fcd8594a
+COPY workflow/envs/stats.yaml /conda-envs/34ba55272752c8e04b955ce7fcd8594a/environment.yaml
 
 # Step 3: Generate conda environments
 
 RUN conda env create --prefix /conda-envs/24b8923f8e4abe077ffe95b01bfc1652 --file /conda-envs/24b8923f8e4abe077ffe95b01bfc1652/environment.yaml && \
     conda env create --prefix /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32 --file /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32/environment.yaml && \
     conda env create --prefix /conda-envs/43340c98ee16cbaa141fbba9b9dd2847 --file /conda-envs/43340c98ee16cbaa141fbba9b9dd2847/environment.yaml && \
-    conda env create --prefix /conda-envs/27a21c7b701b2804d46dd89a8bbb9f95 --file /conda-envs/27a21c7b701b2804d46dd89a8bbb9f95/environment.yaml && \
+    conda env create --prefix /conda-envs/34ba55272752c8e04b955ce7fcd8594a --file /conda-envs/34ba55272752c8e04b955ce7fcd8594a/environment.yaml && \
     conda clean --all -y

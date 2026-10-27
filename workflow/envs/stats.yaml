@@ -43,3 +43,6 @@ dependencies:
   - conda-forge::xorg-libxdamage
   - conda-forge::xorg-libxfixes
   - conda-forge::xorg-libxrandr
+  # Font for that Chrome (containers have no system fonts); Roboto is in the
+  # QC report's font list (Inter isn't on conda-forge)
+  - conda-forge::font-ttf-roboto

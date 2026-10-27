@@ -52,7 +52,10 @@ def _use_managed_chrome():
     so it closes immediately after starting. The conda environment this
     script runs in ships those libraries (see envs/stats.yaml), so put its
     lib directory on LD_LIBRARY_PATH (inherited by the Chrome subprocess)
-    and point kaleido at the downloaded Chrome with BROWSER_PATH.
+    and point kaleido at the downloaded Chrome with BROWSER_PATH. Chrome
+    then also uses the environment's fontconfig, which only finds the
+    environment's fonts via its fonts.conf (FONTCONFIG_FILE): without it,
+    a container has no fonts at all and the PDFs have no text.
 
     Only used after a failed render, so a working system Chrome is never
     run against the conda libraries. Returns True if the switch was made.
@@ -70,6 +73,9 @@ def _use_managed_chrome():
     ld_path = os.environ.get("LD_LIBRARY_PATH")
     os.environ["LD_LIBRARY_PATH"] = f"{env_lib}:{ld_path}" if ld_path else env_lib
     os.environ["BROWSER_PATH"] = str(chrome)
+    fonts_conf = os.path.join(sys.prefix, "etc", "fonts", "fonts.conf")
+    if os.path.exists(fonts_conf):
+        os.environ.setdefault("FONTCONFIG_FILE", fonts_conf)
     logging.info(f"Rendering PDFs with {chrome} and libraries from {env_lib}")
     _managed_chrome = True
     return True
