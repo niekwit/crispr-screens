@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="1e3a38a6e9ffa25b1dd03f85d44d6b05fae75ecd9cec747a43a35f1769aa291e"
+LABEL io.github.snakemake.conda_env_hash="248a953507e43126b00f8b9c2c596fdf6852b090b147d49d298b73cd50955213"
 
 # Step 2: Retrieve conda environments
 
@@ -44,13 +44,13 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v9.18.0/bio/multiqc/envi
 
 # Conda environment:
 #   source: workflow/envs/stats.yaml
-#   prefix: /conda-envs/dced95ef382e45a848a1cfa8149aa190
+#   prefix: /conda-envs/27a21c7b701b2804d46dd89a8bbb9f95
 #   name: stats
 #   channels:
 #     - conda-forge
 #     - bioconda
-#     - defaults
 #   dependencies:
+#     - r-base=4.3.3
 #     - r-tidyverse=2.0.0
 #     - r-cowplot=1.1.1
 #     - r-viridis=0.6.4
@@ -90,13 +90,13 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v9.18.0/bio/multiqc/envi
 #     - conda-forge::xorg-libxdamage
 #     - conda-forge::xorg-libxfixes
 #     - conda-forge::xorg-libxrandr
-RUN mkdir -p /conda-envs/dced95ef382e45a848a1cfa8149aa190
-COPY workflow/envs/stats.yaml /conda-envs/dced95ef382e45a848a1cfa8149aa190/environment.yaml
+RUN mkdir -p /conda-envs/27a21c7b701b2804d46dd89a8bbb9f95
+COPY workflow/envs/stats.yaml /conda-envs/27a21c7b701b2804d46dd89a8bbb9f95/environment.yaml
 
 # Step 3: Generate conda environments
 
 RUN conda env create --prefix /conda-envs/24b8923f8e4abe077ffe95b01bfc1652 --file /conda-envs/24b8923f8e4abe077ffe95b01bfc1652/environment.yaml && \
     conda env create --prefix /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32 --file /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32/environment.yaml && \
     conda env create --prefix /conda-envs/43340c98ee16cbaa141fbba9b9dd2847 --file /conda-envs/43340c98ee16cbaa141fbba9b9dd2847/environment.yaml && \
-    conda env create --prefix /conda-envs/dced95ef382e45a848a1cfa8149aa190 --file /conda-envs/dced95ef382e45a848a1cfa8149aa190/environment.yaml && \
+    conda env create --prefix /conda-envs/27a21c7b701b2804d46dd89a8bbb9f95 --file /conda-envs/27a21c7b701b2804d46dd89a8bbb9f95/environment.yaml && \
     conda clean --all -y
