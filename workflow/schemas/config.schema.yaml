@@ -42,6 +42,7 @@ properties:
     required:
       - name_column
       - sequence_column
+      - gene_column
 
   bowtie_args:
     type: string
@@ -139,6 +140,8 @@ properties:
 
         required:
           - run
+          - command
+          - apply_crisprcleanr
           - extra_mageck_arguments
           - mageck_control_genes
           - apply_CNV_correction
@@ -161,6 +164,7 @@ properties:
 
         required:
           - run
+          - apply_crisprcleanr
           - extra
 
       string_db:
@@ -172,6 +176,7 @@ properties:
 
           data:
             type: string
+            enum: [enriched, depleted, both]
             description: enriched, depleted, or both (mageck/drugz only; bagel2 is always depleted-only)
 
           fdr:
@@ -194,6 +199,13 @@ properties:
           - fdr
           - bf_cutoff
           - top_genes
+
+    required:
+      - crisprcleanr
+      - bagel2
+      - mageck
+      - drugz
+      - string_db
 
   ngs_tracker:
     type: object
@@ -230,6 +242,7 @@ properties:
 
 required:
   - lib_info
+  - cutadapt_args
   - csv
   - bowtie_args
   - stats
