@@ -520,7 +520,7 @@ def comparisons():
                 )
             df = df[equal]
         # (also works if df is empty, e.g. every row is bagel2_only)
-        comps = (df["test"] + "_vs_" + df["control"]).tolist()
+        comps = df["test"].str.cat(df["control"], sep="_vs_").tolist()
         comps = [
             x.replace(";", "-") for x in comps
         ]  # snakemake report does not support ; in filenames
