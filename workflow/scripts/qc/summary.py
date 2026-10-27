@@ -1,6 +1,8 @@
 """Per-sample overview table combining the flags raised by the other QC
 metrics, so problem samples are visible without checking every tab."""
 
+import math
+
 import plotly.graph_objects as go
 
 from .alignment import MIN_ALIGNMENT_RATE
@@ -10,6 +12,28 @@ from .count_distribution import FLAG_THRESHOLD, LOW_FRACTION
 FLAG_ROW_COLOR = "#fff1f2"  # rose-50
 OK_ROW_COLOR = "#ffffff"
 HEADER_COLOR = "#0f172a"
+
+CELL_FONT_SIZE = 14
+# go.Table doesn't expose the wrapped line count it actually renders, and a
+# fixed per-row cell height (the old 32px) only fits a single line — any row
+# whose text wraps to a second line (e.g. a long "Flags" value) still only
+# gets 32px, so go.Table silently clips it instead of wrapping the figure's
+# height to fit: rows run off the bottom of the fixed-height SVG canvas with
+# no scrollbar to reveal them. Estimating the wrapped line count per cell
+# (from the column's pixel width and an average character width) and sizing
+# the header/cell/figure heights to the worst case avoids that clipping.
+AVG_CHAR_WIDTH_FACTOR = 0.56  # of CELL_FONT_SIZE; Arial-ish average glyph width
+CELL_LINE_HEIGHT = 18  # px per wrapped line at CELL_FONT_SIZE
+CELL_PADDING = 16  # go.Table's default horizontal cell padding (both sides)
+
+
+def _wrapped_lines(text, column_width):
+    """How many lines `text` wraps to inside a go.Table column of this
+    pixel width, at CELL_FONT_SIZE."""
+    chars_per_line = max(
+        1, int((column_width - CELL_PADDING) / (CELL_FONT_SIZE * AVG_CHAR_WIDTH_FACTOR))
+    )
+    return max(1, math.ceil(len(str(text)) / chars_per_line))
 
 
 def build(
@@ -90,6 +114,20 @@ def build(
     columnwidth = [sample_col_width, 90, 210, 160, 140, 170, 250, 260]
     table_width = sum(columnwidth)
 
+    # "Flags" is the only column whose values can run long enough to wrap
+    # (e.g. "Low alignment rate, sgRNA dropout") — go.Table has a single
+    # fixed cell height for the whole table, so any row that needs a second
+    # line must get it, or go.Table clips that row's text (and any rows
+    # pushed past the figure's fixed total height) instead of wrapping to
+    # fit. Size cell_height/table height for the worst case across rows.
+    max_flag_lines = max(
+        (_wrapped_lines(flags, columnwidth[-1]) for flags in summary["flags"]),
+        default=1,
+    )
+    cell_height = (
+        32 if max_flag_lines <= 1 else 32 + (max_flag_lines - 1) * CELL_LINE_HEIGHT
+    )
+
     fig = go.Figure(
         data=[
             go.Table(
@@ -97,7 +135,7 @@ def build(
                 header=dict(
                     values=header,
                     fill_color=HEADER_COLOR,
-                    font=dict(color="white", size=14),
+                    font=dict(color="white", size=CELL_FONT_SIZE),
                     align="left",
                     height=36,
                 ),
@@ -105,15 +143,15 @@ def build(
                     values=cell_values,
                     fill_color=[row_colors] * len(header),
                     align="left",
-                    height=32,
-                    font=dict(size=14),
+                    height=cell_height,
+                    font=dict(size=CELL_FONT_SIZE),
                 ),
             )
         ]
     )
     style_fig(
         fig,
-        height=110 + 38 * len(summary),
+        height=110 + (cell_height + 6) * len(summary),
         margin=dict(t=20, b=20, l=20, r=20),
         width=table_width,
     )
