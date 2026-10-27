@@ -15,7 +15,7 @@ Copy the fastq files to the `reads` directory and the resources to the `resource
     All fastq files must have the extension *.fastq.gz* or *.cram*
 
 
-Copy the the fasta file with sgRNA sequences to the `resources` directory. If no fasta file is available, provide a csv file with sgRNA sequences and gene names in separate columns. Set the column numbers in `config/config.yml` (see below).
+Copy the sgRNA library to the `resources` directory as a csv file with the sgRNA names, gene names and sgRNA sequences in separate columns, and set the column numbers in `config/config.yml` (see below). The fasta file for the Bowtie index is generated from this csv file.
 
 The final directory structure should look like this:
 
@@ -34,40 +34,10 @@ The final directory structure should look like this:
     │   └── bassik.csv
     └── workflow
         ├── envs
-        │   └── stats.yaml
         ├── rules
-        │   ├── bagel2.smk
-        │   ├── count.smk
-        │   ├── drugz.smk
-        │   ├── interactive_report.smk
-        │   ├── mageck.smk
-        │   ├── qc.smk
-        │   └── trim.smk
         ├── schemas
-        │   ├── config.schema.yaml
-        │   └── stats.schema.yaml
         ├── scripts
-        │   ├── aggregate_counts.py
-        │   ├── bagel2bf.py
-        │   ├── bagel2pr.py
-        │   ├── cnv_cell_lines.txt
-        │   ├── create_mageck_mle_count_table.py
-        │   ├── crisprcleaner.R
-        │   ├── csv_to_fasta.py
-        │   ├── general_functions.smk
-        │   ├── interactive_results_report.py
-        │   ├── mageck.py
-        │   ├── plot_bf.R
-        │   ├── plot_drugz_results.R
-        │   ├── plot_lfc.R
-        │   ├── plot_mle.R
-        │   ├── plot_pr.R
-        │   ├── plot_sgrank.R
-        │   ├── qc_report.py
-        │   └── string_db.py
         └── Snakefile
-
-    8 directories, 36 files
 
 
 Experiment meta data
@@ -96,8 +66,9 @@ Experiment meta data is described in `config/config.yml`:
         crisprcleanr:
             # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better
             # It is optional for MAGeCK and DrugZ
-            # Path to library file for crisprcleanr with sgRNA annotations
-            # With column names: GENE,seq,CODE,CHRM,STARTpos,ENDpos,EXONE(optional),STRAND
+            # If library_name is not one of the CRISPRcleanR libraries below, the library file
+            # (lib_info: library_file) must contain the sgRNA annotations, with column names:
+            # CODE,GENES,seq,CHRM,STARTpos,ENDpos,EXONE(optional),STRAND
             # If library name is one of the following, the library info is loaded from the crisprcleanr library database:
             # AVANA_Library (https://doi.org/10.1038/ng.3984)
             # Brunello_Library (https://doi.org/10.1038/nbt.3437)
@@ -152,7 +123,7 @@ Experiment meta data is described in `config/config.yml`:
         base_url: "http://127.0.0.1:5000/api"
         project_id: 3
         workflow_name: "crispr-screens"
-        workflow_tag: "v1.1.0"
+        workflow_tag: "v1.3.0"
         workflow_system: "snakemake"
         description: "Test"
         tags:
@@ -174,7 +145,7 @@ An optional `config/samples.csv` file can describe per-sample metadata. Currentl
     noHT_1,
     noHT_2,
 
-A sample marked `sorted` is exempt from the QC report's sgRNA-dropout flag (see the Read count distribution and Overview tabs), since a bottlenecked sgRNA distribution is an expected consequence of sorting, not a technical problem. If `config/samples.csv` is absent, or has no `sorted` column, every sample is treated as unsorted as before.
+A sample marked `sorted` is exempt from the QC report's sgRNA-dropout flag (see the Overview tab), since a bottlenecked sgRNA distribution is an expected consequence of sorting, not a technical problem. If `config/samples.csv` is absent, or has no `sorted` column, every sample is treated as unsorted as before.
 
 
 FASTQ trimming
@@ -210,11 +181,27 @@ BAGEL2 analysis
 
 .. note::
 
-    Replicate samples can be used by separating the sample names with a semicolon (see above). The sample names must match the fastq file names in the `reads` directory.
+    Replicate samples can be used by separating the sample names with a semicolon (see above). The sample names must match the fastq file names in the `reads` directory (without extension), and must not contain hyphens.
+
+.. note::
+
+    `config/stats.csv` is required when MAGeCK `test`, DrugZ or BAGEL2 is run. It is not needed when only MAGeCK `mle` is run. DrugZ and BAGEL2 can be run alongside MAGeCK `mle`, using the comparisons in `config/stats.csv`.
 
 .. note::
 
     An optional `bagel2_only` column can be added, with `y`/`n` values per row. If this column is present, it is a strict split: comparisons marked `y` are only run through BAGEL2 (and CRISPRcleanR), and all other comparisons (`n` or blank) are only run through MAGeCK and DrugZ. This is useful when BAGEL2 needs a different comparison than MAGeCK/DrugZ, eg. against a plasmid/reference sample. If the `bagel2_only` column is absent entirely, every comparison is run through MAGeCK, DrugZ, and BAGEL2 (the default).
+
+.. note::
+
+    Two more optional columns, `condition` and `time_point` (a number, e.g. days), only change how the CRISPRcleanR ROC and precision-recall curves are shown in the QC report: one panel per condition, with comparisons coloured by time point (light = earliest, dark = latest), and gene- or sgRNA-level curves picked with a dropdown. This makes changes in screen performance over time easy to see. Comparisons without a condition are shown in an "Unassigned" panel, and comparisons without a time point in grey. For example:
+
+    .. csv-table:: Example stats.csv file with condition and time_point columns
+        :header: "test", "control", "bagel2_only", "condition", "time_point"
+
+        C2_d7,plasmid,y,control,7
+        C2_d14,plasmid,y,control,14
+        M2_d7,plasmid,y,mutant,7
+        M2_d14,plasmid,y,mutant,14
 
 
 `CRISPRcleanR <https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-018-4989-y>`_ is used to create a count table as input for BAGEL2.
@@ -247,7 +234,7 @@ Custom essential and non-essential gene lists that BAGEL2 requires for Bayes Fac
     A4GNTL1
     A4GNTL2
 
-If no custom gene lists are provided, the default gene lists from BAGEL2 will be used. This can be done by setting the `essential_genes` and `non_essential_genes` parameters to `none`.
+If no custom gene lists are provided, the default gene lists from BAGEL2 will be used (available for human and mouse). This is done by setting `essential_genes` and/or `non_essential_genes` to `none`: each list can be set independently, so a custom essential gene list can be combined with the default non-essential gene list, and vice versa. The same gene lists are used for the CRISPRcleanR QC plots.
 
 Extra arguments for the BAGEL2 `bf` and `pr` subcommands can be provided in the `extra_args` section.
 
@@ -294,7 +281,7 @@ The MAGeCK analysis can be customized as follows:
         apply_CNV_correction: False # Apply CNV correction to mageck results
         cell_line: K562_HAEMATOPOIETIC_AND_LYMPHOID_TISSUE # Cell line for CNV correction
 
-CRISPRcleanR can be used to create a normalised count table as input for MAGeCK. This will disable normalisation by MAGeCK.
+CRISPRcleanR can be used to create a normalised count table as input for MAGeCK `test`. This will disable normalisation by MAGeCK. `apply_crisprcleanr` has no effect with `mle`.
 
 A list of control genes can be provided in the `resources` directory. The file should be in the following format:
 
@@ -311,7 +298,7 @@ A list of control genes can be provided in the `resources` directory. The file s
 
 These genes will then be used for normalisation and for generating the null distribution of RRA.
 
-Extra arguments for the MAGeCK `test` and `mle` commands can be provided in the `extra_mageck_arguments` section.
+Extra arguments for the MAGeCK `test` and `mle` commands can be provided in the `extra_mageck_arguments` section. With `--paired` (MAGeCK `test`), comparisons with unequal numbers of test and control samples are skipped with a warning.
 
 
 drugZ analysis
@@ -329,7 +316,7 @@ The drugZ analysis can be customized as follows:
         apply_crisprcleanr: False
         extra: "" # Extra arguments for drugZ
 
-CRISPRcleanR can be used to create a normalised count table as input for MAGeCK.
+CRISPRcleanR can be used to create a normalised count table as input for drugZ.
 
 Extra arguments for the drugZ command can be provided in the `extra` section.
 
@@ -438,4 +425,6 @@ To execute the workflow:
 Report of analysis
 ==================
 
-The workflow generates its own self-contained interactive HTML reports as part of a normal run — no separate report-generation step needed. ``results/qc-report.html`` covers sample QC (including the embedded MultiQC report), and ``results/interactive_report.html`` covers every MAGeCK/MAGeCK mle/DrugZ/BAGEL2 comparison, both described earlier in this page.
+The workflow generates its own self-contained interactive HTML reports as part of a normal run — no separate report-generation step needed. ``results/qc-report.html`` covers sample QC (including the embedded MultiQC report), and ``results/interactive_report.html`` covers every MAGeCK/MAGeCK mle/DrugZ/BAGEL2 comparison (see the STRING-db analysis section above).
+
+The QC report has the tabs Overview (a per-sample table of all QC flags), MultiQC, Alignment rate, Total reads, Sequence coverage, Gini index, Missed sgRNAs, sgRNA abundance, Sample correlation and PCA. When CRISPRcleanR was run, a CRISPRcleanR tab shows ROC and precision-recall curves (separating BAGEL2 essential from non-essential genes) and the depletion rank of essential gene signatures per comparison.

@@ -36,7 +36,7 @@ stats:
     run: True # Perform mageck analysis
     command: test # test or mle
     mle:
-      design_matrix: [resources/matrix.txt] # Design matrix for mageck mle
+      design_matrix: [config/matrix.txt] # Design matrix for mageck mle
     # It is recommended to disable crisprcleanr when using non-genome-wide sgRNA libraries
     apply_crisprcleanr: False
     extra_mageck_arguments: ""
@@ -68,7 +68,7 @@ ngs_tracker:
   # Run identity  (find project_id on the project detail page)
   project_id: 3
   workflow_name: "crispr-screens"
-  workflow_tag: "v0.9.1"
+  workflow_tag: "v1.3.0"
   workflow_system: "snakemake" # snakemake | nextflow | cwl | other
   description: "Testing REST API integration with NGS Tracker"
   tags:

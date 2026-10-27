@@ -98,7 +98,7 @@ All tests used the GRCh38 primary assembly and the Ensembl 112 GTF, on a single 
     * - TKOv3 (annotated in hg19, so only the chromosome and strand can be compared)
       - 71,090
       - 70,901 placed (65,928 at their own gene, 4,973 through another gene's locus); 189 unplaced (142 of these are the LacZ, luciferase and EGFP controls). 99.94% on the same chromosome and 99.42% on the same strand as the hg19 annotation.
-    * - Bassik library from ``.test_mageck_test`` (variable sgRNA length of 17-25 nt)
+    * - Bassik library from ``.test_mageck_mle`` (variable sgRNA length of 17-25 nt)
       - 211,696
       - 83.5% at their own gene, 10.0% through another gene's locus, 0.2% not found. The 6.3% with a gene name that is not in the GTF are mostly the ``safe`` (6,697) and ``none`` (5,644) controls. 4 min 28 s, 3.8 GB. The ``crisprcleanr`` rule of this workflow ran to completion on the output (with ``min_reads: 0``).
     * - Jacquere library (no known coordinates), ``--genome-fallback``
@@ -107,4 +107,4 @@ All tests used the GRCh38 primary assembly and the Ensembl 112 GTF, on a single 
 
 .. note::
 
-    The ``crisprcleanr`` rule fails on the small test data set of this repository with the default ``min_reads: 10``, because only 86 sgRNAs pass the read filter, no matter which annotation is used.
+    The ``crisprcleanr`` rule fails on the small Bassik test data set of this repository with ``min_reads: 10`` (as set in its test config), because only 86 sgRNAs pass the read filter, no matter which annotation is used.

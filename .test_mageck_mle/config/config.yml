@@ -73,7 +73,7 @@ ngs_tracker:
   # Run identity  (find project_id on the project detail page)
   project_id: 3
   workflow_name: "crispr-screens"
-  workflow_tag: "v0.9.1"
+  workflow_tag: "v1.3.0"
   workflow_system: "snakemake" # snakemake | nextflow | cwl | other
   description: "Testing REST API integration with NGS Tracker"
   tags:

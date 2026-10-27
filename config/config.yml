@@ -17,8 +17,9 @@ stats:
   crisprcleanr:
     # For BAGEL2, crisprcleanr is always run as it allows for combining replicates better
     # It is optional for MAGeCK and DrugZ
-    # Path to library file for crisprcleanr with sgRNA annotations
-    # With column names: GENE,seq,CODE,CHRM,STARTpos,ENDpos,EXONE(optional),STRAND
+    # If library_name is not one of the CRISPRcleanR libraries below, the library file
+    # (lib_info: library_file) must contain the sgRNA annotations, with column names:
+    # CODE,GENES,seq,CHRM,STARTpos,ENDpos,EXONE(optional),STRAND
     # If library name is one of the following, the library info is loaded from the crisprcleanr library database:
     # AVANA_Library (https://doi.org/10.1038/ng.3984)
     # Brunello_Library (https://doi.org/10.1038/nbt.3437)
@@ -78,7 +79,7 @@ ngs_tracker:
   project_id: 3
   #run_id: 1 # optional, if not provided a new run will be created
   workflow_name: "crispr-screens"
-  workflow_tag: "v0.11.0"
+  workflow_tag: "v1.3.0"
   workflow_system: "snakemake" # snakemake | nextflow | cwl | other
   description: "Test"
   tags:
