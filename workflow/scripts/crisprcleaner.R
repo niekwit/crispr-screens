@@ -6,6 +6,11 @@ sink(log, type = "message")
 library(tidyverse)
 library(CRISPRcleanR)
 
+# Some CRISPRcleanR functions open a graphics device even with
+# display = FALSE, which in a non-interactive session creates an empty
+# Rplots.pdf in the working directory: send that to a null device instead
+pdf(NULL)
+
 # Load Snakemake variable
 counts <- read.delim(snakemake@input[["counts"]], header = TRUE)
 control_name <- snakemake@params[["control"]]
