@@ -26,3 +26,4 @@ Rplots.pdf
 # are meant to be tracked).
 **/resources/bagel2/
 **/resources/drugz/
+__pycache__
