@@ -83,7 +83,7 @@ rule mageck_mle:
         "logs/mageck/mle_{matrix}_{cnv}.log",
     conda:
         "../envs/stats.yaml"
-    threads: 24
+    threads: 12
     resources:
         runtime=45,
     params:
