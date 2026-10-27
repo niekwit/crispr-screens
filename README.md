@@ -1,6 +1,6 @@
 # Snakemake workflow: `crispr-screens`
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10286661.svg)](https://doi.org/10.5281/zenodo.10286661)
+[![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.10286661-blue.svg)](https://doi.org/10.5281/zenodo.10286661)
 [![Snakemake](https://img.shields.io/badge/snakemake-≥8.25.5-brightgreen.svg)](https://snakemake.github.io)
 [![Tests](https://github.com/niekwit/crispr-screens/actions/workflows/main.yml/badge.svg)](https://github.com/niekwit/crispr-screens/actions/workflows/main.yml)
 
