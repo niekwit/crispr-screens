@@ -574,6 +574,31 @@ def crisprcleanr_comparisons():
     return sorted(comps)
 
 
+def comparison_metadata():
+    """{comparison: {"condition": str|None, "time_point": float|None}} from
+    the optional condition/time_point columns of config/stats.csv, in
+    stats.csv row order (blank cells give None). The QC report uses this to
+    draw the CRISPRcleanR ROC/PR curves with one panel per condition and
+    time points as a colour gradient. Empty when neither column is present,
+    so the report falls back to one panel with every comparison."""
+    path = "config/stats.csv"
+    if not os.path.exists(path):
+        return {}
+    df = pd.read_csv(path)
+    if "condition" not in df.columns and "time_point" not in df.columns:
+        return {}
+    metadata = {}
+    for _, row in df.iterrows():
+        comparison = f"{row['test']}_vs_{row['control']}".replace(";", "-")
+        condition = row.get("condition")
+        time_point = row.get("time_point")
+        metadata[comparison] = {
+            "condition": None if pd.isna(condition) else str(condition),
+            "time_point": None if pd.isna(time_point) else float(time_point),
+        }
+    return metadata
+
+
 def sorted_samples():
     """Sample names marked as FACS-sorted in the optional config/samples.csv
     (a "sample" column plus a "sorted" column set to "y") — these have a

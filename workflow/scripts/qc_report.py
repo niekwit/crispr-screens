@@ -110,6 +110,7 @@ if crisprcleanr_comparisons:
             snakemake.input["crisprcleanr_pr"],
             snakemake.input["crisprcleanr_drnk_genes"],
             snakemake.input["crisprcleanr_drnk_signatures"],
+            metadata=snakemake.params["comparison_metadata"],
         )
     )
 

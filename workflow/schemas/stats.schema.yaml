@@ -21,6 +21,18 @@ properties:
       MAGeCK/DrugZ (eg. against a plasmid/reference sample). If the
       column is absent entirely, every row is analysed with all three
       tools (the default).
+  condition:
+    type: [string, number]
+    description: >
+      Optional. Condition of the comparison (eg. control, mutant). If this
+      column and/or time_point is present, the QC report's CRISPRcleanR
+      ROC/PR curves get one panel per condition.
+  time_point:
+    type: number
+    description: >
+      Optional. Time point of the comparison (eg. days after transduction).
+      If present, the QC report's CRISPRcleanR ROC/PR curves are coloured
+      by time point (light = earliest, dark = latest).
 
 required:
   - test

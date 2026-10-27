@@ -74,19 +74,20 @@ def _hex_to_rgb(hex_color):
     return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
 
 
-def _gradient(base_hex, n):
+def _gradient(base_hex, n, max_white=0.75):
     """n shades of base_hex from light to full colour, one per comparison
     (comparisons are usually successive timepoints) — lets every curve be
     plotted on one axis at once instead of behind a dropdown, so an
     improving/worsening AUC across timepoints reads directly off the
-    colour progression."""
+    colour progression. max_white is the fraction of white mixed into the
+    lightest shade."""
     if n == 1:
         return [base_hex]
     r, g, b = _hex_to_rgb(base_hex)
     colors = []
     for i in range(n):
         t = i / (n - 1)  # 0 = lightest (first comparison), 1 = full colour (last)
-        frac_white = 0.75 * (1 - t)
+        frac_white = max_white * (1 - t)
         rr = round(r + (255 - r) * frac_white)
         gg = round(g + (255 - g) * frac_white)
         bb = round(b + (255 - b) * frac_white)
@@ -149,7 +150,239 @@ def _build_curve_fig(comparisons, dfs, x_col, y_col, x_title, y_title, show_diag
     return fig, pd.concat(dfs, ignore_index=True)
 
 
-def build_roc(comparisons, csv_paths):
+def _format_time_point(t):
+    return f"{int(t)}" if float(t).is_integer() else f"{t:g}"
+
+
+def _axis_ref(idx, axis):
+    """Plotly axis name of the idx-th (1-based) subplot, e.g. "x", "x2"."""
+    return axis if idx == 1 else f"{axis}{idx}"
+
+
+def _build_faceted_curve_fig(
+    comparisons,
+    dfs,
+    metadata,
+    x_col,
+    y_col,
+    x_title,
+    y_title,
+    show_diagonal,
+):
+    """Used instead of _build_curve_fig when stats.csv has a condition
+    and/or time_point column: one panel per condition, one line per
+    comparison coloured by time point (light = earliest, dark = latest,
+    the same shade for the same time point in every panel, so a time
+    effect reads directly off the colour progression), and gene- or
+    sgRNA-level curves picked with a dropdown instead of drawn together.
+    Each panel's title lists its AUCs per time point (in the title rather
+    than inside the panel, as PR curves have no reliably empty corner).
+
+    Comparisons without a condition go in an "Unassigned" panel, and
+    comparisons without a time point are drawn in grey, labelled by their
+    comparison name."""
+    stats_order = list(metadata)
+    order = sorted(
+        range(len(comparisons)),
+        key=lambda i: (
+            (
+                stats_order.index(comparisons[i])
+                if comparisons[i] in metadata
+                else len(stats_order)
+            ),
+            comparisons[i],
+        ),
+    )
+    meta = [metadata.get(c, {}) for c in comparisons]
+    has_condition = any(m.get("condition") is not None for m in meta)
+
+    def condition_of(i):
+        return meta[i].get("condition") or "Unassigned"
+
+    def time_of(i):
+        return meta[i].get("time_point")
+
+    conditions = list(dict.fromkeys(condition_of(i) for i in order))
+    time_points = sorted({time_of(i) for i in order if time_of(i) is not None})
+
+    n_cols = min(3, len(conditions))
+    n_rows = -(-len(conditions) // n_cols)  # ceiling division
+    fig = make_subplots(
+        rows=n_rows,
+        cols=n_cols,
+        horizontal_spacing=0.07,
+        vertical_spacing=0.22 if n_rows > 1 else 0.1,
+    )
+    panel_of = {c: k + 1 for k, c in enumerate(conditions)}  # 1-based index
+
+    def row_col(panel):
+        return (panel - 1) // n_cols + 1, (panel - 1) % n_cols + 1
+
+    levels = (("gene", "Gene level", GENE_COLOR), ("sgRNA", "sgRNA level", SGRNA_COLOR))
+    trace_levels = []  # level of each trace, None = always visible
+    level_annotations = {}
+    export_dfs = []
+    for level, _, base_color in levels:
+        # Lightest shade less pale than the default, so it stays visible
+        colors = dict(
+            zip(time_points, _gradient(base_color, len(time_points), max_white=0.55))
+        )
+        shown_in_legend = set()
+        auc_lines = {panel: [] for panel in panel_of.values()}
+        for i in order:
+            comparison, df = comparisons[i], dfs[i]
+            condition, time_point = condition_of(i), time_of(i)
+            if time_point is None:
+                label, color, rank = comparison, DIAGONAL_COLOR, len(time_points)
+            else:
+                label = _format_time_point(time_point)
+                color, rank = colors[time_point], time_points.index(time_point)
+            sub = df[df["class"] == level].sort_values(x_col)
+            auc = sub["auc"].iloc[0] if len(sub) else float("nan")
+            panel = panel_of[condition]
+            row, col = row_col(panel)
+            fig.add_trace(
+                go.Scatter(
+                    x=sub[x_col],
+                    y=sub[y_col],
+                    mode="lines",
+                    name=label,
+                    legendgroup=label,
+                    legendrank=rank,
+                    showlegend=label not in shown_in_legend,
+                    visible=level == levels[0][0],
+                    line=dict(color=color, width=2),
+                    hovertemplate=(
+                        f"<b>{comparison}</b><br>"
+                        + (f"Condition: {condition}<br>" if has_condition else "")
+                        + (f"Time point: {label}<br>" if time_point is not None else "")
+                        + f"{level} level, AUC={auc:.3f}<br>{x_title}: "
+                        "%{x:.3f}<br>"
+                        f"{y_title}: "
+                        "%{y:.3f}<extra></extra>"
+                    ),
+                ),
+                row=row,
+                col=col,
+            )
+            shown_in_legend.add(label)
+            trace_levels.append(level)
+            auc_lines[panel].append(
+                f'<span style="color:{color}">●</span> {label}: {auc:.3f}'
+            )
+            if level == levels[0][0]:
+                export = df.copy()
+                export["condition"] = meta[i].get("condition")
+                export["time_point"] = time_point
+                export_dfs.append(export)
+
+        # Panel title: condition plus AUC per time point, 4 per line
+        level_annotations[level] = [
+            dict(
+                text=(f"<b>{condition}</b><br>" if has_condition else "")
+                + "<br>".join(
+                    "AUC  " * (k == 0) + "  ·  ".join(lines[k : k + 4])
+                    for k in range(0, len(lines), 4)
+                ),
+                xref=f"{_axis_ref(panel, 'x')} domain",
+                yref=f"{_axis_ref(panel, 'y')} domain",
+                x=0.5,
+                y=1,
+                xanchor="center",
+                yanchor="bottom",
+                yshift=6,
+                showarrow=False,
+                font=dict(size=13),
+            )
+            for condition, panel in panel_of.items()
+            for lines in [auc_lines[panel]]
+        ]
+
+    if show_diagonal:
+        for panel in panel_of.values():
+            row, col = row_col(panel)
+            fig.add_trace(
+                go.Scatter(
+                    x=[0, 1],
+                    y=[0, 1],
+                    mode="lines",
+                    line=dict(color=DIAGONAL_COLOR, width=1, dash="dash"),
+                    showlegend=False,
+                    hoverinfo="skip",
+                ),
+                row=row,
+                col=col,
+            )
+            trace_levels.append(None)
+
+    # Hide the empty axes of an incomplete last row
+    for panel in range(len(conditions) + 1, n_rows * n_cols + 1):
+        row, col = row_col(panel)
+        fig.update_xaxes(visible=False, row=row, col=col)
+        fig.update_yaxes(visible=False, row=row, col=col)
+
+    fig.update_xaxes(range=[0, 1])
+    fig.update_yaxes(range=[0, 1])
+    # Every panel gets an x title: with an incomplete last row, panels
+    # above its empty slots are the bottom of their column
+    fig.update_xaxes(title=x_title)
+    fig.update_yaxes(title=y_title, col=1)
+
+    buttons = [
+        dict(
+            label=label,
+            method="update",
+            args=[
+                {"visible": [lv in (None, level) for lv in trace_levels]},
+                {"annotations": level_annotations[level]},
+            ],
+        )
+        for level, label, _ in levels
+    ]
+    # The buttons only apply on click: set the first option's state directly
+    fig.layout.annotations = level_annotations[levels[0][0]]
+    menu = dict(
+        type="dropdown",
+        direction="down",
+        buttons=buttons,
+        x=0,
+        xanchor="left",
+        y=1.0,
+        yanchor="bottom",
+        pad=dict(b=60 if has_condition else 35),
+        showactive=True,
+        bgcolor="#ffffff",
+        bordercolor="#cbd5e1",
+        font=dict(size=13),
+    )
+    style_fig(
+        fig,
+        height=120 + 430 * n_rows,
+        showlegend=True,
+        legend=dict(title=dict(text="Time point" if time_points else "Comparison")),
+        updatemenus=[menu],
+        margin=dict(t=140, b=80, l=70, r=30),
+    )
+    return fig, pd.concat(export_dfs, ignore_index=True)
+
+
+def _faceted(comparisons, metadata):
+    """True if stats.csv's condition/time_point columns describe any of
+    these comparisons (see comparison_metadata() in general_functions.smk)."""
+    return any(c in (metadata or {}) for c in comparisons)
+
+
+FACETED_DESCRIPTION = (
+    " Curves are split into one panel per condition and coloured by time "
+    "point (light = earliest, dark = latest; the same shade means the same "
+    "time point in every panel), using the condition/time_point columns of "
+    "stats.csv. Pick gene- or sgRNA-level curves with the dropdown; each "
+    "panel's title lists its AUCs per time point. The PDF export shows the gene "
+    "level."
+)
+
+
+def build_roc(comparisons, csv_paths, metadata=None):
     logging.info(f"Building CRISPRcleanR ROC plot for {len(comparisons)} comparison(s)")
     dfs = []
     for comparison, path in zip(comparisons, csv_paths):
@@ -159,15 +392,18 @@ def build_roc(comparisons, csv_paths):
         df["fpr"] = 1 - df["specificity"]
         df["comparison"] = comparison
         dfs.append(df)
-    fig, df = _build_curve_fig(
-        comparisons,
-        dfs,
+    curve_args = dict(
         x_col="fpr",
         y_col="sensitivity",
         x_title="1 - Specificity",
         y_title="Sensitivity (Recall)",
         show_diagonal=True,
     )
+    faceted = _faceted(comparisons, metadata)
+    if faceted:
+        fig, df = _build_faceted_curve_fig(comparisons, dfs, metadata, **curve_args)
+    else:
+        fig, df = _build_curve_fig(comparisons, dfs, **curve_args)
     df = df.drop(columns="fpr")
     return dict(
         id="crisprcleanr-roc",
@@ -181,7 +417,7 @@ def build_roc(comparisons, csv_paths):
             "toward the top-left (AUC near 1), the better essential and "
             "non-essential genes are separated. Unlike the PR curve below, "
             "ROC doesn't depend on how rare essential genes are among all "
-            f"genes screened ({CITATION})."
+            f"genes screened ({CITATION})." + (FACETED_DESCRIPTION if faceted else "")
         ),
         fig=fig,
         df=df,
@@ -189,22 +425,25 @@ def build_roc(comparisons, csv_paths):
     )
 
 
-def build_pr(comparisons, csv_paths):
+def build_pr(comparisons, csv_paths, metadata=None):
     logging.info(f"Building CRISPRcleanR PR plot for {len(comparisons)} comparison(s)")
     dfs = []
     for comparison, path in zip(comparisons, csv_paths):
         df = pd.read_csv(path)
         df["comparison"] = comparison
         dfs.append(df)
-    fig, df = _build_curve_fig(
-        comparisons,
-        dfs,
+    curve_args = dict(
         x_col="recall",
         y_col="precision",
         x_title="Recall",
         y_title="Precision",
         show_diagonal=False,
     )
+    faceted = _faceted(comparisons, metadata)
+    if faceted:
+        fig, df = _build_faceted_curve_fig(comparisons, dfs, metadata, **curve_args)
+    else:
+        fig, df = _build_curve_fig(comparisons, dfs, **curve_args)
     return dict(
         id="crisprcleanr-pr",
         title="CRISPRcleanR PR",
@@ -217,7 +456,7 @@ def build_pr(comparisons, csv_paths):
             "screened, and PR — unlike ROC — is sensitive to that "
             "imbalance, so it penalises false positives more visibly and "
             "tends to look less optimistic than ROC for the same "
-            f"classifier ({CITATION})."
+            f"classifier ({CITATION})." + (FACETED_DESCRIPTION if faceted else "")
         ),
         fig=fig,
         df=df,
@@ -437,17 +676,20 @@ def build(
     pr_csv_paths,
     drnk_gene_csv_paths,
     drnk_signature_csv_paths,
+    metadata=None,
 ):
     """All three plots under one "CRISPRcleanR" tab (see qc/report_html.py's
     "multi"-kind section handling) rather than three separate top-level
-    tabs."""
+    tabs. metadata (see comparison_metadata() in general_functions.smk)
+    switches ROC/PR to one panel per condition with time points as a
+    colour gradient."""
     return dict(
         id="crisprcleanr",
         title="CRISPRcleanR",
         kind="multi",
         subsections=[
-            build_roc(comparisons, roc_csv_paths),
-            build_pr(comparisons, pr_csv_paths),
+            build_roc(comparisons, roc_csv_paths, metadata),
+            build_pr(comparisons, pr_csv_paths, metadata),
             build_depletion_rank(
                 comparisons, drnk_gene_csv_paths, drnk_signature_csv_paths
             ),
