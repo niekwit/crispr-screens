@@ -8,12 +8,13 @@ report shows one figure at a time, selected via tabs along the top.
 import base64
 import json
 import logging
+import os
+import sys
 from string import Template
 
 import kaleido
 import plotly.graph_objects as go
 import plotly.offline
-from choreographer.errors import ChromeNotFoundError
 
 # kaleido's chromium management (choreographer) logs noisily at DEBUG/INFO,
 # including from background threads and __del__ finalizers. Left alone,
@@ -33,6 +34,46 @@ logging.getLogger("kaleido").setLevel(logging.WARNING)
 # figure with a legend (a fixed-width sidebar that eats proportionally
 # more of a narrow canvas).
 PDF_EXPORT_WIDTH = 1112
+
+# State of the fallback to kaleido's own managed Chrome download (see
+# _use_managed_chrome): None = not tried yet, True = in use, False = failed
+# (PDF export is then skipped for the remaining figures).
+_managed_chrome = None
+
+
+def _use_managed_chrome():
+    """Switch PDF rendering to kaleido's managed Chrome download.
+
+    kaleido v1+ no longer bundles Chrome: it looks for a system install, or
+    a copy previously downloaded to ~/.local/share/choreographer. Hosts
+    without either (e.g. the Docker/Singularity image of this workflow)
+    get that download, but the downloaded Chrome links against system
+    libraries (glib, nss, X11, ...) that a minimal container doesn't have,
+    so it closes immediately after starting. The conda environment this
+    script runs in ships those libraries (see envs/stats.yaml), so put its
+    lib directory on LD_LIBRARY_PATH (inherited by the Chrome subprocess)
+    and point kaleido at the downloaded Chrome with BROWSER_PATH.
+
+    Only used after a failed render, so a working system Chrome is never
+    run against the conda libraries. Returns True if the switch was made.
+    """
+    global _managed_chrome
+    if _managed_chrome is not None:
+        return False
+    _managed_chrome = False
+    try:
+        chrome = kaleido.get_chrome_sync()  # reuses a cached download
+    except Exception as exc:  # pragma: no cover - needs network access
+        logging.warning(f"Could not download Chrome for PDF export: {exc}")
+        return False
+    env_lib = os.path.join(sys.prefix, "lib")
+    ld_path = os.environ.get("LD_LIBRARY_PATH")
+    os.environ["LD_LIBRARY_PATH"] = f"{env_lib}:{ld_path}" if ld_path else env_lib
+    os.environ["BROWSER_PATH"] = str(chrome)
+    logging.info(f"Rendering PDFs with {chrome} and libraries from {env_lib}")
+    _managed_chrome = True
+    return True
+
 
 TAB_TEMPLATE = Template(
     """<button type="button" class="tab" data-target="$div_id">$title</button>"""
@@ -285,6 +326,7 @@ def _json_for_script_tag(obj):
 
 
 def _encode_pdf(fig, filename, wide=False, extra_top_margin=None):
+    global _managed_chrome
     # Interactive-only controls (e.g. the bar-sort dropdown) have no place
     # in a static export, so strip them from a copy before rendering, along
     # with the extra top margin reserved for the dropdown — EXCEPT when the
@@ -310,32 +352,24 @@ def _encode_pdf(fig, filename, wide=False, extra_top_margin=None):
     # depletion rank's extra gene-signature columns, or the Overview
     # table's widened columns — see summary.py).
     width = PDF_EXPORT_WIDTH if (export_fig.layout.showlegend or wide) else None
+    if _managed_chrome is False:
+        return None, filename  # fallback already failed, don't retry per figure
     try:
         pdf_bytes = export_fig.to_image(format="pdf", width=width)
     except Exception as exc:
-        # kaleido v1+ no longer bundles Chrome and only looks at a fixed list
-        # of typical system install paths (plotly re-raises the underlying
-        # ChromeNotFoundError as a plain RuntimeError, so check the chained
-        # cause rather than the exception type). On a host with neither a
-        # system install nor a previously-downloaded copy — e.g. the
-        # Docker/Singularity image, which has no browser baked in — fall
-        # back to kaleido's own managed download (cached under
-        # ~/.local/share/choreographer, picked up automatically on future
-        # runs) and retry once before giving up.
-        if isinstance(exc.__context__, ChromeNotFoundError) or isinstance(
-            exc, ChromeNotFoundError
-        ):
-            try:
-                kaleido.get_chrome_sync()
-                pdf_bytes = export_fig.to_image(format="pdf", width=width)
-            except Exception as exc2:  # pragma: no cover - needs network access
-                logging.warning(
-                    f"Could not render PDF for {filename}: no Chrome install "
-                    f"found and the fallback download failed: {exc2}"
-                )
-                return None, filename
-        else:  # pragma: no cover - depends on kaleido install
+        # No (working) Chrome: switch to kaleido's managed download once and
+        # retry (see _use_managed_chrome)
+        if not _use_managed_chrome():
             logging.warning(f"Could not render PDF for {filename}: {exc}")
+            return None, filename
+        try:
+            pdf_bytes = export_fig.to_image(format="pdf", width=width)
+        except Exception as exc2:  # pragma: no cover - depends on host
+            _managed_chrome = False
+            logging.warning(
+                f"Could not render PDF for {filename}, also not with "
+                f"kaleido's managed Chrome: {exc2}"
+            )
             return None, filename
     payload = base64.b64encode(pdf_bytes).decode()
     return f"data:application/pdf;base64,{payload}", filename

@@ -26,3 +26,20 @@ dependencies:
   - conda-forge::plotly
   - conda-forge::python-kaleido
   - conda-forge::jq
+  # System libraries needed by the Chrome that kaleido downloads for the QC
+  # report's PDF export, which minimal containers don't have (see
+  # _use_managed_chrome in scripts/qc/report_html.py)
+  - conda-forge::alsa-lib
+  - conda-forge::atk-1.0
+  - conda-forge::at-spi2-atk
+  - conda-forge::at-spi2-core
+  - conda-forge::dbus
+  - conda-forge::libcups
+  - conda-forge::libgbm
+  - conda-forge::libxkbcommon
+  - conda-forge::nspr
+  - conda-forge::nss
+  - conda-forge::xorg-libxcomposite
+  - conda-forge::xorg-libxdamage
+  - conda-forge::xorg-libxfixes
+  - conda-forge::xorg-libxrandr
