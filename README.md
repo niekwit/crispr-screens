@@ -28,7 +28,7 @@ If you use this workflow in a paper, don't forget to give credits to the authors
 
    ```shell
    mkdir my_experiment && cd my_experiment
-   snakefetch --outdir . --repo-version v1.2.0 --url https://github.com/niekwit/crispr-screens
+   snakefetch --outdir . --repo-version v1.3.0 --url https://github.com/niekwit/crispr-screens
    ```
 
 3. Add your data:
