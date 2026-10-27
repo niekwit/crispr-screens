@@ -286,19 +286,35 @@ write.table(
   row.names = FALSE
 )
 
+# Read a custom gene list the same way BAGEL.py does, so the QC plots use the
+# same genes as BAGEL2: skip the header line and take the first
+# tab-separated column (e.g. GENE of a GENE/HGNC_ID/ENTREZ_ID file)
+read_gene_list <- function(file) {
+  lines <- sub("\\s+$", "", readLines(file)[-1])
+  genes <- sapply(strsplit(lines, "\t", fixed = TRUE), `[`, 1)
+  genes[!is.na(genes) & genes != ""]
+}
+
 # Prepare data for QC plots
 if (ceg == "none") {
   data(BAGEL_essential)
   bagel_essential <- BAGEL_essential
 } else {
-  bagel_essential <- scan(ceg, what = "character")
+  bagel_essential <- read_gene_list(ceg)
 }
 if (cneg == "none") {
   data(BAGEL_nonEssential)
   bagel_non_essential <- BAGEL_nonEssential
 } else {
-  bagel_non_essential <- scan(cneg, what = "character")
+  bagel_non_essential <- read_gene_list(cneg)
 }
+print(paste(
+  "Reference genes for QC plots:",
+  length(bagel_essential),
+  "essential,",
+  length(bagel_non_essential),
+  "non-essential"
+))
 
 fcs <- corrected_fcs$corrected_logFCs$avgFC
 names(fcs) <- rownames(corrected_fcs$corrected_logFCs)

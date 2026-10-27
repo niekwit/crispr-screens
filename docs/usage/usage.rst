@@ -221,18 +221,18 @@ BAGEL2 can be customized as follows:
             bf: ""
             pr: ""
 
-Custom essential and non-essential gene lists that BAGEL2 requires for Bayes Factor calculation can be provided in the `resources` directory. The files should be in the following format:
+Custom essential and non-essential gene lists that BAGEL2 requires for Bayes Factor calculation can be provided in the `resources` directory. They use the format of BAGEL2's own gene lists (e.g. `CEGv2.txt`): a tab-separated file with a header line and the gene names in the first column. Further columns are ignored, so a file with only gene names works too, as long as it starts with a header line:
 
 .. csv-table:: Example essential gene list
+    :header: "GENE", "HGNC_ID", "ENTREZ_ID"
 
-    A1BG
-    A1CF
-    A2M
-    A3GALT2
-    A4GALT
-    A4GNT
-    A4GNTL1
-    A4GNTL2
+    ABCE1,HGNC:69,6059
+    ACTL6A,HGNC:24124,86
+    ACTR10,HGNC:17372,55860
+
+.. warning::
+
+    The first line is always skipped as a header (by BAGEL2 and by the CRISPRcleanR QC plots), so a file without a header line silently loses its first gene.
 
 If no custom gene lists are provided, the default gene lists from BAGEL2 will be used (available for human and mouse). This is done by setting `essential_genes` and/or `non_essential_genes` to `none`: each list can be set independently, so a custom essential gene list can be combined with the default non-essential gene list, and vice versa. The same gene lists are used for the CRISPRcleanR QC plots.
 
