@@ -39,14 +39,13 @@ CONDA_META_VERSIONS = (
 )
 
 
-def methods_version_files():
-    """Version files of all sources used by this configuration"""
-    files = [f"results/software_versions/{env}.tsv" for env in methods_envs()]
-    files += [f"results/software_versions/wrapper_{w}.tsv" for w in methods_wrappers()]
-    files += [f"results/software_versions/git_{name}.tsv" for name in methods_git()]
-    if methods_string_db():
-        files.append("results/software_versions/string_db.tsv")
-    return files
+# Version files of all sources used by this configuration
+METHODS_VERSION_FILES = (
+    [f"results/software_versions/{env}.tsv" for env in methods_envs()]
+    + [f"results/software_versions/wrapper_{w}.tsv" for w in methods_wrappers()]
+    + [f"results/software_versions/git_{name}.tsv" for name in methods_git()]
+    + (["results/software_versions/string_db.tsv"] if methods_string_db() else [])
+)
 
 
 # Versions of the packages listed in an environment file of the workflow, as
@@ -151,7 +150,7 @@ rule string_db_version:
 # -----------------------------------------------------
 rule methods:
     input:
-        versions=methods_version_files(),
+        versions=METHODS_VERSION_FILES,
         targets=methods_targets(),
     output:
         methods="methods/methods.md",
