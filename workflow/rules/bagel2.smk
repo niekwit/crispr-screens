@@ -8,8 +8,12 @@ rule install_bagel2:
     threads: 1
     resources:
         runtime=5,
+    params:
+        # Pinned, so that a workflow version always runs the same code
+        commit="53388adbb4fb0931e5c9dda135502be19e4555f0",
     shell:
-        "git clone https://github.com/hart-lab/bagel.git {output} 2> {log}"
+        "(git clone https://github.com/hart-lab/bagel.git {output} && "
+        "git -C {output} checkout -q {params.commit}) 2> {log}"
 
 
 rule bagel2bf:
@@ -100,6 +104,8 @@ rule string_db_bagel2:
         svg="results/bagel2/stringdb/{comparison}/{pathway_data}/pathway_analysis.svg",
         csv="results/bagel2/stringdb/{comparison}/{pathway_data}/pathway_analysis.csv",
         id_mapping="results/bagel2/stringdb/{comparison}/{pathway_data}/id_mapping.csv",
+        # STRING version these queries used (for the methods)
+        version="results/bagel2/stringdb/{comparison}/{pathway_data}/string_version.txt",
     log:
         "logs/stringdb/bagel2/{comparison}_{pathway_data}.log",
     conda:

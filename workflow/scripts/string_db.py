@@ -136,6 +136,18 @@ retry = Retry(
 session = requests.Session()
 session.mount("https://", HTTPAdapter(max_retries=retry))
 
+# Record the STRING version these queries use, for the methods section
+version_response = session.get("https://string-db.org/api/json/version", timeout=60)
+if version_response.status_code != 200:
+    raise RuntimeError(
+        f"STRING-db version request failed with status "
+        f"{version_response.status_code}: {version_response.text}"
+    )
+string_version = version_response.json()[0]["string_version"]
+with open(snakemake.output["version"], "w") as f:
+    f.write(f"{string_version}\n")
+logging.info(f"STRING version: {string_version}")
+
 params = {
     "identifiers": genes_payload,
     "species": taxon_id,

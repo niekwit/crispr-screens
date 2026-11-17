@@ -153,6 +153,8 @@ rule string_db:
         svg="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.svg",
         csv="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/pathway_analysis.csv",
         id_mapping="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/id_mapping.csv",
+        # STRING version these queries used (for the methods)
+        version="results/mageck/stringdb/{cnv}/{comparison}/{pathway_data}/string_version.txt",
     log:
         "logs/stringdb/mageck/{cnv}/{comparison}_{pathway_data}.log",
     # Without this, {cnv} can greedily swallow the "mle/..." prefix of
@@ -177,6 +179,8 @@ rule string_db_mle:
         svg="results/mageck/stringdb/mle/{cnv}/{matrix}/{condition}/{pathway_data}/pathway_analysis.svg",
         csv="results/mageck/stringdb/mle/{cnv}/{matrix}/{condition}/{pathway_data}/pathway_analysis.csv",
         id_mapping="results/mageck/stringdb/mle/{cnv}/{matrix}/{condition}/{pathway_data}/id_mapping.csv",
+        # STRING version these queries used (for the methods)
+        version="results/mageck/stringdb/mle/{cnv}/{matrix}/{condition}/{pathway_data}/string_version.txt",
     log:
         "logs/stringdb/mageck_mle/{cnv}/{matrix}_{condition}_{pathway_data}.log",
     conda:
