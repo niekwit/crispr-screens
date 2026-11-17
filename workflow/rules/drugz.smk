@@ -24,6 +24,9 @@ rule drugz:
         fc="results/drugz/{comparison}.foldchange.txt",
     log:
         "logs/drugz/{comparison}.log",
+    # Not the files in results/drugz/stringdb/
+    wildcard_constraints:
+        comparison="[^/]+",
     conda:
         "../envs/stats.yaml"
     threads: 2
@@ -68,6 +71,8 @@ rule string_db_drugz:
         svg="results/drugz/stringdb/{comparison}/{pathway_data}/pathway_analysis.svg",
         csv="results/drugz/stringdb/{comparison}/{pathway_data}/pathway_analysis.csv",
         id_mapping="results/drugz/stringdb/{comparison}/{pathway_data}/id_mapping.csv",
+        # STRING version these queries used (for the methods)
+        version="results/drugz/stringdb/{comparison}/{pathway_data}/string_version.txt",
     log:
         "logs/stringdb/drugz/{comparison}_{pathway_data}.log",
     conda:

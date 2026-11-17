@@ -131,8 +131,9 @@ rule git_versions:
         '"$(git -C {input} rev-parse HEAD)" > {output} 2> {log}'
 
 
-# Version of STRING (online API) and the date of the queries (the latest
-# modification time of the STRING outputs)
+# Version of STRING used by the queries (written by string_db.py when it
+# queried STRING) and the date of the queries (the latest of the version
+# files). Several versions are listed comma-separated (the methods then warn)
 # -----------------------------------------------------
 rule string_db_version:
     input:
@@ -141,14 +142,14 @@ rule string_db_version:
         temp("results/software_versions/string_db.tsv"),
     log:
         "logs/methods/string_db_version.log",
-    conda:
-        "../envs/methods.yaml"
     threads: 1
     resources:
         runtime=5,
         mem_mb=500,
     shell:
-        "snakemake-methods string-db-version {input} > {output} 2> {log}"
+        "(printf 'string-db\\t%s\\tapi\\nstring-db-date\\t%s\\tapi\\n' "
+        '"$(sort -u {input} | paste -sd , -)" '
+        '"$(date -r "$(ls -t {input} | head -n 1)" +%F)" > {output}) 2> {log}'
 
 
 # Methods section (Markdown), versions table and BibTeX of the parts of the

@@ -104,6 +104,8 @@ rule string_db_bagel2:
         svg="results/bagel2/stringdb/{comparison}/{pathway_data}/pathway_analysis.svg",
         csv="results/bagel2/stringdb/{comparison}/{pathway_data}/pathway_analysis.csv",
         id_mapping="results/bagel2/stringdb/{comparison}/{pathway_data}/id_mapping.csv",
+        # STRING version these queries used (for the methods)
+        version="results/bagel2/stringdb/{comparison}/{pathway_data}/string_version.txt",
     log:
         "logs/stringdb/bagel2/{comparison}_{pathway_data}.log",
     conda:

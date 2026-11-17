@@ -886,11 +886,14 @@ def flat_targets():
 
 
 def methods_string_db():
-    """Output files of the STRING queries of this configuration"""
+    """
+    STRING version files of the queries of this configuration (written by
+    string_db.py when it queries STRING)
+    """
     return [
-        p
+        p.replace("pathway_analysis.csv", "string_version.txt")
         for p in flat_targets()
-        if "stringdb" in p.split(os.sep) and p.endswith(".csv")
+        if "stringdb" in p.split(os.sep) and p.endswith("pathway_analysis.csv")
     ]
 
 
