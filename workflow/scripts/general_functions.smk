@@ -887,7 +887,11 @@ def flat_targets():
 
 def methods_string_db():
     """Output files of the STRING queries of this configuration"""
-    return [p for p in flat_targets() if "/stringdb/" in p and p.endswith(".csv")]
+    return [
+        p
+        for p in flat_targets()
+        if "stringdb" in p.split(os.sep) and p.endswith(".csv")
+    ]
 
 
 def methods_targets():

@@ -18,7 +18,6 @@
 import snakemake.wrapper
 from snakemake import __version__ as SNAKEMAKE_VERSION
 
-
 # Package names of the environment files (read while parsing)
 ENV_PACKAGES = {env: env_packages(env) for env in methods_envs()}
 
@@ -54,20 +53,20 @@ METHODS_VERSION_FILES = (
 rule software_versions:
     output:
         temp("results/software_versions/{env}.tsv"),
+    log:
+        "logs/methods/software_versions_{env}.log",
     wildcard_constraints:
         env="|".join(methods_envs()),
-    params:
-        packages=lambda w: " ".join(ENV_PACKAGES[w.env]),
-        source="conda",
-        interpreters=1,
+    conda:
+        "../envs/{env}.yaml"
     threads: 1
     resources:
         runtime=10,
         mem_mb=1000,
-    log:
-        "logs/methods/software_versions_{env}.log",
-    conda:
-        "../envs/{env}.yaml"
+    params:
+        packages=lambda w: " ".join(ENV_PACKAGES[w.env]),
+        source="conda",
+        interpreters=1,
     shell:
         CONDA_META_VERSIONS
 
@@ -83,21 +82,21 @@ for _name, (_wrapper, _packages) in methods_wrappers().items():
             f"wrapper_versions_{_name}"
         output:
             temp(f"results/software_versions/wrapper_{_name}.tsv"),
-        params:
-            packages=" ".join(_packages),
-            source="wrapper",
-            # No workflow script runs in a wrapper's environment
-            interpreters=0,
-        threads: 1
-        resources:
-            runtime=10,
-            mem_mb=1000,
         log:
             f"logs/methods/wrapper_versions_{_name}.log",
         conda:
             snakemake.wrapper.get_conda_env(
                 _wrapper, prefix=workflow.workflow_settings.wrapper_prefix
             )
+        threads: 1
+        resources:
+            runtime=10,
+            mem_mb=1000,
+        params:
+            packages=" ".join(_packages),
+            source="wrapper",
+            # No workflow script runs in a wrapper's environment
+            interpreters=0,
         shell:
             CONDA_META_VERSIONS
 
@@ -109,16 +108,16 @@ rule git_versions:
         lambda w: methods_git()[w.name],
     output:
         temp("results/software_versions/git_{name}.tsv"),
+    log:
+        "logs/methods/git_versions_{name}.log",
     wildcard_constraints:
         name="|".join(methods_git()),
+    conda:
+        "../envs/methods.yaml"
     threads: 1
     resources:
         runtime=5,
         mem_mb=500,
-    log:
-        "logs/methods/git_versions_{name}.log",
-    conda:
-        "../envs/methods.yaml"
     shell:
         'printf "%s\\t%s\\tgit\\n" {wildcards.name} '
         '"$(git -C {input} rev-parse HEAD)" > {output} 2> {log}'
@@ -132,14 +131,14 @@ rule string_db_version:
         methods_string_db(),
     output:
         temp("results/software_versions/string_db.tsv"),
-    threads: 1
-    resources:
-        runtime=5,
-        mem_mb=500,
     log:
         "logs/methods/string_db_version.log",
     conda:
         "../envs/methods.yaml"
+    threads: 1
+    resources:
+        runtime=5,
+        mem_mb=500,
     shell:
         "snakemake-methods string-db-version {input} > {output} 2> {log}"
 
@@ -162,6 +161,14 @@ rule methods:
         methods="methods/methods.md",
         versions="methods/software_versions.tsv",
         bibtex="methods/references.bib",
+    log:
+        "logs/methods/methods.log",
+    conda:
+        "../envs/methods.yaml"
+    threads: 1
+    resources:
+        runtime=10,
+        mem_mb=1000,
     params:
         template=workflow.source_path("../methods/methods.md.j2"),
         overrides=workflow.source_path("../methods/tools.yaml"),
@@ -181,13 +188,5 @@ rule methods:
         mageck_control=mageck_control(),
         mageck_extra=extra_mageck_args(),
         string_db_data=STRING_DB_DATA,
-    threads: 1
-    resources:
-        runtime=10,
-        mem_mb=1000,
-    log:
-        "logs/methods/methods.log",
-    conda:
-        "../envs/methods.yaml"
     script:
         "../scripts/methods.py"
