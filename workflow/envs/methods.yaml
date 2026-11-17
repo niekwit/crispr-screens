@@ -13,4 +13,4 @@ dependencies:
   - pip:
       # TODO: replace with tag before merge
       # (git+https://github.com/niekwit/snakemake-methods@v0.1.0)
-      - git+file:///mnt/4TB_SSD/Dropbox/scripts/snakemake-methods@512a43b7395289d7335ee22b671f9bbdfaa0751d
+      - git+file:///mnt/4TB_SSD/Dropbox/scripts/snakemake-methods@ac55820ed3644a13f5991b6487b3eea447bb0c70
