@@ -18,6 +18,14 @@
 import snakemake.wrapper
 from snakemake import __version__ as SNAKEMAKE_VERSION
 
+# Methods template and database overrides of the workflow, as text (read
+# while parsing). Text, not paths: source_path() gives a new runtime-cache path
+# at every invocation, and a path in params would rerun the methods every time
+with open(workflow.source_path("../methods/methods.md.j2")) as fh:
+    METHODS_TEMPLATE = fh.read()
+with open(workflow.source_path("../methods/tools.yaml")) as fh:
+    METHODS_OVERRIDES = fh.read()
+
 # Package names of the environment files (read while parsing)
 ENV_PACKAGES = {env: env_packages(env) for env in methods_envs()}
 
@@ -170,8 +178,9 @@ rule methods:
         runtime=10,
         mem_mb=1000,
     params:
-        template=workflow.source_path("../methods/methods.md.j2"),
-        overrides=workflow.source_path("../methods/tools.yaml"),
+        # Functions: Snakemake would fill in "{...}" of a string param
+        template_text=lambda w: METHODS_TEMPLATE,
+        overrides_text=lambda w: METHODS_OVERRIDES,
         snakemake_version=SNAKEMAKE_VERSION,
         workflow_version=VERSION,
         samples=SAMPLES,

@@ -11,4 +11,4 @@ dependencies:
   - conda-forge::git=2.47.1
   - conda-forge::pip
   - pip:
-      - git+https://github.com/niekwit/snakemake-methods@v0.1.0
+      - git+https://github.com/niekwit/snakemake-methods@v0.1.1
