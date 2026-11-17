@@ -11,6 +11,4 @@ dependencies:
   - conda-forge::git=2.47.1
   - conda-forge::pip
   - pip:
-      # TODO: replace with tag before merge
-      # (git+https://github.com/niekwit/snakemake-methods@v0.1.0)
-      - git+file:///mnt/4TB_SSD/Dropbox/scripts/snakemake-methods@ac55820ed3644a13f5991b6487b3eea447bb0c70
+      - git+https://github.com/niekwit/snakemake-methods@v0.1.0
