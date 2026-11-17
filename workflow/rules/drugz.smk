@@ -8,8 +8,12 @@ rule install_drugz:
     threads: 1
     resources:
         runtime=5,
+    params:
+        # Pinned, so that a workflow version always runs the same code
+        commit="eb15d34e4dd172965e618d5bb662c053066da799",
     shell:
-        "git clone https://github.com/hart-lab/drugz.git {output} 2> {log}"
+        "(git clone https://github.com/hart-lab/drugz.git {output} && "
+        "git -C {output} checkout -q {params.commit}) 2> {log}"
 
 
 rule drugz:

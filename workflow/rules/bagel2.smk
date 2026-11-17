@@ -8,8 +8,12 @@ rule install_bagel2:
     threads: 1
     resources:
         runtime=5,
+    params:
+        # Pinned, so that a workflow version always runs the same code
+        commit="53388adbb4fb0931e5c9dda135502be19e4555f0",
     shell:
-        "git clone https://github.com/hart-lab/bagel.git {output} 2> {log}"
+        "(git clone https://github.com/hart-lab/bagel.git {output} && "
+        "git -C {output} checkout -q {params.commit}) 2> {log}"
 
 
 rule bagel2bf:
