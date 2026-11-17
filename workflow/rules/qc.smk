@@ -37,7 +37,7 @@ rule fastqc:
     params:
         extra="--quiet",
     wrapper:
-        "v5.2.1/bio/fastqc"
+        WRAPPERS["fastqc"]
 
 
 rule multiqc:
@@ -61,7 +61,7 @@ rule multiqc:
         # override) into qc-report.html, which is otherwise light-themed.
         extra='--cl-config "template_dark_mode: false"',
     wrapper:
-        "v9.18.0/bio/multiqc"
+        WRAPPERS["multiqc"]
 
 
 rule qc_report:

@@ -428,3 +428,15 @@ Report of analysis
 The workflow generates its own self-contained interactive HTML reports as part of a normal run — no separate report-generation step needed. ``results/qc-report.html`` covers sample QC (including the embedded MultiQC report), and ``results/interactive_report.html`` covers every MAGeCK/MAGeCK mle/DrugZ/BAGEL2 comparison (see the STRING-db analysis section above).
 
 The QC report has the tabs Overview (a per-sample table of all QC flags), MultiQC, Alignment rate, Total reads, Sequence coverage, Gini index, Missed sgRNAs, sgRNA abundance, Sample correlation and PCA. When CRISPRcleanR was run, a CRISPRcleanR tab shows ROC and precision-recall curves (separating BAGEL2 essential from non-essential genes) and the depletion rank of essential gene signatures per comparison.
+
+
+Methods section
+===============
+
+After all other outputs, the workflow writes a methods section of the steps that were run, in the analysis directory (not ``results/``):
+
+- ``methods/methods.md``: the methods, with every setting taken from the configuration of the run. Each tool is cited where it is first mentioned, with its version and its reference (PubMed ID, else DOI, else URL). The cited references follow, then the configuration of the run (including command line overrides).
+- ``methods/software_versions.tsv``: the versions of the software of the run (columns ``environment``, ``package``, ``version``, ``source``, ``cited``). The sources are the workflow's conda environment (the packages named in ``workflow/envs/stats.yaml``, with Python and R), the conda environments of the Snakemake wrappers (FastQC, MultiQC, cutadapt), the git commits of BAGEL2 and DrugZ, and the STRING API (version and the date of the queries). ``cited`` marks the packages cited in the text; the others (e.g. the system libraries of the QC report's PDF export) are listed for completeness only.
+- ``methods/references.bib``: the cited references as BibTeX (e.g. for Zotero).
+
+The methods are generated with `snakemake-methods <https://github.com/niekwit/snakemake-methods>`_; the text is in ``workflow/methods/methods.md.j2``.
