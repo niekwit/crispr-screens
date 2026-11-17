@@ -7,9 +7,9 @@
 #}
 {% set st = config["stats"] %}
 {% set mageck = st["mageck"] %}
-{% set rra = mageck["run"] and mageck["command"] == "test" %}
+{% set rra = mageck["run"] and mageck["command"] == "test" and comparisons %}
 {% set mle = mageck["run"] and mageck["command"] == "mle" %}
-{% set cnv = mageck["run"] and mageck["apply_CNV_correction"] %}
+{% set cnv = (rra or mle) and mageck["apply_CNV_correction"] %}
 {% set drugz = st["drugz"]["run"] and comparisons %}
 {% set bagel2 = st["bagel2"]["run"] and comparisons_bagel2 %}
 {% set string_db = st["string_db"] %}
@@ -17,8 +17,8 @@
 {% set ccr_libraries = ["AVANA_Library", "Brunello_Library", "GeCKO_Library_v2",
   "KY_Library_v1.0", "KY_Library_v1.1", "MiniLibCas9_Library", "Whitehead_Library"] %}
 {% set gene_lists = st["bagel2"]["custom_gene_lists"] %}
-{% set custom_lists = gene_lists["essential_genes"] != "none"
-  and gene_lists["non_essential_genes"] != "none" %}
+{% set essential = gene_lists["essential_genes"] %}
+{% set non_essential = gene_lists["non_essential_genes"] %}
 Pooled CRISPR screen data of {{ samples | length }} samples were analysed with
 the crispr-screens workflow {{ workflow_version }}
 (https://github.com/niekwit/crispr-screens) in {{ tool("snakemake") }}.
@@ -66,17 +66,26 @@ the library file
 {% endif %}
 ) and corrected (ccr.GWclean), and corrected counts were calculated
 (ccr.correctCounts, {{ code("minTargetedGenes = 3") }}). The separation of
-{% if custom_lists %}
-the essential ({{ gene_lists["essential_genes"] }}) and non-essential
-({{ gene_lists["non_essential_genes"] }}) reference genes
-{% else %}
+{% if essential == "none" and non_essential == "none" %}
 reference essential and non-essential genes {{ cite("hart2016") }}
+{% else %}
+{% if essential != "none" %}
+the essential genes in {{ essential }}
+{% else %}
+reference essential genes {{ cite("hart2016") }}
+{% endif %}
+and
+{% if non_essential != "none" %}
+the non-essential genes in {{ non_essential }}
+{% else %}
+reference non-essential genes {{ cite("hart2016") }}
+{% endif %}
 {% endif %}
 by the corrected fold changes was assessed with ROC and precision-recall
 curves (ccr.ROC_Curve and ccr.PrRc_Curve).
 {% endif %}
 
-{% if mageck["run"] %}
+{% if rra or mle %}
 ## MAGeCK
 
 {% set options = (mageck_control ~ " " ~ mageck_extra).split() | join(" ") %}
@@ -133,19 +142,30 @@ fold changes (BAGEL.py bf
 ) and precision and recall (BAGEL.py pr
 {%- if st["bagel2"]["extra_args"]["pr"] %}, {{ code(st["bagel2"]["extra_args"]["pr"]) }}{% endif %}
 ), with
-{% if custom_lists %}
-the essential ({{ gene_lists["essential_genes"] }}) and non-essential
-({{ gene_lists["non_essential_genes"] }}) reference genes
-{% elif config["lib_info"]["species"] == "human" %}
-the reference core essential genes CEGv2 {{ cite("hart2017") }} and
-non-essential genes NEGv1 {{ cite("hart2014") }}
-{% else %}
+{% set human = config["lib_info"]["species"] == "human" %}
+{% if essential == "none" and non_essential == "none" and not human %}
 the mouse reference essential and non-essential genes distributed with BAGEL2
+{% else %}
+{% if essential != "none" %}
+the essential genes in {{ essential }}
+{% elif human %}
+the reference core essential genes CEGv2 {{ cite("hart2017") }}
+{% else %}
+the mouse reference essential genes distributed with BAGEL2
+{% endif %}
+and
+{% if non_essential != "none" %}
+the non-essential genes in {{ non_essential }}
+{% elif human %}
+the reference non-essential genes NEGv1 {{ cite("hart2014") }}
+{% else %}
+the mouse reference non-essential genes distributed with BAGEL2
+{% endif %}
 {% endif %}
 .
 {% endif %}
 
-{% if string_db["run"] %}
+{% if string_db["run"] and string_db_queries %}
 {% set top = string_db["top_genes"] %}
 {% set fdr = string_db["fdr"] %}
 {% set data = string_db["data"] %}
@@ -188,12 +208,12 @@ of the genes was drawn.
 
 ## Software
 
-{% set stats_run = mageck["run"] or drugz or bagel2 %}
+{% set stats_run = rra or mle or drugz or bagel2 %}
 {% if stats_run %}
 {% set r_packages = [tool("tidyverse")] %}
-{% if mageck["run"] or drugz %}{% set _ = r_packages.append(tool("ggrepel")) %}{% endif %}
+{% if rra or mle or drugz %}{% set _ = r_packages.append(tool("ggrepel")) %}{% endif %}
 {% set _ = r_packages.append(tool("cowplot")) %}
-{% if mageck["run"] %}{% set _ = r_packages.append(tool("viridis")) %}{% endif %}
+{% if rra or mle %}{% set _ = r_packages.append(tool("viridis")) %}{% endif %}
 Results were plotted with {{ tool("r") }} with {{ r_packages | join_and }}.
 {% endif %}
 Custom scripts used {{ tool("python") }} with {{ tool("pandas") }} and

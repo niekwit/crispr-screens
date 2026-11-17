@@ -918,5 +918,7 @@ def env_packages(env):
 
 def comparison_label(comparison):
     """'T18_1-T18_2_vs_T0_1-T0_2' -> 'T18_1, T18_2 vs T0_1, T0_2'"""
-    test, control = comparison.split("_vs_")
+    # As the rules split it (first and second part)
+    parts = comparison.split("_vs_")
+    test, control = parts[0], parts[1] if len(parts) > 1 else ""
     return f"{test.replace('-', ', ')} vs {control.replace('-', ', ')}"

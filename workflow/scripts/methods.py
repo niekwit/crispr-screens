@@ -16,8 +16,9 @@ library_file = snakemake.params["library_file"]
 name_column = config["csv"]["name_column"]
 gene_column = config["csv"]["gene_column"]
 sgrnas, genes = set(), set()
-with open(library_file, newline="") as fh:
-    rows = csv.reader(fh)
+with open(library_file, newline="", encoding="utf-8") as fh:
+    # Blank records are skipped (as pandas does in csv_to_fasta.py)
+    rows = (row for row in csv.reader(fh) if any(field.strip() for field in row))
     next(rows)
     for row in rows:
         sgrnas.add(row[name_column])
