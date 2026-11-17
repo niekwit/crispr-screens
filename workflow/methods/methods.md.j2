@@ -37,12 +37,12 @@ reads were aligned to them with {{ tool("bowtie", code(bowtie_extra)) }}.
 Aligned reads were counted per sgRNA; sgRNAs without aligned reads were given
 a count of 0.
 
-Alignment rates, read numbers, fold coverage of the library, sgRNAs without
-reads, read count distributions, the evenness of sgRNA representation (Gini
-index and the ratio of the 90th to the 10th percentile of the counts), Pearson
-correlation of log-transformed counts between samples, and a principal
-component analysis of log2(count + 1) with {{ tool("scikit-learn") }} were
-reported in an interactive HTML report.
+Quality control included alignment rates, read numbers, fold coverage of the
+library, sgRNAs without reads, read count distributions, the evenness of sgRNA
+representation (Gini index and the ratio of the 90th to the 10th percentile of
+the counts), Pearson correlation of log-transformed counts between samples, and
+a principal component analysis of log2(count + 1) with
+{{ tool("scikit-learn") }}.
 
 {% if crisprcleanr_comparisons %}
 {% set ccr_uses = [] %}
@@ -196,11 +196,5 @@ of the genes was drawn.
 {% if mageck["run"] %}{% set _ = r_packages.append(tool("viridis")) %}{% endif %}
 Results were plotted with {{ tool("r") }} with {{ r_packages | join_and }}.
 {% endif %}
-The QC report
-{% if stats_run %}
-and the interactive results report were
-{% else %}
-was
-{% endif %}
-made with {{ tool("python") }} with {{ tool("pandas") }}, {{ tool("numpy") }},
-{{ tool("scipy") }} and {{ tool("plotly") }}.
+Custom scripts used {{ tool("python") }} with {{ tool("pandas") }} and
+{{ tool("numpy") }}.
