@@ -181,7 +181,7 @@ BAGEL2 analysis
 
 .. note::
 
-    Replicate samples can be used by separating the sample names with a semicolon (see above). The sample names must match the fastq file names in the `reads` directory (without extension), and must not contain hyphens.
+    Replicate samples can be used by separating the sample names with a semicolon (see above). The sample names must match the fastq file names in the `reads` directory (without extension), and must not contain hyphens or ``_vs_``.
 
 .. note::
 

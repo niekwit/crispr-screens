@@ -473,6 +473,23 @@ def sample_names():
                 "file(s) and update stats.csv (e.g. use _ instead of -)"
             )
 
+        # "_vs_" separates test from control in comparison names (and is
+        # split on unconditionally, e.g. comparison_label(), drugz.smk,
+        # count.smk), so it cannot be part of a sample name either, even for
+        # a bagel2_only row when BAGEL2 itself isn't run: comparisons() still
+        # builds COMPARISONS_BAGEL2 from every row whenever stats.csv is
+        # needed at all, and the methods template formats it unconditionally
+        with_vs = sorted(
+            {part for x in samples for part in x.split(";") if "_vs_" in part}
+        )
+        if with_vs:
+            raise ValueError(
+                f"Sample name(s) in stats.csv contain '_vs_': "
+                f"{', '.join(with_vs)}. '_vs_' is used to separate test from "
+                "control in comparison names: rename the reads file(s) and "
+                "update stats.csv (e.g. use _versus_ instead of _vs_)"
+            )
+
         # Check every replicate of a ;-separated entry individually
         not_found = sorted(
             {part for x in samples for part in x.split(";") if part not in sample_names}
