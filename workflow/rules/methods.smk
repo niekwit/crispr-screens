@@ -179,6 +179,10 @@ rule methods:
         runtime=10,
         mem_mb=1000,
     params:
+        # The full config, so Snakemake's params-change tracking regenerates
+        # methods.md when any config value changes, including ones not
+        # otherwise read as their own param below (e.g. ngs_tracker.description)
+        full_config=lambda w: config,
         # Functions: Snakemake would fill in "{...}" of a string param
         template_text=lambda w: METHODS_TEMPLATE,
         overrides_text=lambda w: METHODS_OVERRIDES,

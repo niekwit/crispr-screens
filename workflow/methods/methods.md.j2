@@ -40,9 +40,14 @@ a count of 0.
 Quality control included alignment rates, read numbers, fold coverage of the
 library, sgRNAs without reads, read count distributions, the evenness of sgRNA
 representation (Gini index and the ratio of the 90th to the 10th percentile of
-the counts), Pearson correlation of log-transformed counts between samples, and
-a principal component analysis of log2(count + 1) with
-{{ tool("scikit-learn") }}.
+the counts),
+{# 3: workflow/scripts/qc/pca.py's MIN_SAMPLES, below which it skips PCA #}
+{% if samples | length >= 3 %}
+Pearson correlation of log-transformed counts between samples, and a principal
+component analysis of log2(count + 1) with {{ tool("scikit-learn") }}.
+{% else %}
+and Pearson correlation of log-transformed counts between samples.
+{% endif %}
 
 {% if crisprcleanr_comparisons %}
 {% set ccr_uses = [] %}
