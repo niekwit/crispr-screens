@@ -1,0 +1,14 @@
+# Methods section of the run (snakemake-methods); git for the commits of
+# BAGEL2 and DrugZ
+name: methods
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - conda-forge::python=3.12
+  - conda-forge::jinja2=3.1
+  - conda-forge::pyyaml=6.0
+  - conda-forge::git=2.47.1
+  - conda-forge::pip
+  - pip:
+      - git+https://github.com/niekwit/snakemake-methods@v0.1.1

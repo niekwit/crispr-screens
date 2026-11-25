@@ -1,0 +1,4 @@
+# Workflow overrides of the snakemake-methods database (none needed: one
+# conda environment holds all tools of the workflow's own rules)
+tools: {}
+references: {}

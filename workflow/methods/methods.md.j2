@@ -1,0 +1,225 @@
+{#
+  Methods of the crispr-screens workflow (snakemake-methods). Only the steps
+  of this configuration are described; every value comes from config or the
+  params of the methods rule (workflow/rules/methods.smk). tool() cites a tool
+  with its version at its first mention. Prose lines of a paragraph are
+  joined; keep {% if %} blocks on their own lines.
+#}
+{% set st = config["stats"] %}
+{% set mageck = st["mageck"] %}
+{% set rra = mageck["run"] and mageck["command"] == "test" and comparisons %}
+{% set mle = mageck["run"] and mageck["command"] == "mle" %}
+{% set cnv = (rra or mle) and mageck["apply_CNV_correction"] %}
+{% set drugz = st["drugz"]["run"] and comparisons %}
+{% set bagel2 = st["bagel2"]["run"] and comparisons_bagel2 %}
+{% set string_db = st["string_db"] %}
+{% set ccr = st["crisprcleanr"] %}
+{% set ccr_libraries = ["AVANA_Library", "Brunello_Library", "GeCKO_Library_v2",
+  "KY_Library_v1.0", "KY_Library_v1.1", "MiniLibCas9_Library", "Whitehead_Library"] %}
+{% set gene_lists = st["bagel2"]["custom_gene_lists"] %}
+{% set essential = gene_lists["essential_genes"] %}
+{% set non_essential = gene_lists["non_essential_genes"] %}
+Pooled CRISPR screen data of {{ samples | length }} samples were analysed with
+the crispr-screens workflow {{ workflow_version }}
+(https://github.com/niekwit/crispr-screens) in {{ tool("snakemake") }}.
+
+## Read processing and sgRNA counts
+
+{% if cram %}
+Reads were extracted from CRAM files with {{ tool("samtools", "samtools fastq") }}.
+{% endif %}
+Read quality was assessed with {{ tool("fastqc") }} before and after
+trimming, and the reports were combined with {{ tool("multiqc") }}. Reads were
+trimmed with {{ tool("cutadapt", code(cutadapt_extra)) }}. The sgRNA sequences
+of the library ({{ library_name }}: {{ n_sgrnas | number }} sgRNAs targeting
+{{ n_genes | number }} genes) were indexed with bowtie-build, and the trimmed
+reads were aligned to them with {{ tool("bowtie", code(bowtie_extra)) }}.
+Aligned reads were counted per sgRNA; sgRNAs without aligned reads were given
+a count of 0.
+
+Quality control included alignment rates, read numbers, fold coverage of the
+library, sgRNAs without reads, read count distributions, the evenness of sgRNA
+representation (Gini index and the ratio of the 90th to the 10th percentile of
+the counts),
+{# 3: workflow/scripts/qc/pca.py's MIN_SAMPLES, below which it skips PCA #}
+{% if samples | length >= 3 %}
+Pearson correlation of log-transformed counts between samples, and a principal
+component analysis of log2(count + 1) with {{ tool("scikit-learn") }}.
+{% else %}
+and Pearson correlation of log-transformed counts between samples.
+{% endif %}
+
+{% if crisprcleanr_comparisons %}
+{% set ccr_uses = [] %}
+{% if bagel2 %}{% set _ = ccr_uses.append("BAGEL2") %}{% endif %}
+{% if rra and mageck["apply_crisprcleanr"] %}{% set _ = ccr_uses.append("MAGeCK") %}{% endif %}
+{% if drugz and st["drugz"]["apply_crisprcleanr"] %}{% set _ = ccr_uses.append("DrugZ") %}{% endif %}
+## Correction of gene-independent responses
+
+Before analysis with {{ ccr_uses | join_and }}, gene-independent responses to CRISPR–Cas9
+targeting were corrected per comparison
+({{ crisprcleanr_comparisons | join_and }}) with {{ tool("crisprcleanr") }}.
+Counts of the test and control samples were normalised and sgRNA log fold
+changes calculated, removing sgRNAs with few reads in the control sample(s)
+(ccr.NormfoldChanges, {{ code("min_reads = " ~ ccr["min_reads"]) }}). The fold
+changes, averaged over the test samples, were ordered by the genomic position
+of the sgRNAs (from
+{% if ccr["library_name"] in ccr_libraries %}
+the CRISPRcleanR annotation of {{ ccr["library_name"] }}
+{% else %}
+the library file
+{% endif %}
+) and corrected (ccr.GWclean), and corrected counts were calculated
+(ccr.correctCounts, {{ code("minTargetedGenes = 3") }}). The separation of
+{% if essential == "none" and non_essential == "none" %}
+reference essential and non-essential genes {{ cite("hart2016") }}
+{% else %}
+{% if essential != "none" %}
+the essential genes in {{ essential }}
+{% else %}
+reference essential genes {{ cite("hart2016") }}
+{% endif %}
+and
+{% if non_essential != "none" %}
+the non-essential genes in {{ non_essential }}
+{% else %}
+reference non-essential genes {{ cite("hart2016") }}
+{% endif %}
+{% endif %}
+by the corrected fold changes was assessed with ROC and precision-recall
+curves (ccr.ROC_Curve and ccr.PrRc_Curve).
+{% endif %}
+
+{% if rra or mle %}
+## MAGeCK
+
+{% set options = (mageck_control ~ " " ~ mageck_extra).split() | join(" ") %}
+{% if rra %}
+Enriched and depleted genes of each comparison ({{ comparisons | join_and }})
+were identified with {{ tool("mageck", "test, robust rank aggregation") }}
+{% if mageck["apply_crisprcleanr"] %}
+from the CRISPRcleanR-corrected counts, without further normalisation
+{% elif "--norm-method" not in options %}
+from the counts, after median normalisation
+{% else %}
+from the counts
+{% endif %}
+{% else %}
+Gene effects (beta scores) were estimated with
+{{ tool("mageck", "mle, " ~ citation("li2015")) }} from the counts of the
+samples of each design matrix ({{ matrix_descriptions | join_and }})
+{% if "--norm-method" not in options %}
+, after median normalisation
+{% endif %}
+{% endif %}
+{% if options %}
+, with {{ code(options) }}
+{% endif %}
+.
+{% if cnv %}
+Copy-number bias was corrected with MAGeCK's CNV correction
+({{ code("--cnv-norm --cell-line " ~ mageck["cell_line"]) }};
+{{ citation("wang2019") }}), using the gene-level copy numbers of the Cancer
+Cell Line Encyclopedia (2013-12-03 release; {{ citation("barretina2012") }}).
+{% endif %}
+{% endif %}
+
+{% if drugz %}
+## DrugZ
+
+Chemogenetic interactions in each comparison ({{ comparisons | join_and }})
+were scored with
+{{ tool("drugz", code(st["drugz"]["extra"]) if st["drugz"]["extra"] else None) }}
+{% if st["drugz"]["apply_crisprcleanr"] %}
+from the CRISPRcleanR-corrected counts.
+{% else %}
+from the counts.
+{% endif %}
+{% endif %}
+
+{% if bagel2 %}
+## BAGEL2
+
+Gene essentiality in each comparison ({{ comparisons_bagel2 | join_and }}) was
+scored with {{ tool("bagel2") }}: Bayes factors from the CRISPRcleanR-corrected
+fold changes (BAGEL.py bf
+{%- if st["bagel2"]["extra_args"]["bf"] %}, {{ code(st["bagel2"]["extra_args"]["bf"]) }}{% endif %}
+) and precision and recall (BAGEL.py pr
+{%- if st["bagel2"]["extra_args"]["pr"] %}, {{ code(st["bagel2"]["extra_args"]["pr"]) }}{% endif %}
+), with
+{% set human = config["lib_info"]["species"] == "human" %}
+{% if essential == "none" and non_essential == "none" and not human %}
+the mouse reference essential and non-essential genes distributed with BAGEL2
+{% else %}
+{% if essential != "none" %}
+the essential genes in {{ essential }}
+{% elif human %}
+the reference core essential genes CEGv2 {{ cite("hart2017") }}
+{% else %}
+the mouse reference essential genes distributed with BAGEL2
+{% endif %}
+and
+{% if non_essential != "none" %}
+the non-essential genes in {{ non_essential }}
+{% elif human %}
+the reference non-essential genes NEGv1 {{ cite("hart2014") }}
+{% else %}
+the mouse reference non-essential genes distributed with BAGEL2
+{% endif %}
+{% endif %}
+.
+{% endif %}
+
+{% if string_db["run"] and string_db_queries %}
+{% set top = string_db["top_genes"] %}
+{% set fdr = string_db["fdr"] %}
+{% set data = string_db["data"] %}
+{% set directions = {"both": "enriched and depleted genes (separately)",
+  "enriched": "enriched genes", "depleted": "depleted genes"}[data] %}
+{% set beta = {"both": "genes with beta > 0 and with beta < 0 (separately)",
+  "enriched": "genes with beta > 0", "depleted": "genes with beta < 0"}[data] %}
+{% set ranked = (["MAGeCK"] if rra else []) + (["DrugZ"] if drugz else []) %}
+{% set sets = [] %}
+{% if ranked and top > 0 %}
+{% set _ = sets.append("the top " ~ top ~ " " ~ directions ~ " of each "
+  ~ join_and(ranked) ~ " comparison, ranked by " ~ join_and(ranked, " or ")
+  ~ " rank") %}
+{% elif ranked %}
+{% set _ = sets.append("the " ~ directions ~ " with FDR < " ~ fdr ~ " of each "
+  ~ join_and(ranked) ~ " comparison") %}
+{% endif %}
+{% if mle and top > 0 %}
+{% set _ = sets.append("the top " ~ top ~ " " ~ beta
+  ~ " of each MAGeCK MLE condition, ranked by FDR") %}
+{% elif mle %}
+{% set _ = sets.append("the " ~ beta ~ " with FDR < " ~ fdr
+  ~ " of each MAGeCK MLE condition") %}
+{% endif %}
+{% if bagel2 and top > 0 %}
+{% set _ = sets.append("the top " ~ top
+  ~ " genes of each BAGEL2 comparison, ranked by Bayes factor") %}
+{% elif bagel2 %}
+{% set _ = sets.append("the genes with a Bayes factor > " ~ string_db["bf_cutoff"]
+  ~ " of each BAGEL2 comparison") %}
+{% endif %}
+## Functional enrichment
+
+Functional enrichment was tested with {{ tool("string") }}, queried through
+its API ({{ config["lib_info"]["species"] }}, NCBI taxon {{ taxon }}) on
+{{ package_version("string-db-date") }}, for {{ sets | join("; ") }}. Terms
+with an FDR < 0.05 (as reported by STRING) were kept, and the STRING network
+of the genes was drawn.
+{% endif %}
+
+## Software
+
+{% set stats_run = rra or mle or drugz or bagel2 %}
+{% if stats_run %}
+{% set r_packages = [tool("tidyverse")] %}
+{% if rra or mle or drugz %}{% set _ = r_packages.append(tool("ggrepel")) %}{% endif %}
+{% set _ = r_packages.append(tool("cowplot")) %}
+{% if rra or mle %}{% set _ = r_packages.append(tool("viridis")) %}{% endif %}
+Results were plotted with {{ tool("r") }} with {{ r_packages | join_and }}.
+{% endif %}
+Custom scripts used {{ tool("python") }} with {{ tool("pandas") }} and
+{{ tool("numpy") }}.

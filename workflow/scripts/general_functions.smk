@@ -1,4 +1,5 @@
 import os
+import re
 import glob
 import datetime
 import pandas as pd
@@ -6,6 +7,14 @@ import numpy as np
 from snakemake.utils import min_version, validate
 from snakemake.logging import logger
 from snakemake.shell import shell
+
+# Snakemake wrappers (version/path), used by the rules and, for the versions
+# of their software, by the methods
+WRAPPERS = {
+    "fastqc": "v5.2.1/bio/fastqc",
+    "multiqc": "v9.18.0/bio/multiqc",
+    "cutadapt": "v9.18.0/bio/cutadapt/se",
+}
 
 
 def targets():
@@ -186,6 +195,25 @@ def mageck_mle_condition_triples():
             for c in conditions:
                 triples.append((name, v, c))
     return triples
+
+
+def matrix_descriptions():
+    """Design-matrix names together with the condition(s) they model (e.g.
+    "matrix (modelling noHT_vs_HT)"), for the MAGeCK MLE methods sentence.
+    Condition names are read from each matrix's header the same way as in
+    mageck_mle_condition_triples(). Empty unless MAGeCK is run in mle mode."""
+    mageck_mle_on = (
+        config["stats"]["mageck"]["run"]
+        and config["stats"]["mageck"]["command"] == "mle"
+    )
+    if not mageck_mle_on:
+        return []
+    matrices = config["stats"]["mageck"]["mle"]["design_matrix"]
+    descriptions = []
+    for name, path in zip(MATRIX_NAMES, matrices):
+        conditions = pd.read_csv(path, sep="\t", nrows=0).columns.tolist()[2:]
+        descriptions.append(f"{name} (modelling {' and '.join(conditions)})")
+    return descriptions
 
 
 def interactive_results_keys():
@@ -443,6 +471,23 @@ def sample_names():
                 f"{', '.join(with_hyphen)}. Hyphens are used to separate "
                 "multiple samples in comparison names: rename the reads "
                 "file(s) and update stats.csv (e.g. use _ instead of -)"
+            )
+
+        # "_vs_" separates test from control in comparison names (and is
+        # split on unconditionally, e.g. comparison_label(), drugz.smk,
+        # count.smk), so it cannot be part of a sample name either, even for
+        # a bagel2_only row when BAGEL2 itself isn't run: comparisons() still
+        # builds COMPARISONS_BAGEL2 from every row whenever stats.csv is
+        # needed at all, and the methods template formats it unconditionally
+        with_vs = sorted(
+            {part for x in samples for part in x.split(";") if "_vs_" in part}
+        )
+        if with_vs:
+            raise ValueError(
+                f"Sample name(s) in stats.csv contain '_vs_': "
+                f"{', '.join(with_vs)}. '_vs_' is used to separate test from "
+                "control in comparison names: rename the reads file(s) and "
+                "update stats.csv (e.g. use _versus_ instead of _vs_)"
             )
 
         # Check every replicate of a ;-separated entry individually
@@ -841,3 +886,78 @@ def matrix_names():
         return [os.path.basename(x).rsplit(".", 1)[0] for x in matrices]
     else:
         return None
+
+
+def methods_envs():
+    """
+    Conda environments (workflow/envs/{env}.yaml) used by the jobs of this
+    configuration, whose package versions go into the methods
+    """
+    return ["stats"]
+
+
+def methods_wrappers():
+    """{name: (wrapper, [packages])} of the Snakemake wrappers used"""
+    return {
+        name: (WRAPPERS[name], [name]) for name in ("fastqc", "multiqc", "cutadapt")
+    }
+
+
+def methods_git():
+    """{name: clone directory} of the tools cloned from git by this configuration"""
+    clones = {}
+    if config["stats"]["bagel2"]["run"] and COMPARISONS_BAGEL2:
+        clones["bagel2"] = "resources/bagel2"
+    if config["stats"]["drugz"]["run"] and COMPARISONS:
+        clones["drugz"] = "resources/drugz"
+    return clones
+
+
+def flat_targets():
+    """targets() as a flat list of paths"""
+    paths = []
+    for target in ALL_TARGETS:
+        paths.extend(target if isinstance(target, list) else [target])
+    return paths
+
+
+def methods_string_db():
+    """
+    STRING version files of the queries of this configuration (written by
+    string_db.py when it queries STRING)
+    """
+    return [
+        p.replace("pathway_analysis.csv", "string_version.txt")
+        for p in flat_targets()
+        if "stringdb" in p.split(os.sep) and p.endswith("pathway_analysis.csv")
+    ]
+
+
+def methods_targets():
+    """All other targets: the methods describe the finished analysis"""
+    return ALL_TARGETS
+
+
+def env_packages(env):
+    """
+    Package names in the dependency lines of workflow/envs/{env}.yaml
+    (bioconda::mageck=0.5.9 -> mageck). Read while the workflow is parsed:
+    workflow.source_path() gives a local copy of the file, also when the
+    workflow is used as a module (e.g. deployed with snakedeploy), where
+    workflow.basedir is the deployment directory
+    """
+    names = []
+    with open(workflow.source_path(f"../envs/{env}.yaml")) as fh:
+        for line in fh:
+            match = re.match(r"\s*-\s+(?:[^:\s]+::)?([^=<>!\s#]+)", line)
+            if match:
+                names.append(match.group(1))
+    return names
+
+
+def comparison_label(comparison):
+    """'T18_1-T18_2_vs_T0_1-T0_2' -> 'T18_1, T18_2 vs T0_1, T0_2'"""
+    # As the rules split it (first and second part)
+    parts = comparison.split("_vs_")
+    test, control = parts[0], parts[1] if len(parts) > 1 else ""
+    return f"{test.replace('-', ', ')} vs {control.replace('-', ', ')}"

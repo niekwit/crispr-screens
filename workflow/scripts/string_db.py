@@ -123,18 +123,30 @@ genes_payload = "%0d".join(genes)
 # Session with retry: backoff on 400 (STRING returns this, not 429, when
 # concurrent CI jobs exceed its request rate), 429/500/502/503/504, up to 5
 # attempts. backoff_factor=2 gives waits of 2, 4, 8, 16 s between retries.
-# allowed_methods must include POST explicitly — urllib3's Retry excludes
-# non-idempotent methods by default, so without this every retry setting
-# here is a silent no-op for our session.post() calls.
+# allowed_methods must include GET and POST explicitly — urllib3's Retry
+# excludes non-idempotent methods by default, so without this every retry
+# setting here is a silent no-op for our session.get()/session.post() calls.
 retry = Retry(
     total=5,
     backoff_factor=2,
     status_forcelist=[400, 429, 500, 502, 503, 504],
-    allowed_methods=frozenset(["POST"]),
+    allowed_methods=frozenset(["GET", "POST"]),
     raise_on_status=False,
 )
 session = requests.Session()
 session.mount("https://", HTTPAdapter(max_retries=retry))
+
+# Record the STRING version these queries use, for the methods section
+version_response = session.get("https://string-db.org/api/json/version", timeout=60)
+if version_response.status_code != 200:
+    raise RuntimeError(
+        f"STRING-db version request failed with status "
+        f"{version_response.status_code}: {version_response.text}"
+    )
+string_version = version_response.json()[0]["string_version"]
+with open(snakemake.output["version"], "w") as f:
+    f.write(f"{string_version}\n")
+logging.info(f"STRING version: {string_version}")
 
 params = {
     "identifiers": genes_payload,

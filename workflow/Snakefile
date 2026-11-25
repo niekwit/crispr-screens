@@ -37,6 +37,9 @@ MATRIX_NAMES = matrix_names()
 # Get fasta/csv paths
 fasta, csv = fasta()
 
+# All outputs of this configuration (the methods are written after them)
+ALL_TARGETS = targets()
+
 
 # Import rules
 include: "rules/qc.smk"
@@ -46,12 +49,14 @@ include: "rules/mageck.smk"
 include: "rules/bagel2.smk"
 include: "rules/drugz.smk"
 include: "rules/interactive_report.smk"
+include: "rules/methods.smk"
 
 
 # Set target rule
 rule all:
     input:
-        targets(),
+        ALL_TARGETS,
+        "methods/methods.md",
 
 
 # Save snakemake terminal output to log file
