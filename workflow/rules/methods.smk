@@ -194,7 +194,7 @@ rule methods:
         crisprcleanr_comparisons=[
             comparison_label(c) for c in crisprcleanr_comparisons()
         ],
-        matrices=MATRIX_NAMES,
+        matrix_descriptions=matrix_descriptions(),
         mageck_control=mageck_control(),
         mageck_extra=extra_mageck_args(),
         string_db_data=STRING_DB_DATA,

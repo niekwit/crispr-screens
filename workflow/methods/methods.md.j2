@@ -102,7 +102,7 @@ from the counts
 {% else %}
 Gene effects (beta scores) were estimated with
 {{ tool("mageck", "mle, " ~ citation("li2015")) }} from the counts of the
-samples of each design matrix ({{ matrices | join_and }})
+samples of each design matrix ({{ matrix_descriptions | join_and }})
 {% if "--norm-method" not in options %}
 , after median normalisation
 {% endif %}

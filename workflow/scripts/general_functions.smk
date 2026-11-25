@@ -197,6 +197,25 @@ def mageck_mle_condition_triples():
     return triples
 
 
+def matrix_descriptions():
+    """Design-matrix names together with the condition(s) they model (e.g.
+    "matrix (modelling noHT_vs_HT)"), for the MAGeCK MLE methods sentence.
+    Condition names are read from each matrix's header the same way as in
+    mageck_mle_condition_triples(). Empty unless MAGeCK is run in mle mode."""
+    mageck_mle_on = (
+        config["stats"]["mageck"]["run"]
+        and config["stats"]["mageck"]["command"] == "mle"
+    )
+    if not mageck_mle_on:
+        return []
+    matrices = config["stats"]["mageck"]["mle"]["design_matrix"]
+    descriptions = []
+    for name, path in zip(MATRIX_NAMES, matrices):
+        conditions = pd.read_csv(path, sep="\t", nrows=0).columns.tolist()[2:]
+        descriptions.append(f"{name} (modelling {' and '.join(conditions)})")
+    return descriptions
+
+
 def interactive_results_keys():
     """(mageck_pairs, mageck_mle_pairs, drugz_comparisons, bagel2_comparisons)
     feeding the combined interactive_results_report rule, each empty when
